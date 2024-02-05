@@ -13,12 +13,12 @@ pal <- wes_palette("Cavalcanti1")
 pal2 <- wes_palette("GrandBudapest2")
 
 # get signature scores
-signature_scores <- read.table("Signatures/bca_sign.Zscore.txt")
-signature_scores <- signature_scores[,which(colnames(signature_scores) %in% samples$file)]
+signature_scores <- read.table("Signatures/data/bca_sign.Zscore.txt")
 # remove duplicates
-#samples[samples$sample %in% samples$sample[duplicated(samples$sample)],]
-remove <- c("HCC1395.", "BT549.", "MDA.MB.436.", "HCC1143.", "HCC3153.", "HCC1806.", "BT20.", "HCC1937.", "SUM149PT.", "SUM159PT.", "MDA.MB.231.", "HS578.", "HCC70.", "MDA.MB.468.")
-samples <- samples[-which(samples$file %in% remove),]
+dup <- samples$sample[duplicated(samples$sample)]
+tmp <- samples[samples$sample %in% dup,]
+samples <- rbind(samples[-which(samples$sample %in% dup),], tmp[which(tmp$seq == "Nergiz"),]) # from dups, keep only the ones by Nergiz
+
 signature_scores <- signature_scores[,which(colnames(signature_scores) %in% samples$file)]
 
 # data frame to keep track of number of significant associations
@@ -293,9 +293,9 @@ dev.off()
 sig_com$type <- ifelse(sig_com$ci > 0.5, "Sensitivity", "Resistance")
 
 png("DrugResponse/results/figures/indiv_PSet_CI/count_per_sig.png", width = 6, height = 4, res = 600, units = "in")
-ggplot(sig_com, aes(x = signature, fill = type)) + 
+ggplot(sig_com[sig_com$FDR < 0.05,], aes(x = signature, fill = type)) + 
   geom_bar(stat = "count", size = 0.5, position = "dodge", color = "black", width=0.6) +
-  scale_y_continuous(limits = c(0, 75), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 120), expand = c(0, 0)) +
   scale_fill_manual("Association", values = c("Sensitivity" = pal[1], "Resistance" = pal[5])) +
   theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
   labs(x = "Signature", y = "Number of Associations")
