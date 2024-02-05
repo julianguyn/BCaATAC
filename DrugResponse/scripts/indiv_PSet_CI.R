@@ -22,12 +22,12 @@ samples <- rbind(samples[-which(samples$sample %in% dup),], tmp[which(tmp$seq ==
 signature_scores <- signature_scores[,which(colnames(signature_scores) %in% samples$file)]
 
 # data frame to keep track of number of significant associations
-sig_com <- as.data.frame(matrix(ncol = 6, nrow = 0))
-colnames(sig_com) <- c("pset", "signature", "drug", "ci", "pvalue", "FDR")
+sig_com <- as.data.frame(matrix(ncol = 7, nrow = 0))
+colnames(sig_com) <- c("pset", "signature", "drug", "ci", "pvalue", "FDR", "label")
 
 
 ### Function to compute CI ###
-computeCI <- function(signature_scores, sensitivity_data) {
+computeCI <- function(signature_scores, sensitivity_data, label) {
 
     # create data frame to hold results
     combinations <- as.data.frame(matrix(data = NA, nrow = nrow(signature_scores) * nrow(sensitivity_data), ncol = 7))
@@ -63,7 +63,8 @@ computeCI <- function(signature_scores, sensitivity_data) {
     combinations$signature <- gsub("sign", "signature", combinations$signature)
     combinations <- combinations[order(combinations$ci),]
     combinations$rank <- 1:nrow(combinations)
-    combinations$pairs <- paste(combinations$signature, combinations$drug)
+    combinations$pairs <- paste0(combinations$signature, "-", combinations$drug)
+    combinations$pset <- c(rep(label, nrow(combinations)))
 
     return(combinations)
 }
@@ -71,12 +72,12 @@ computeCI <- function(signature_scores, sensitivity_data) {
 saveSig <- function(sig_com, combinations, label) {
 
     # save signatures associated with drug sensitivity:
-    sen <- combinations[which(combinations$ci > 0.65),]
+    sen <- combinations[which(combinations$ci > 0.6 & combinations$FDR < 0.05),]
     sig_com <- rbind(sig_com, data.frame(pset = c(rep(label, nrow(sen))), signature = sen$signature, drug = sen$drug, ci = sen$ci, pvalue = sen$pvalue, FDR = sen$FDR))
     write.csv(sen[order(sen$FDR, -sen$ci),], file = paste0("DrugResponse/results/tables/indiv_PSet_CI/", label, "_sen.csv"), row.names = F)
 
     # save signatures associated with drug resistance:
-    res <- combinations[which(combinations$ci < 0.35),]
+    res <- combinations[which(combinations$ci < 0.4 & combinations$FDR < 0.05),]
     sig_com <- rbind(sig_com, data.frame(pset = c(rep(label, nrow(res))), signature = res$signature, drug = res$drug, ci = res$ci, pvalue = res$pvalue, FDR = res$FDR))
     write.csv(res[order(res$FDR, res$ci),], file = paste0("DrugResponse/results/tables/indiv_PSet_CI/", label, "_res.csv"), row.names = F)
 
@@ -101,7 +102,7 @@ ubr1_sam <- samples[which(samples$sample %in% colnames(ubr1_sen)),]
 ubr1_sig <- signature_scores[,which(colnames(signature_scores) %in% ubr1_sam$file)]
 
 # compute associations
-ubr1_com <- computeCI(ubr1_sig, ubr1_sen)
+ubr1_com <- computeCI(ubr1_sig, ubr1_sen, "uhnbreast")
 sig_com <- saveSig(sig_com, ubr1_com, "uhnbreast")
 
 # plot associations
@@ -136,7 +137,7 @@ gray_sam <- samples[which(samples$sample %in% colnames(gray_sen)),]
 gray_sig <- signature_scores[,which(colnames(signature_scores) %in% gray_sam$file)]
 
 # compute associations
-gray_com <- computeCI(gray_sig, gray_sen)
+gray_com <- computeCI(gray_sig, gray_sen, "gray")
 sig_com <- saveSig(sig_com, gray_com, "gray")
 
 # plot associations
@@ -169,7 +170,7 @@ gcsi_sam <- samples[which(samples$sample %in% colnames(gcsi_sen)),]
 gcsi_sig <- signature_scores[,which(colnames(signature_scores) %in% gcsi_sam$file)]
 
 # compute associations
-gcsi_com <- computeCI(gcsi_sig, gcsi_sen)
+gcsi_com <- computeCI(gcsi_sig, gcsi_sen, "gcsi")
 sig_com <- saveSig(sig_com, gcsi_com, "gcsi")
 
 # plot associations
@@ -203,7 +204,7 @@ gdsc_sam <- samples[which(samples$sample %in% colnames(gdsc_sen)),]
 gdsc_sig <- signature_scores[,which(colnames(signature_scores) %in% gdsc_sam$file)]
 
 # compute associations
-gdsc_com <- computeCI(gdsc_sig, gdsc_sen)
+gdsc_com <- computeCI(gdsc_sig, gdsc_sen, "gdsc")
 sig_com <- saveSig(sig_com, gdsc_com, "gdsc")
 
 # plot associations
@@ -235,7 +236,7 @@ ctrp_sam <- samples[which(samples$sample %in% colnames(ctrp_sen)),]
 ctrp_sig <- signature_scores[,which(colnames(signature_scores) %in% ctrp_sam$file)]
 
 # compute associations
-ctrp_com <- computeCI(ctrp_sig, ctrp_sen)
+ctrp_com <- computeCI(ctrp_sig, ctrp_sen, "ctrp")
 sig_com <- saveSig(sig_com, ctrp_com, "ctrp")
 
 # plot associations
@@ -268,7 +269,7 @@ ccle_sam <- samples[which(samples$sample %in% colnames(ccle_sen)),]
 ccle_sig <- signature_scores[,which(colnames(signature_scores) %in% ccle_sam$file)]
 
 # compute associations
-ccle_com <- computeCI(ccle_sig, ccle_sen)
+ccle_com <- computeCI(ccle_sig, ccle_sen, "ccle")
 sig_com <- saveSig(sig_com, ccle_com, "ccle")
 
 # plot associations
@@ -283,7 +284,7 @@ ggplot(ccle_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35
     annotate(geom = "text", label = c("*", "*", "*", "*"), x = c(1, 3.2, 141.8, 143), y = c(-0.208, -0.175, 0.209, 0.222), vjust = 1) 
 dev.off()
 
-
+save(sig_com, ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file = "DrugResponse/results/data/indiv_PSet_CI.RData")
 
 ####################################
 ### All Significant Associations ###
@@ -332,20 +333,28 @@ dev.off()
 
 
 ### Signature-Drug pairs significant in >1 PSet ###
-sig_com$pairs <- paste0(sig_com$signature, sig_com$drug)
-multiple <- sig_com$pairs[duplicated(sig_com$pairs)]
+sig_com$pairs <- paste0(sig_com$signature, "-", sig_com$drug)
+sig_pairs_1 <- sig_com$pairs[duplicated(sig_com$pairs)]
 
-df <- sig_com[which(sig_com$pairs %in% multiple),]
+all_com <- rbind(ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com) #combine all drug response from all psets
+all_com$pairs <- paste0(all_com$signature, "-", all_com$drug)
+df <- all_com[which(all_com$pairs %in% sig_pairs_1),]
+df$sig <- ifelse(df$ci > 0.6 | df$ci < 0.4, "sig", "not sig")
+df[df$FDRsig == FALSE,]$sig <- "not sig"
 df$pset <- toupper(df$pset)
 
-png("DrugResponse/results/figures/indiv_PSet_CI/double_pairs.png", width = 10, height = 5, res = 600, units = "in")
-ggplot(df, aes(x = pset, y = ci, fill = signature)) + 
-  geom_bar(stat = "identity", size = 0.5, position = position_dodge(width = 0.9), color = "black") + 
-  facet_grid(~ as.factor(drug), scales = "free_x") +
-  scale_y_continuous(limits = c(0, 0.8), expand=c(0,0)) +
-  scale_fill_manual("Signature", values = c("signature0" = pal2[3], "signature1" = pal2[4], "signature3" = pal[2], "signature4" = pal[5])) +
-  theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
-  labs(x = "PSet", y = "Concordance Index (CI)")
-dev.off()
 
-save(sig_com, ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file = "DrugResponse/results/data/indiv_PSet_CI.RData")
+# New facet label names for facets
+labs <- unique(df$pairs)
+supp.labs <- setNames(gsub(".*-", "", labs), labs)
+
+png("DrugResponse/results/figures/indiv_PSet_CI/dups_remove_nergiz.png", width = 12, height = 5, res = 600, units = "in")
+ggplot(df, aes(x = pset, y = ci - 0.5, fill = ifelse(sig == "sig", signature, "Not Significant"))) + geom_bar(stat="identity") +
+    facet_grid(~ factor(pairs), scales = "free_x", labeller = as_labeller(supp.labs)) +
+    scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +
+    scale_fill_manual(values = c("Not Significant" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
+    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
+    geom_hline(yintercept = c(-0.1, 0.1), linetype = "dotted") + geom_hline(yintercept = c(0)) +
+    theme_classic() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
