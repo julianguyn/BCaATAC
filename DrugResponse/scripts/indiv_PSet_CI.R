@@ -4,6 +4,7 @@ suppressMessages(library(PharmacoGx))
 suppressMessages(library(survcomp))
 library(ggplot2)
 library(wesanderson)
+library(ggh4x)
 
 # load in BCa cell lines
 samples <- read.csv("DrugResponse/data/cl_samples.csv")
@@ -303,41 +304,46 @@ waterfallplot_signature <- function(signature) {
 
     # order by CI
     toPlot <- toPlot[order(toPlot$ci),]
-    toPlot$rank <- nrow(toPlot):1
+    toPlot$rank <- 1:nrow(toPlot)
 
-    p <- ggplot(toPlot, aes(x = rank, y = ci - 0.5, fill = signature)) + #shift ci by 0.5 so that the baseline becomes 0.5
-    geom_bar(stat="identity", color = "black") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
+    p <- ggplot(toPlot, aes(x = ci - 0.5, y = interaction(drug, rank, sep = "&"))) +
+    geom_col(aes(fill = signature), color = "black") + scale_x_continuous(labels = function(x) x + 0.5) +
+    guides(y = guide_axis_nested(delim = "&")) +
     scale_fill_manual(values = c("Other" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
-    geom_hline(yintercept = 0) + 
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) 
+    theme_classic() + coord_cartesian(clip = "off") +
+    geom_vline(xintercept = 0) +
+    theme(
+        axis.text.y.left = element_text(margin = margin(r = 5, l = 5)),
+        ggh4x.axis.nesttext.y = element_text(margin = margin(r = 5, l = 5)),
+        ggh4x.axis.nestline = element_blank()) +
+    labs(y = "", title = "", x = "Concordance Index (CI)") 
 
     return(p)
 }
 
 
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig0.png", width = 8, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig0.png", width = 6, height = 8, res = 600, units = "in")
 waterfallplot_signature("signature0")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig1.png", width = 8, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig1.png", width = 6, height = 8, res = 600, units = "in")
 waterfallplot_signature("signature1")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig2.png", width = 8, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig2.png", width = 6, height = 8, res = 600, units = "in")
 waterfallplot_signature("signature2")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig3.png", width = 8, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig3.png", width = 6, height = 8, res = 600, units = "in")
 waterfallplot_signature("signature3")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig4.png", width = 8, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig4.png", width = 6, height = 8, res = 600, units = "in")
 waterfallplot_signature("signature4")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig5.png", width = 8, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig5.png", width = 6, height = 8, res = 600, units = "in")
 waterfallplot_signature("signature5")
 dev.off()
 
