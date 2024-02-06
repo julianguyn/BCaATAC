@@ -7,3 +7,6 @@ Signatures/data
 # all results folders
 DrugResponse/results
 Signatures/results
+
+# others
+MetaData
