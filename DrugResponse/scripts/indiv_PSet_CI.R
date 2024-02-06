@@ -290,10 +290,62 @@ save(sig_com, ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file =
 ### All Significant Associations ###
 ####################################
 
+### All Sig Associations ###
+
+# stricter CI thresholds
+strict_sig_com <- sig_com[which(sig_com$ci > 0.7 | sig_com$ci < 0.3),]
+strict_sig_com <- strict_sig_com[strict_sig_com$FDR < 0.01,]
+
+# function to make plot for each signature
+waterfallplot_signature <- function(signature) {
+    # subset dataframe to keep only signature of interest
+    toPlot <- strict_sig_com[strict_sig_com$signature == signature,]
+
+    # order by CI
+    toPlot <- toPlot[order(toPlot$ci),]
+    toPlot$rank <- nrow(toPlot):1
+
+    p <- ggplot(toPlot, aes(x = rank, y = ci - 0.5, fill = signature)) + #shift ci by 0.5 so that the baseline becomes 0.5
+    geom_bar(stat="identity", color = "black") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
+    scale_fill_manual(values = c("Other" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
+    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
+    geom_hline(yintercept = 0) + 
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) 
+
+    return(p)
+}
+
+
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig0.png", width = 8, height = 5, res = 600, units = "in")
+waterfallplot_signature("signature0")
+dev.off()
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig1.png", width = 8, height = 5, res = 600, units = "in")
+waterfallplot_signature("signature1")
+dev.off()
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig2.png", width = 8, height = 5, res = 600, units = "in")
+waterfallplot_signature("signature2")
+dev.off()
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig3.png", width = 8, height = 5, res = 600, units = "in")
+waterfallplot_signature("signature3")
+dev.off()
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig4.png", width = 8, height = 5, res = 600, units = "in")
+waterfallplot_signature("signature4")
+dev.off()
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig5.png", width = 8, height = 5, res = 600, units = "in")
+waterfallplot_signature("signature5")
+dev.off()
+
+
 ### Count per Signature ###
 sig_com$type <- ifelse(sig_com$ci > 0.5, "Sensitivity", "Resistance")
 
-png("DrugResponse/results/figures/indiv_PSet_CI/count_per_sig.png", width = 6, height = 4, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/count_per_sig.png", width = 6, height = 4, res = 600, units = "in")
 ggplot(sig_com[sig_com$FDR < 0.05,], aes(x = signature, fill = type)) + 
   geom_bar(stat = "count", size = 0.5, position = "dodge", color = "black", width=0.6) +
   scale_y_continuous(limits = c(0, 120), expand = c(0, 0)) +
@@ -329,32 +381,4 @@ ggplot(drug_count, aes(x = reorder(Drug, -as.numeric(factor(Drug))), y = Count, 
   coord_flip() + theme_classic() +
   scale_fill_manual("Number of PSets", values = c("1" = pal2[2], "2" = pal2[4], "4" = pal2[3])) +
   labs(x = "Drug", y = "Count")
-dev.off()
-
-
-### Signature-Drug pairs significant in >1 PSet ###
-sig_com$pairs <- paste0(sig_com$signature, "-", sig_com$drug)
-sig_pairs_1 <- sig_com$pairs[duplicated(sig_com$pairs)]
-
-all_com <- rbind(ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com) #combine all drug response from all psets
-all_com$pairs <- paste0(all_com$signature, "-", all_com$drug)
-df <- all_com[which(all_com$pairs %in% sig_pairs_1),]
-df$sig <- ifelse(df$ci > 0.6 | df$ci < 0.4, "sig", "not sig")
-df[df$FDRsig == FALSE,]$sig <- "not sig"
-df$pset <- toupper(df$pset)
-
-
-# New facet label names for facets
-labs <- unique(df$pairs)
-supp.labs <- setNames(gsub(".*-", "", labs), labs)
-
-png("DrugResponse/results/figures/indiv_PSet_CI/dups_remove_nergiz.png", width = 12, height = 5, res = 600, units = "in")
-ggplot(df, aes(x = pset, y = ci - 0.5, fill = ifelse(sig == "sig", signature, "Not Significant"))) + geom_bar(stat="identity") +
-    facet_grid(~ factor(pairs), scales = "free_x", labeller = as_labeller(supp.labs)) +
-    scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +
-    scale_fill_manual(values = c("Not Significant" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
-    geom_hline(yintercept = c(-0.1, 0.1), linetype = "dotted") + geom_hline(yintercept = c(0)) +
-    theme_classic() +
-    theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
