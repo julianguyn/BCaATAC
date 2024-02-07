@@ -3,10 +3,12 @@
 # all data folders
 DrugResponse/data
 Signatures/data
+DrugResponsePDX/data
 
 # all results folders
 DrugResponse/results
 Signatures/results
+DrugResponsePDX/results
 
 # others
 MetaData
