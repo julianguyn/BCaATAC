@@ -9,9 +9,9 @@ library(ggh4x)
 # load in BCa cell lines
 samples <- read.csv("DrugResponse/data/cl_samples.csv")
 
-# load in palette for plotting
-pal <- wes_palette("Cavalcanti1")
-pal2 <- wes_palette("GrandBudapest2")
+# set up palette for plotting
+pal <- c("#046C9A", "#BBADB9", "#7294D4", "#E8E1D9", "#AFC5D8", "#DF9C93")
+pal2 <- c("#899DA4", "#BC4749")
 
 # get signature scores
 signature_scores <- read.table("Signatures/data/bca_sign.Zscore.txt")
@@ -291,11 +291,49 @@ save(sig_com, ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file =
 ### All Significant Associations ###
 ####################################
 
-### All Sig Associations ###
+# rename signatures
+sig_com$signature <- paste0("Signature", as.numeric(gsub("signature", "", sig_com$signature)) + 1)
+
+### CLASS A BIOMARKERS ###
 
 # stricter CI thresholds
 strict_sig_com <- sig_com[which(sig_com$ci > 0.7 | sig_com$ci < 0.3),]
 strict_sig_com <- strict_sig_com[strict_sig_com$FDR < 0.01,]
+
+# order by CI
+strict_sig_com <- strict_sig_com[order(strict_sig_com$ci),]
+strict_sig_com$rank <- 1:nrow(strict_sig_com)
+
+strict_sig_com$rank <- as.factor(strict_sig_com$rank)
+strict_sig_com$drug <- as.factor(strict_sig_com$drug)
+
+# specify sensitivity and resistance
+strict_sig_com$type <- ifelse(strict_sig_com$ci > 0.5, "Sensitivity", "Resistance")
+strict_sig_com$type <- factor(strict_sig_com$type, levels = c("Sensitivity", "Resistance"))
+
+# plot of all sig associations
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/all_sig.png", width = 6, height = 12, res = 600, units = "in")
+ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
+    geom_col(aes(fill = signature), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
+    scale_y_discrete(breaks = strict_sig_com$rank, labels = strict_sig_com$drug) +
+    scale_fill_manual(values = pal) +
+    theme_classic() + geom_vline(xintercept = 0) +
+    labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "Signature") 
+dev.off()
+
+# same graph but horizontal
+strict_sig_com$rank <- nrow(strict_sig_com):1
+strict_sig_com$rank <- as.factor(strict_sig_com$rank)
+strict_sig_com$drug <- as.factor(strict_sig_com$drug)
+ 
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/all_sig_horizontal.png", width = 13, height = 6, res = 600, units = "in")
+ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
+    geom_col(aes(fill = signature), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
+    scale_y_discrete(breaks = strict_sig_com$rank, labels = strict_sig_com$drug) +
+    scale_fill_manual(values = pal) + theme_classic() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + geom_vline(xintercept = 0) +
+    labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "Signature") + coord_flip()
+dev.off()
 
 # function to make plot for each signature
 waterfallplot_signature <- function(signature) {
@@ -306,60 +344,58 @@ waterfallplot_signature <- function(signature) {
     toPlot <- toPlot[order(toPlot$ci),]
     toPlot$rank <- 1:nrow(toPlot)
 
-    p <- ggplot(toPlot, aes(x = ci - 0.5, y = interaction(drug, rank, sep = "&"))) +
-    geom_col(aes(fill = signature), color = "black") + scale_x_continuous(labels = function(x) x + 0.5) +
-    guides(y = guide_axis_nested(delim = "&")) +
-    scale_fill_manual(values = c("Other" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
-    theme_classic() + coord_cartesian(clip = "off") +
-    geom_vline(xintercept = 0) +
-    theme(
-        axis.text.y.left = element_text(margin = margin(r = 5, l = 5)),
-        ggh4x.axis.nesttext.y = element_text(margin = margin(r = 5, l = 5)),
-        ggh4x.axis.nestline = element_blank()) +
-    labs(y = "", title = "", x = "Concordance Index (CI)") 
+    toPlot$rank <- as.factor(toPlot$rank)
+    toPlot$drug <- as.factor(toPlot$drug)
+
+    p <- ggplot(toPlot, aes(x = ci - 0.5, y = rank)) +
+    geom_col(aes(fill = FDR), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
+    scale_y_discrete(breaks = toPlot$rank, labels = toPlot$drug) + geom_vline(xintercept = 0) +
+    scale_fill_gradient(low = "#046C9A", high = "#AFC5D8", limits = c(0, 0.008)) + theme_classic() + 
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    labs(y = "Drug", title = signature, x = "Concordance Index (CI)") 
 
     return(p)
 }
 
 
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig0.png", width = 6, height = 8, res = 600, units = "in")
-waterfallplot_signature("signature0")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig1.png", width = 5, height = 5, res = 600, units = "in")
+waterfallplot_signature("Signature1")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig1.png", width = 6, height = 8, res = 600, units = "in")
-waterfallplot_signature("signature1")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig2.png", width = 5, height = 5, res = 600, units = "in")
+waterfallplot_signature("Signature2")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig2.png", width = 6, height = 8, res = 600, units = "in")
-waterfallplot_signature("signature2")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig3.png", width = 5, height = 5, res = 600, units = "in")
+waterfallplot_signature("Signature3")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig3.png", width = 6, height = 8, res = 600, units = "in")
-waterfallplot_signature("signature3")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig4.png", width = 5, height = 5, res = 600, units = "in")
+waterfallplot_signature("Signature4")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig4.png", width = 6, height = 8, res = 600, units = "in")
-waterfallplot_signature("signature4")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig5.png", width = 5, height = 5, res = 600, units = "in")
+waterfallplot_signature("Signature5")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig5.png", width = 6, height = 8, res = 600, units = "in")
-waterfallplot_signature("signature5")
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig6.png", width = 5, height = 5, res = 600, units = "in")
+waterfallplot_signature("Signature6")
 dev.off()
 
 
 ### Count per Signature ###
-sig_com$type <- ifelse(sig_com$ci > 0.5, "Sensitivity", "Resistance")
-
 png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/count_per_sig.png", width = 6, height = 4, res = 600, units = "in")
-ggplot(sig_com[sig_com$FDR < 0.05,], aes(x = signature, fill = type)) + 
+ggplot(strict_sig_com, aes(x = signature, fill = type)) + 
   geom_bar(stat = "count", size = 0.5, position = "dodge", color = "black", width=0.6) +
-  scale_y_continuous(limits = c(0, 120), expand = c(0, 0)) +
-  scale_fill_manual("Association", values = c("Sensitivity" = pal[1], "Resistance" = pal[5])) +
+  scale_y_continuous(limits = c(0, 23), expand = c(0, 0)) +
+  scale_fill_manual("Association", values = pal2) +
   theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
   labs(x = "Signature", y = "Number of Associations")
 dev.off()
 
+# table of counts per signature
+table(strict_sig_com$signature, strict_sig_com$type)
 
 ### Count per Drug ###
 drug_count <- as.data.frame(table(sig_com$drug)[order(-table(sig_com$drug))])
