@@ -348,16 +348,14 @@ waterfallplot_signature <- function(signature) {
     toPlot$drug <- as.factor(toPlot$drug)
 
     p <- ggplot(toPlot, aes(x = ci - 0.5, y = rank)) +
-    geom_col(aes(fill = FDR), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
+    geom_col(aes(fill = type), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
     scale_y_discrete(breaks = toPlot$rank, labels = toPlot$drug) + geom_vline(xintercept = 0) +
-    scale_fill_gradient(low = "#046C9A", high = "#AFC5D8", limits = c(0, 0.008)) + theme_classic() + 
+    scale_fill_manual("Association", values = pal2) + theme_classic() + 
     theme(plot.title = element_text(hjust = 0.5)) + 
     labs(y = "Drug", title = signature, x = "Concordance Index (CI)") 
 
     return(p)
 }
-
-
 
 png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig1.png", width = 5, height = 5, res = 600, units = "in")
 waterfallplot_signature("Signature1")
@@ -396,6 +394,29 @@ dev.off()
 
 # table of counts per signature
 table(strict_sig_com$signature, strict_sig_com$type)
+
+
+### Count per PSet ###
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/count_per_pset.png", width = 6, height = 3, res = 600, units = "in")
+ggplot(strict_sig_com, aes(x = signature, fill = pset)) + 
+  geom_bar(stat = "count", size = 0.5, position = "dodge", color = "black", width=0.6) +
+  scale_y_continuous(limits = c(0, 20), expand = c(0, 0)) +
+  scale_fill_manual("PSet", values = wes_palette("Cavalcanti1")) +
+  theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
+  labs(x = "Signature", y = "Number of Associations")
+dev.off()
+
+
+png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/count_per_pset.png", width = 9, height = 2, res = 600, units = "in")
+ggplot(strict_sig_com, aes(x = "", fill = pset)) + 
+  geom_bar(stat = "count", size = 0.5, position = "fill", color = "black", width=0.6) +
+  scale_fill_manual("PSet", values = wes_palette("Cavalcanti1")) +
+  theme_void() + coord_polar("y", start=0) +
+  labs(x = "Signature", y = "Proportion of Associations") +
+  facet_wrap(~ signature, nrow = 1)
+dev.off()
+
+
 
 ### Count per Drug ###
 drug_count <- as.data.frame(table(sig_com$drug)[order(-table(sig_com$drug))])
