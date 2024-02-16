@@ -2,15 +2,16 @@ setwd("C:/Users/julia/Documents/BCaATAC")
 
 suppressMessages(library(PharmacoGx))
 suppressMessages(library(survcomp))
-library(ggplot2)
 library(wesanderson)
+library(ggplot2)
 library(ggh4x)
 
 # load in BCa cell lines
 samples <- read.csv("DrugResponse/data/cl_samples.csv")
 
 # set up palette for plotting
-pal <- c("#046C9A", "#BBADB9", "#7294D4", "#E8E1D9", "#AFC5D8", "#DF9C93")
+pal <- c("Signature1" = "#046C9A", "Signature2" = "#BBADB9", "Signature3" = "#7294D4", 
+        "Signature4" = "#E8E1D9", "Signature5" = "#AFC5D8", "Signature6" = "#DF9C93")
 pal2 <- c("#899DA4", "#BC4749")
 
 # get signature scores
@@ -60,13 +61,15 @@ computeCI <- function(signature_scores, sensitivity_data, label) {
     combinations$FDR <- p.adjust(combinations$pvalue, method = "BH", n = length(combinations$pvalue))
     combinations$FDRsig <- ifelse(combinations$FDR < 0.05, TRUE, FALSE)
 
+    # rename signatures
+    combinations$signature <- paste0("Signature", as.numeric(gsub("sign", "", combinations$signature)) + 1)
+
     # format dataframe for plotting (order by ci and add variable rank)
-    combinations$signature <- gsub("sign", "signature", combinations$signature)
     combinations <- combinations[order(combinations$ci),]
     combinations$rank <- 1:nrow(combinations)
     combinations$pairs <- paste0(combinations$signature, "-", combinations$drug)
     combinations$pset <- c(rep(label, nrow(combinations)))
-
+    
     return(combinations)
 }
 
@@ -110,13 +113,11 @@ sig_com <- saveSig(sig_com, ubr1_com, "uhnbreast")
 png("DrugResponse/results/figures/indiv_PSet_CI/uhnbreast.png", width = 8, height = 5, res = 600, units = "in")
 ggplot(ubr1_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
     geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = c("Other" = "grey", "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
+    scale_fill_manual(values = pal) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
     geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-    ggtitle("UHN Breast") + theme(plot.title = element_text(hjust = 0.5)) +
-    #annotate(geom = "text", label = c("CI > 0.65", "CI < 0.35"), x = c(21.5, 21.5), y = c(0.18, -0.16), vjust = 1) +
-    annotate(geom = "text", label = c("*", "*", "*"), x = c(1, 3, 43), y = c(-0.22, -0.17, 0.22), vjust = 1)
+    ggtitle("UHN Breast") + theme(plot.title = element_text(hjust = 0.5)) 
 dev.off()
 
 
@@ -145,7 +146,7 @@ sig_com <- saveSig(sig_com, gray_com, "gray")
 png("DrugResponse/results/figures/indiv_PSet_CI/gray.png", width = 8, height = 5, res = 600, units = "in")
 ggplot(gray_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
     geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = c("Other" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
+    scale_fill_manual(values = pal) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
     geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
     ggtitle("GRAY") + theme(plot.title = element_text(hjust = 0.5)) +
@@ -178,7 +179,7 @@ sig_com <- saveSig(sig_com, gcsi_com, "gcsi")
 png("DrugResponse/results/figures/indiv_PSet_CI/gcsi.png", width = 8, height = 5, res = 600, units = "in")
 ggplot(gcsi_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
     geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = c("Other" = "grey", "signature1" = pal2[4], "signature2" = pal[1], "signature4" = pal[5])) +
+    scale_fill_manual(values = pal) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
     geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
@@ -212,7 +213,7 @@ sig_com <- saveSig(sig_com, gdsc_com, "gdsc")
 png("DrugResponse/results/figures/indiv_PSet_CI/gdsc.png", width = 8, height = 5, res = 600, units = "in")
 ggplot(gdsc_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
     geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = c("Other" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
+    scale_fill_manual(values = pal) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
     geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
     ggtitle("GDSC2") + theme(plot.title = element_text(hjust = 0.5)) +
@@ -244,7 +245,7 @@ sig_com <- saveSig(sig_com, ctrp_com, "ctrp")
 png("DrugResponse/results/figures/indiv_PSet_CI/ctrp.png", width = 8, height = 5, res = 600, units = "in")
 ggplot(ctrp_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
     geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = c("Other" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature3" = pal[2], "signature4" = pal[5], "signature5" = pal[4])) +
+    scale_fill_manual(values = pal) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
     geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
     ggtitle("CTRP") + theme(plot.title = element_text(hjust = 0.5)) +
@@ -277,7 +278,7 @@ sig_com <- saveSig(sig_com, ccle_com, "ccle")
 png("DrugResponse/results/figures/indiv_PSet_CI/ccle.png", width = 8, height = 5, res = 600, units = "in")
 ggplot(ccle_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
     geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = c("Other" = "grey", "signature0" = pal2[3], "signature1" = pal2[4], "signature2" = pal[1], "signature4" = pal[5])) +
+    scale_fill_manual(values = pal) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
     geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
@@ -290,9 +291,6 @@ save(sig_com, ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file =
 ####################################
 ### All Significant Associations ###
 ####################################
-
-# rename signatures
-sig_com$signature <- paste0("Signature", as.numeric(gsub("signature", "", sig_com$signature)) + 1)
 
 ### CLASS A BIOMARKERS ###
 
@@ -312,7 +310,7 @@ strict_sig_com$type <- ifelse(strict_sig_com$ci > 0.5, "Sensitivity", "Resistanc
 strict_sig_com$type <- factor(strict_sig_com$type, levels = c("Sensitivity", "Resistance"))
 
 # plot of all sig associations
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/all_sig.png", width = 6, height = 12, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/all_sig.png", width = 6, height = 12, res = 600, units = "in")
 ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
     geom_col(aes(fill = signature), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
     scale_y_discrete(breaks = strict_sig_com$rank, labels = strict_sig_com$drug) +
@@ -327,7 +325,7 @@ strict_sig_com$rank <- as.factor(strict_sig_com$rank)
 strict_sig_com$drug <- as.factor(strict_sig_com$drug)
  
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/all_sig_horizontal.png", width = 13, height = 6, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/ClassA.png", width = 13, height = 6, res = 600, units = "in")
 ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
     geom_col(aes(fill = signature), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
     scale_y_discrete(breaks = strict_sig_com$rank, labels = strict_sig_com$drug) +
@@ -357,91 +355,51 @@ waterfallplot_signature <- function(signature) {
     return(p)
 }
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig1.png", width = 5, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/signature/sig1.png", width = 5, height = 5, res = 600, units = "in")
 waterfallplot_signature("Signature1")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig2.png", width = 5, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/signature/sig2.png", width = 5, height = 5, res = 600, units = "in")
 waterfallplot_signature("Signature2")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig3.png", width = 5, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/signature/sig3.png", width = 5, height = 5, res = 600, units = "in")
 waterfallplot_signature("Signature3")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig4.png", width = 5, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/signature/sig4.png", width = 5, height = 5, res = 600, units = "in")
 waterfallplot_signature("Signature4")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig5.png", width = 5, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/signature/sig5.png", width = 5, height = 5, res = 600, units = "in")
 waterfallplot_signature("Signature5")
 dev.off()
 
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/signature/sig6.png", width = 5, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/signature/sig6.png", width = 5, height = 5, res = 600, units = "in")
 waterfallplot_signature("Signature6")
 dev.off()
 
 
 ### Count per Signature ###
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/count_per_sig.png", width = 6, height = 4, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/count_per_sig.png", width = 6, height = 4, res = 600, units = "in")
 ggplot(strict_sig_com, aes(x = signature, fill = type)) + 
   geom_bar(stat = "count", size = 0.5, position = "dodge", color = "black", width=0.6) +
-  scale_y_continuous(limits = c(0, 23), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 15), expand = c(0, 0)) +
   scale_fill_manual("Association", values = pal2) +
   theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
   labs(x = "Signature", y = "Number of Associations")
 dev.off()
 
 # table of counts per signature
-table(strict_sig_com$signature, strict_sig_com$type)
+#table(strict_sig_com$signature, strict_sig_com$type)
 
 
 ### Count per PSet ###
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/count_per_pset.png", width = 6, height = 3, res = 600, units = "in")
-ggplot(strict_sig_com, aes(x = signature, fill = pset)) + 
-  geom_bar(stat = "count", size = 0.5, position = "dodge", color = "black", width=0.6) +
-  scale_y_continuous(limits = c(0, 20), expand = c(0, 0)) +
-  scale_fill_manual("PSet", values = wes_palette("Cavalcanti1")) +
-  theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
-  labs(x = "Signature", y = "Number of Associations")
-dev.off()
-
-
-png("DrugResponse/results/figures/indiv_PSet_CI/Lucie/count_per_pset.png", width = 9, height = 2, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/count_per_pset.png", width = 9, height = 2, res = 600, units = "in")
 ggplot(strict_sig_com, aes(x = "", fill = pset)) + 
   geom_bar(stat = "count", size = 0.5, position = "fill", color = "black", width=0.6) +
   scale_fill_manual("PSet", values = wes_palette("Cavalcanti1")) +
   theme_void() + coord_polar("y", start=0) +
   labs(x = "Signature", y = "Proportion of Associations") +
   facet_wrap(~ signature, nrow = 1)
-dev.off()
-
-
-
-### Count per Drug ###
-drug_count <- as.data.frame(table(sig_com$drug)[order(-table(sig_com$drug))])
-colnames(drug_count) <- c("Drug", "Count")
-
-# keep only drugs with count > 2
-drug_count <- drug_count[drug_count$Count > 2,]
-
-# get number of psets drug counts span
-drug_count$PSet = 0
-for (i in 1:length(drug_count$Drug)) {
-    
-    # subset all significant combinations to those with the drug
-    subsetdf <- sig_com[sig_com$drug == drug_count$Drug[i],]
-
-    # get number of unique psets
-    pset_count <- length(unique(subsetdf$pset))
-    drug_count$PSet[i] <- pset_count
-}
-drug_count$PSet <- as.factor(drug_count$PSet)
-
-png("DrugResponse/results/figures/indiv_PSet_CI/count_per_drug.png", width = 6, height = 12, res = 600, units = "in")
-ggplot(drug_count, aes(x = reorder(Drug, -as.numeric(factor(Drug))), y = Count, fill = PSet)) + 
-  geom_col(size = 0.5, position = "identity", color = "black") +
-  coord_flip() + theme_classic() +
-  scale_fill_manual("Number of PSets", values = c("1" = pal2[2], "2" = pal2[4], "4" = pal2[3])) +
-  labs(x = "Drug", y = "Count")
 dev.off()

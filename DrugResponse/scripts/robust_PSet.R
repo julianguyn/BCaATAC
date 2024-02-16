@@ -2,22 +2,19 @@ setwd("C:/Users/julia/Documents/BCaATAC")
 
 library(ggplot2)
 library(ggh4x)
-library(meta)
+suppressMessages(library(meta))
 
 # load in BCa cell lines
 samples <- read.csv("DrugResponse/data/cl_samples.csv")
 
 # set up palette for plotting
-pal <- c("#046C9A", "#BBADB9", "#7294D4", "#E8E1D9", "#AFC5D8", "#DF9C93")
+pal <- c("Signature1" = "#046C9A", "Signature2" = "#BBADB9", "Signature3" = "#7294D4", 
+        "Signature4" = "#E8E1D9", "Signature5" = "#AFC5D8", "Signature6" = "#DF9C93")
 pal2 <- c("#899DA4", "#BC4749")
 
 # load in drug response associations
-load("DrugResponse/results/data/indiv_PSet_CI_removeNergiz.RData")
+load("DrugResponse/results/data/indiv_PSet_CI.RData")
 all_com <- rbind(ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com) #combine all drug response from all psets
-
-# rename signatures
-sig_com$signature <- paste0("Signature", as.numeric(gsub("signature", "", sig_com$signature)) + 1)
-all_com$signature <- paste0("Signature", as.numeric(gsub("signature", "", all_com$signature)) + 1)
 
 sig_com$pairs <- paste0(sig_com$signature, "_", sig_com$drug)
 all_com$pairs <- paste0(all_com$signature, "_", all_com$drug)
@@ -40,11 +37,11 @@ df$type <- factor(df$type, levels = c("Sensitivity", "Resistance"))
 
 
 # plot all 
-png("DrugResponse/results/figures/robust_PSet/Lucie/two_psets_all.png", width = 16, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/robust_PSet/two_psets_all.png", width = 16, height = 5, res = 600, units = "in")
 ggplot(df, aes(x = pset, y = ci - 0.5, fill = ifelse(sig == "sig", type, "Not Significant"))) + geom_bar(stat="identity", color = "black") +
     facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
     scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +
-    scale_fill_manual(values = c(pal2, pal[4]), labels = c("Sensitivity", "Resistance", "Not Significant")) +
+    scale_fill_manual(values = c(pal2, "#E8E1D9"), labels = c("Sensitivity", "Resistance", "Not Significant")) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "PSet") + 
     geom_hline(yintercept = c(-0.1, 0.1), linetype = "dotted") + geom_hline(yintercept = c(0)) +
     theme_classic() +
@@ -66,7 +63,7 @@ df <- df[df$classB == TRUE,]
 df <- df[df$sig == "sig",]
 
 # plot class B
-png("DrugResponse/results/figures/robust_PSet/Lucie/classB.png", width = 15, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/robust_PSet/classB.png", width = 15, height = 5, res = 600, units = "in")
 ggplot(df, aes(x = pset, y = ci - 0.5, fill = signature)) + geom_bar(stat="identity", color = "black") +
     facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
     scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +
@@ -113,7 +110,7 @@ for (i in 1:length(unique(df$pair))) {
   estimates$I2[i] <- meta$I2
   
   # Forest Plots
-  fileName = paste0("DrugResponse/results/figures/robust_PSet/Lucie/meta/",df$signature[i],"_",df$drug[i],".png")
+  fileName = paste0("DrugResponse/results/figures/robust_PSet/meta/",df$signature[i],"_",df$drug[i],".png")
   
   png(fileName, width = 10, height = 4, res = 600, units = "in")
   #pdf(fileName, width=10 , height=8, onefile=FALSE)
@@ -149,34 +146,21 @@ df <- rbind(df, data.frame(signature = classC$signature, drug = classC$signature
                             upper = classC$upper, lower = classC$lower, FDR = classC$FDR,
                             FDRsig = ifelse(classC$FDR < 0.05, TRUE, FALSE),
                             rank = NA, pairs = paste0(classC$signature, "_", classC$drug),
-                            pset = "Meta Estimate", sig = NA))
+                            pset = "Meta Estimate", sig = NA, meta = TRUE))
 
 df$pairs <- gsub("_", " and ", df$pairs)
 
-png("DrugResponse/results/figures/robust_PSet/Lucie/classC.png", width = 9, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/robust_PSet/classC.png", width = 10, height = 6, res = 600, units = "in")
 ggplot(df, aes(x = ci, y = pset)) + geom_linerange(aes(xmin = lower, xmax = upper)) + 
     geom_vline(xintercept = 0.5) + geom_vline(xintercept = c(0.4, 0.6), linetype = "dotted") + 
     geom_point(data = df, aes(fill = FDRsig, shape = meta), size=5) +
     scale_shape_manual(values=c(18, 22)) + scale_y_discrete(limits=rev) +
     guides(shape = "none", fill = guide_legend(override.aes=list(shape=22, size = 8))) +
-    scale_fill_manual(guide = guide_legend(reverse = FALSE), values = pal, label = c("Significant", "Not Significant")) + 
+    scale_fill_manual(guide = guide_legend(reverse = FALSE), values = unname(pal), label = c("Significant", "Not Significant")) + 
     scale_x_continuous(limits = c(0, 1), expand = c(0.02, 0.02), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c(0, 0.25, 0.5, 0.75, 1)) +
     facet_wrap(pairs ~ .) + theme_classic() + 
     theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
     labs(x = "Concordance Index (CI) | Meta Estimate", y = "PSet", fill = "FDR Significance")
-dev.off()
-
-
-# plot class c
-png("DrugResponse/results/figures/robust_PSet/Lucie/classC.png", width = 10, height = 4, res = 600, units = "in")
-ggplot(df, aes(x = pset, y = ci - 0.5, fill = signature)) + geom_bar(stat="identity", color = "black") +
-    facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
-    scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +
-    scale_fill_manual(values = pal) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "PSet") + 
-    geom_hline(yintercept = c(-0.1, 0.1), linetype = "dotted") + geom_hline(yintercept = c(0)) +
-    theme_classic() +
-    theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
 
 
@@ -231,7 +215,3 @@ dev.off()
 png("DrugResponse/results/figures/robust_PSet/Lucie/sig5.png", width = 16, height = 5, res = 600, units = "in")
 plot_signature("signature5")
 dev.off()
-
-
-dir.create("../results/meta_circ_forest")
-
