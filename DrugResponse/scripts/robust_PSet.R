@@ -63,7 +63,7 @@ df <- df[df$classB == TRUE,]
 df <- df[df$sig == "sig",]
 
 # plot class B
-png("DrugResponse/results/figures/robust_PSet/classB.png", width = 15, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/robust_PSet/classB.png", width = 12, height = 4, res = 600, units = "in")
 ggplot(df, aes(x = pset, y = ci - 0.5, fill = signature)) + geom_bar(stat="identity", color = "black") +
     facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
     scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +
