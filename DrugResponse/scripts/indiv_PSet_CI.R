@@ -5,6 +5,7 @@ suppressMessages(library(survcomp))
 library(wesanderson)
 library(ggplot2)
 library(ggh4x)
+library(reshape2)
 
 # load in BCa cell lines
 samples <- read.csv("DrugResponse/data/cl_samples.csv")
@@ -88,9 +89,9 @@ saveSig <- function(sig_com, combinations, label) {
     return(sig_com)
 }
 
-#######################
-### UHN Breast PSet ###
-#######################
+########################
+### UHN Breast PSet1 ###
+########################
 
 # load in UHN Breast PSet
 uhnbreast <- readRDS("DrugResponse/data/PSet_UHNBreast.rds")
@@ -106,19 +107,42 @@ ubr1_sam <- samples[which(samples$sample %in% colnames(ubr1_sen)),]
 ubr1_sig <- signature_scores[,which(colnames(signature_scores) %in% ubr1_sam$file)]
 
 # compute associations
-ubr1_com <- computeCI(ubr1_sig, ubr1_sen, "uhnbreast")
-sig_com <- saveSig(sig_com, ubr1_com, "uhnbreast")
+ubr1_com <- computeCI(ubr1_sig, ubr1_sen, "uhnbreast1")
+sig_com <- saveSig(sig_com, ubr1_com, "uhnbreast1")
 
-# plot associations
-png("DrugResponse/results/figures/indiv_PSet_CI/uhnbreast.png", width = 8, height = 5, res = 600, units = "in")
-ggplot(ubr1_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
-    geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = pal) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
-    geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-    ggtitle("UHN Breast") + theme(plot.title = element_text(hjust = 0.5)) 
-dev.off()
+########################
+### UHN Breast PSet2 ###
+########################
+
+# load in UHN Breast PSet
+uhnbreast2 <- readRDS("DrugResponse/data/PharmacoSet.RDS")
+
+# get drug sensitivity data
+sensitivity_data <- dcast(uhnbreast2@treatmentResponse$profiles, treatmentid ~ sampleid, value.var = "aac_recomputed")
+rownames(sensitivity_data) <- sensitivity_data$treatmentid
+sensitivity_data <- sensitivity_data[,-c(1)]
+# mapping cell line names
+mapping <- c("BT20" = "BT-20", "BT474" = "BT-474", "BT549" = "BT-549", "CAL120" = "CAL-120", "CAL148" = "CAL-148", 
+             "CAL51" = "CAL-51", "CAMA1" = "CAMA-1", "EFM19" = "EFM-19", "HDQP1" = "HDQ-P1", "HS578T" = "Hs 578T",
+             "JIMT1" = "JIMT-1", "KPL1" = "KPL-1", "LY2" = "MCF-7/LY2", "MCF7" = "MCF-7", "MDAMB157" = "MDA-MB-157",
+             "MDAMB175VII" = "MDA-MB-175-VII", "MDAMB231" = "MDA-MB-231", "MDAMB361" = "MDA-MB-361", 
+             "MDAMB436" = "MDA-MB-436", "MDAMB468" = "MDA-MB-468", "MX1" = "MX-1", "SKBR3" = "SK-BR-3", 
+             "SKBR5" = "SK-BR-5", "SKBR7" = "SK-BR-7", "SUM149" = "SUM149PT", "SUM159" = "SUM159PT", "T47D" = "T-47D",
+             "UACC812" = "UACC-812", "ZR751" = "ZR-75-1")
+for (i in 1:length(colnames(sensitivity_data))) {
+    cell = colnames(sensitivity_data)[i]
+    if (cell %in% names(mapping)) {colnames(sensitivity_data)[i] <- unname(mapping[cell])}
+}
+ubr2_sen <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #42 unique cell lines remain
+rm(uhnbreast2)
+
+# subset signature scores to samples in dataset
+ubr2_sam <- samples[which(samples$sample %in% colnames(ubr2_sen)),]
+ubr2_sig <- signature_scores[,which(colnames(signature_scores) %in% ubr2_sam$file)]
+
+# compute associations
+ubr2_com <- computeCI(ubr2_sig, ubr2_sen, "uhnbreast2")
+sig_com <- saveSig(sig_com, ubr2_com, "uhnbreast2")
 
 
 #################
@@ -142,17 +166,6 @@ gray_sig <- signature_scores[,which(colnames(signature_scores) %in% gray_sam$fil
 gray_com <- computeCI(gray_sig, gray_sen, "gray")
 sig_com <- saveSig(sig_com, gray_com, "gray")
 
-# plot associations
-png("DrugResponse/results/figures/indiv_PSet_CI/gray.png", width = 8, height = 5, res = 600, units = "in")
-ggplot(gray_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
-    geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = pal) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
-    geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
-    ggtitle("GRAY") + theme(plot.title = element_text(hjust = 0.5)) +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
-dev.off()
-
 
 #################
 ### gCSI PSet ###
@@ -175,19 +188,6 @@ gcsi_sig <- signature_scores[,which(colnames(signature_scores) %in% gcsi_sam$fil
 gcsi_com <- computeCI(gcsi_sig, gcsi_sen, "gcsi")
 sig_com <- saveSig(sig_com, gcsi_com, "gcsi")
 
-# plot associations
-png("DrugResponse/results/figures/indiv_PSet_CI/gcsi.png", width = 8, height = 5, res = 600, units = "in")
-ggplot(gcsi_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
-    geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = pal) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
-    geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-    ggtitle("gCSI") + theme(plot.title = element_text(hjust = 0.5)) +
-    annotate(geom = "text", label = c("*"), x = c(1), y = c(-0.18), vjust = 1)
-dev.off()
-
-
 ################# 
 ### GDSC PSet ###
 #################
@@ -209,17 +209,6 @@ gdsc_sig <- signature_scores[,which(colnames(signature_scores) %in% gdsc_sam$fil
 gdsc_com <- computeCI(gdsc_sig, gdsc_sen, "gdsc")
 sig_com <- saveSig(sig_com, gdsc_com, "gdsc")
 
-# plot associations
-png("DrugResponse/results/figures/indiv_PSet_CI/gdsc.png", width = 8, height = 5, res = 600, units = "in")
-ggplot(gdsc_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
-    geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = pal) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
-    geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
-    ggtitle("GDSC2") + theme(plot.title = element_text(hjust = 0.5)) +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) 
-dev.off()
-
 
 #################
 ### CTRP PSet ###
@@ -240,17 +229,6 @@ ctrp_sig <- signature_scores[,which(colnames(signature_scores) %in% ctrp_sam$fil
 # compute associations
 ctrp_com <- computeCI(ctrp_sig, ctrp_sen, "ctrp")
 sig_com <- saveSig(sig_com, ctrp_com, "ctrp")
-
-# plot associations
-png("DrugResponse/results/figures/indiv_PSet_CI/ctrp.png", width = 8, height = 5, res = 600, units = "in")
-ggplot(ctrp_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
-    geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
-    scale_fill_manual(values = pal) +
-    labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
-    geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
-    ggtitle("CTRP") + theme(plot.title = element_text(hjust = 0.5)) +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) 
-dev.off()
 
 
 #################
@@ -274,19 +252,20 @@ ccle_sig <- signature_scores[,which(colnames(signature_scores) %in% ccle_sam$fil
 ccle_com <- computeCI(ccle_sig, ccle_sen, "ccle")
 sig_com <- saveSig(sig_com, ccle_com, "ccle")
 
-# plot associations
-png("DrugResponse/results/figures/indiv_PSet_CI/ccle.png", width = 8, height = 5, res = 600, units = "in")
-ggplot(ccle_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
+
+save(sig_com, ubr1_com, ubr2_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file = "DrugResponse/results/data/indiv_PSet_CI.RData")
+
+# TODO: turn this into a function for each pset (if needed)
+png("DrugResponse/results/figures/indiv_PSet_CI/uhnbreast.png", width = 8, height = 5, res = 600, units = "in")
+ggplot(ubr1_com, aes(x = rank, y = ci - 0.5, fill = ifelse(ci > 0.65 | ci < 0.35, signature, "Below CI Threshold"))) + #shift ci by 0.5 so that the baseline becomes 0.5
     geom_bar(stat="identity") + scale_y_continuous(labels = function(y) y + 0.5) + theme_classic() +
     scale_fill_manual(values = pal) +
     labs(fill = "Signature", y = "Concordance Index (CI)", x = "Signature-Drug Pairs") + 
     geom_hline(yintercept = c(-0.15, 0.15), linetype = "dotted") +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-    ggtitle("CCLE") + theme(plot.title = element_text(hjust = 0.5)) +
-    annotate(geom = "text", label = c("*", "*", "*", "*"), x = c(1, 3.2, 141.8, 143), y = c(-0.208, -0.175, 0.209, 0.222), vjust = 1) 
+    ggtitle("UHN Breast") + theme(plot.title = element_text(hjust = 0.5)) 
 dev.off()
 
-save(sig_com, ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file = "DrugResponse/results/data/indiv_PSet_CI.RData")
 
 ####################################
 ### All Significant Associations ###
