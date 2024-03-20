@@ -14,7 +14,7 @@ pal2 <- c("#899DA4", "#BC4749")
 
 # load in drug response associations
 load("DrugResponse/results/data/indiv_PSet_CI.RData")
-all_com <- rbind(ubr1_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com) #combine all drug response from all psets
+all_com <- rbind(ubr1_com, ubr2_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com) #combine all drug response from all psets
 
 sig_com$pairs <- paste0(sig_com$signature, "_", sig_com$drug)
 all_com$pairs <- paste0(all_com$signature, "_", all_com$drug)
@@ -37,7 +37,7 @@ df$type <- factor(df$type, levels = c("Sensitivity", "Resistance"))
 
 
 # plot all 
-png("DrugResponse/results/figures/robust_PSet/two_psets_all.png", width = 16, height = 5, res = 600, units = "in")
+png("DrugResponse/results/figures/robust_PSet/two_psets_all.png", width = 17, height = 5, res = 600, units = "in")
 ggplot(df, aes(x = pset, y = ci - 0.5, fill = ifelse(sig == "sig", type, "Not Significant"))) + geom_bar(stat="identity", color = "black") +
     facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
     scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +
@@ -63,7 +63,7 @@ df <- df[df$classB == TRUE,]
 df <- df[df$sig == "sig",]
 
 # plot class B
-png("DrugResponse/results/figures/robust_PSet/classB.png", width = 12, height = 4, res = 600, units = "in")
+png("DrugResponse/results/figures/robust_PSet/classB.png", width = 13, height = 4, res = 600, units = "in")
 ggplot(df, aes(x = pset, y = ci - 0.5, fill = signature)) + geom_bar(stat="identity", color = "black") +
     facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
     scale_y_continuous(limits = c(-0.5, 0.5), expand = c(0, 0), labels = function(y) y + 0.5, oob = scales::squish) +

@@ -133,6 +133,13 @@ for (i in 1:length(colnames(sensitivity_data))) {
     cell = colnames(sensitivity_data)[i]
     if (cell %in% names(mapping)) {colnames(sensitivity_data)[i] <- unname(mapping[cell])}
 }
+mapping <- c("carboplatin" = "Carboplatinum", "dipyridamole" = "Dipyridamole", 
+             "epirubicin" = "Epirubicin", "eribulin" = "Eribulin", "fluvastatin" = "Fluvastatin", 
+             "herceptin" = "Herceptin", "lapatinib" = "Lapatinib", "paclitaxel" = "Paclitaxel")
+for (i in 1:length(rownames(sensitivity_data))) {
+    cell = rownames(sensitivity_data)[i]
+    if (cell %in% names(mapping)) {rownames(sensitivity_data)[i] <- unname(mapping[cell])}
+}
 ubr2_sen <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #42 unique cell lines remain
 rm(uhnbreast2)
 
