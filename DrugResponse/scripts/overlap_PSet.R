@@ -1,4 +1,5 @@
 ### This script checks or overlapping cell lines and drugs across PSets
+### Also correlations between PSet drug response for overlapping cell lines and drugs
 
 setwd("C:/Users/julia/Documents/BCaATAC")
 
@@ -21,7 +22,7 @@ uhnbreast <- updateObject(uhnbreast)
 sensitivity_data <- as.data.frame(summarizeSensitivityProfiles(uhnbreast, sensitivity.measure = "aac_recomputed",  fill.missing = F))
 sensitivity_data <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #43 unique cell lines remain, 7 dups
 
-# save cell lines and drugs
+# save drug sensitivity, cell lines and drugs
 uhnbreast_cl <- colnames(sensitivity_data)
 uhnbreast_dr <- rownames(sensitivity_data)
 
@@ -61,7 +62,7 @@ sensitivity_data <- as.data.frame(summarizeSensitivityProfiles(gray, sensitivity
 sensitivity_data <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #42 unique cell lines remain
 
 
-# save cell lines and drugs
+# save drug sensitivity, cell lines and drugs
 gray_cl <- colnames(sensitivity_data)
 gray_dr <- rownames(sensitivity_data)
 
@@ -78,7 +79,7 @@ gcsi <- updateObject(gcsi)
 sensitivity_data <- as.data.frame(summarizeSensitivityProfiles(gcsi, sensitivity.measure = "aac_recomputed",  fill.missing = F))
 sensitivity_data <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #25 unique cell lines remain, 7 dups
 
-# save cell lines and drugs
+# save drug sensitivity, cell lines and drugs
 gcsi_cl <- colnames(sensitivity_data)
 gcsi_dr <- rownames(sensitivity_data)
 
@@ -94,7 +95,7 @@ gdsc <- updateObject(gdsc)
 sensitivity_data <- as.data.frame(summarizeSensitivityProfiles(gdsc, sensitivity.measure = "aac_recomputed",  fill.missing = F))
 sensitivity_data <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #34 unique cell lines remain, 7 dups
 
-# save cell lines and drugs
+# save drug sensitivity, cell lines and drugs
 gdsc_cl <- colnames(sensitivity_data)
 gdsc_dr <- rownames(sensitivity_data)
 
@@ -109,7 +110,7 @@ load("C:/Users/julia/Desktop/ncRNA Code/data/PSets/CTRP.rds")
 sensitivity_data <- as.data.frame(summarizeSensitivityProfiles(CTRP, sensitivity.measure = "aac_recomputed",  fill.missing = F))
 sensitivity_data <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #32 unique cell lines remain, 7 dups
 
-# save cell lines and drugs
+# save drug sensitivity, cell lines and drugs
 ctrp_cl <- colnames(sensitivity_data)
 ctrp_dr <- rownames(sensitivity_data)
 
@@ -125,7 +126,7 @@ ccle <- updateObject(ccle)
 sensitivity_data <- as.data.frame(summarizeSensitivityProfiles(ccle, sensitivity.measure = "aac_recomputed",  fill.missing = F))
 ccle_sn <- sensitivity_data[,which(colnames(sensitivity_data) %in% samples$sample)] #23 unique cell lines remain, 7 dups
 
-# save cell lines and drugs
+# save drug sensitivity, cell lines and drugs
 ccle_cl <- colnames(ccle_sn)
 ccle_dr <- rownames(ccle_sn)
 
