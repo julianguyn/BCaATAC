@@ -4,11 +4,16 @@
 DrugResponse/data
 Signatures/data
 DrugResponsePDX/data
+RNAChemoResistance/data
+temp
 
 # all results folders
 DrugResponse/results
 Signatures/results
 DrugResponsePDX/results
+RNAChemoResistance/results
+
 
 # others
 MetaData
+temp
