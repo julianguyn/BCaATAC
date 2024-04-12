@@ -296,12 +296,18 @@ strict_sig_com$type <- ifelse(strict_sig_com$ci > 0.5, "Sensitivity", "Resistanc
 strict_sig_com$type <- factor(strict_sig_com$type, levels = c("Sensitivity", "Resistance"))
 
 # plot of all sig associations
-png("DrugResponse/results/figures/indiv_PSet_CI/all_sig.png", width = 6, height = 12, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/all_sig.png", width = 7, height = 15, res = 600, units = "in")
 ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
     geom_col(aes(fill = signature), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
     scale_y_discrete(breaks = strict_sig_com$rank, labels = strict_sig_com$drug) +
     scale_fill_manual(values = pal) +
-    theme_classic() + geom_vline(xintercept = 0) +
+    theme_classic() + geom_vline(xintercept = 0) + 
+    theme(legend.text = element_text(size = 13),
+          legend.title = element_text(size = 16),
+          axis.text.x = element_text(size = 13),  
+          axis.text.y = element_text(size = 13),
+          axis.title.x = element_text(size = 16),
+          axis.title.y = element_text(size = 16)) +
     labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "Signature") 
 dev.off()
 

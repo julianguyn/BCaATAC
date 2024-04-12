@@ -231,19 +231,24 @@ dev.off()
 
 ### Heat map of cell lines in PSets
 
+# keep only cell lines needed
+uhnbreast1_cl <- colnames(ubr1_sen)[colnames(ubr1_sen) %in% samples$sample]
+uhnbreast2_cl <- colnames(ubr2_sen)[colnames(ubr2_sen) %in% samples$sample]
+gray_cl <- colnames(gray_sen)[colnames(gray_sen) %in% samples$sample]
+gcsi_cl <- colnames(gcsi_sen)[colnames(gcsi_sen) %in% samples$sample]
+gdsc_cl <- colnames(gdsc_sen)[colnames(gdsc_sen) %in% samples$sample]
+ctrp_cl <- colnames(ctrp_sen)[colnames(ctrp_sen) %in% samples$sample]
+ccle_cl <- colnames(ccle_sen)[colnames(ccle_sen) %in% samples$sample]
+
 df <- data.frame(PSet = c("UHNBreast", "UHNBreast2", "GRAY", "gCSI", "GDSC2", "CTRP", "CCLE"),
-                CL_Count = c(length(uhnbreast_cl), length(uhnbreast2_cl), length(gray_cl), length(gcsi_cl),
-                            length(gdsc_cl), length(ctrp_cl), length(ccle_cl)),
-                Drug_Count = c(length(uhnbreast_dr), length(uhnbreast2_dr), length(gray_dr), length(gcsi_dr),
-                            length(gdsc_dr), length(ctrp_dr), length(ccle_dr)))
+                CL_Count = c(length(uhnbreast1_cl), length(uhnbreast2_cl), length(gray_cl), length(gcsi_cl),
+                            length(gdsc_cl), length(ctrp_cl), length(ccle_cl)))
 
 
-
-uhnbreast2_cl <- unique(samples$sample) #look at code above, samples are all present but mislabeled
-all_cl <- unique(c(uhnbreast_cl, uhnbreast2_cl, gray_cl, gcsi_cl, gdsc_cl, ctrp_cl, ccle_cl))
+all_cl <- unique(c(uhnbreast1_cl, uhnbreast2_cl, gray_cl, gcsi_cl, gdsc_cl, ctrp_cl, ccle_cl))
 
 toPlot <- data.frame(
-    ubr1 = ifelse(all_cl %in% uhnbreast_cl, 1, 0),
+    ubr1 = ifelse(all_cl %in% uhnbreast1_cl, 1, 0),
     ubr2 = ifelse(all_cl %in% uhnbreast2_cl, 1, 0),
     gray = ifelse(all_cl %in% gray_cl, 1, 0),
     gcsi = ifelse(all_cl %in% gcsi_cl, 1, 0),
@@ -253,11 +258,11 @@ toPlot <- data.frame(
 toPlot$sample <- all_cl
 toPlot <- melt(toPlot)
 
-PSet_labels <- c("UHNBreast", "UHNBreast2", "GRAY", "gCSI", "GDSC2", "CTRP", "CCLE")
+PSet_labels <- c("UHNBreast1", "UHNBreast2", "GRAY", "gCSI", "GDSC2", "CTRP", "CCLE")
 
-png("DrugResponse/results/PSetoverlap.png", width = 4, height = 8, res = 600, units = "in")
+png("DrugResponse/results/figures/PSetoverlap.png", width = 4, height = 8, res = 600, units = "in")
 ggplot(toPlot, aes(x = variable, y = reorder(sample, -as.numeric(factor(sample))), fill = factor(value))) + 
-    geom_tile(color = "black") + scale_fill_manual(values = c("0" = "white", "1" = wes_palette("Cavalcanti1")[4]), labels = c("False", "True")) +
+    geom_tile(color = "black") + scale_fill_manual(values = c("0" = "white", "1" = "#ABC8C0"), labels = c("False", "True")) +
     theme_minimal() + scale_x_discrete(labels = PSet_labels) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     labs(x = "PSet", y = "Breast Cancer Cell Line", fill = "In PSet")
 dev.off()
