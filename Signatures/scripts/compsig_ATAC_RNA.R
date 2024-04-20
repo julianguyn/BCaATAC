@@ -1,5 +1,11 @@
 ### Script to compare overlap in TCGA samples between ATAC and RNA signatures
-
+library(reshape2)
+library(ggplot2)
+library(RColorBrewer)
+library(ggh4x)
+library(ggpubr)
+suppressMessages(library(grid))
+suppressMessages(library(gridExtra))
 
 setwd("C:/Users/julia/Documents/BCaATAC")
 
@@ -56,6 +62,9 @@ read_mat <- function(file, rank, atac=FALSE) {
 # load in ATAC matrix file from NMF
 atac_mat <- read_mat("Signatures/results/data/ATAC_heatmap_rank6.png.order.matrix", 6, TRUE)
 
+# read in meta data
+meta <- read.csv("Signatures/data/TCGA_subtype_label.csv")
+
 # function to process RNA matrix file and get number of overlapping samples
 get_overlap <- function(filename, rank) {
 
@@ -66,6 +75,7 @@ get_overlap <- function(filename, rank) {
     combinations <- expand.grid(unique(atac_mat$signature_assign), unique(rna_mat$signature_assign))
     colnames(combinations) <- c("ATACSeq", "RNASeq")
     combinations$count <- 0
+    combinations$n_RNA <- 0
 
     # get number of overlapping tumour samples
     for (i in 1:nrow(combinations)) {
@@ -79,13 +89,21 @@ get_overlap <- function(filename, rank) {
 
         # populate combinations with number
         combinations$count[i] <- n_common
+
+        # save number of samples in RNA signature class
+        combinations$n_RNA[i] <- nrow(rna_s)
     }
+
+    # compute proportion of signature overlap
+    combinations$proportion <- combinations$count / combinations$n_RNA
 
     # reorder RNA-Seq signatures
     combinations$RNASeq <- factor(combinations$RNASeq, levels = paste0("Signature",rank:1))
 
-    p <- ggplot(combinations, aes(x = ATACSeq, y = RNASeq, fill = count)) + geom_tile(color = "black") +
-            scale_fill_gradientn("No. Overlapping\nSamples", colours = brewer.pal(9, "Blues")) + theme_void() +
+    
+    p <- ggplot(combinations, aes(x = ATACSeq, y = RNASeq, fill = proportion)) + geom_tile(color = "black") +
+            scale_fill_gradientn("Proportion of\nOverlapping\nSamples", colours = brewer.pal(9, "Blues"), limits = c(0, 1)) + 
+            theme_void() +
             theme(axis.text.x = element_text(size=11, angle = 90, vjust = 0.5), axis.title.x = element_text(size=12),
                 axis.text.y = element_text(size=11), axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
             labs(x = "\nATAC-Seq Signatures", y = "RNA-Seq Signatures\n")
@@ -93,26 +111,26 @@ get_overlap <- function(filename, rank) {
     return(p)
 }
 
-png("Signatures/results/figures/overlap_rank4.png", width = 4, height = 6, res = 600, units = "in")
+png("Signatures/results/figures/RNA_ATAC/overlap_rank4.png", width = 5, height = 5, res = 600, units = "in")
 get_overlap("Signatures/results/data/RNA_heatmap_rank4.png.order.matrix", 4)
 dev.off()
 
-png("Signatures/results/figures/overlap_rank5.png", width = 4, height = 6, res = 600, units = "in")
+png("Signatures/results/figures/RNA_ATAC/overlap_rank5.png", width = 5, height = 5, res = 600, units = "in")
 get_overlap("Signatures/results/data/RNA_heatmap_rank5.png.order.matrix", 5)
 dev.off()
 
-png("Signatures/results/figures/overlap_rank6.png", width = 4, height = 6, res = 600, units = "in")
+png("Signatures/results/figures/RNA_ATAC/overlap_rank6.png", width = 5, height = 5, res = 600, units = "in")
 get_overlap("Signatures/results/data/RNA_heatmap_rank6.png.order.matrix", 6)
 dev.off()
 
-png("Signatures/results/figures/overlap_rank7.png", width = 4, height = 6, res = 600, units = "in")
+png("Signatures/results/figures/RNA_ATAC/overlap_rank7.png", width = 5, height = 5, res = 600, units = "in")
 get_overlap("Signatures/results/data/RNA_heatmap_rank7.png.order.matrix", 7)
 dev.off()
 
-png("Signatures/results/figures/overlap_rank8.png", width = 4, height = 6, res = 600, units = "in")
+png("Signatures/results/figures/RNA_ATAC/overlap_rank8.png", width = 5, height = 5, res = 600, units = "in")
 get_overlap("Signatures/results/data/RNA_heatmap_rank8.png.order.matrix", 8)
 dev.off()
 
-png("Signatures/results/figures/overlap_rank9.png", width = 4, height = 6, res = 600, units = "in")
+png("Signatures/results/figures/RNA_ATAC/overlap_rank9.png", width = 5, height = 5, res = 600, units = "in")
 get_overlap("Signatures/results/data/RNA_heatmap_rank9.png.order.matrix", 9)
 dev.off()
