@@ -32,13 +32,17 @@ samples[samples$subtype == "cell_line",]$subtype <- "LumA"
 
 # function to return dataframe of drug sensitivity for list of drugs and cell lines needed
 subset_sen <- function(sen, need_cl, drugs, df, label) {
-    tmp <- sen[rownames(sen) %in% drugs, colnames(sen) %in% need_cl]
-    if (nrow(tmp) > 0) {
-        tmp$drug <- rownames(tmp)
-        res <- melt(tmp)
+    sen <- sen[rownames(sen) %in% drugs,]
+
+    if (nrow(sen) > 0) {
+        sen$drug <- rownames(sen)
+        res <- melt(sen)
         res$label <- label
+        res$subtype <- 0
+        for (i in 1:nrow(res)) {ifelse(res$variable[i] %in% need_cl, res$subtype[i] <- "Interest", res$subtype[i] <- "NonInterest")}
         df <- rbind(df, res)
     }
+    
     return(df)
 }
 
@@ -51,7 +55,7 @@ get_drugresponse <- function(subtype, drugs) {
     need_cl <- samples[samples$subtype %in% subtype,]$sample
 
     # save results in dataframe
-    df <- data.frame(matrix(nrow=0, ncol=4))
+    df <- data.frame(matrix(nrow=0, ncol=5))
 
     # for each pset, subset for the needed cell lines and drugs and save results
     df <- subset_sen(ubr1_sen,need_cl,drugs,df,"UHNBreast1")
@@ -62,7 +66,7 @@ get_drugresponse <- function(subtype, drugs) {
     df <- subset_sen(ctrp_sen,need_cl,drugs,df,"CTRP")
     df <- subset_sen(ccle_sen,need_cl,drugs,df,"CCLE")
     
-    print(table(df$label, df$drug))
+    #print(table(df$label, df$drug))
     df <- na.omit(df)
 
     df$label <- factor(df$label, levels = c("UHNBreast1", "UHNBreast2", "GRAY", "gCSI", "GDSC2", "CTRP", "CCLE"))
@@ -75,24 +79,24 @@ drugs <- c("Trastuzumab", "Lapatinib")
 df <- get_drugresponse(c("Her2"), drugs)
 
 
-png("DataExploration/results/figures/Her2-Lapatinib.png", width = 3, height = 5, res = 600, units = "in")
+png("DataExploration/results/figures/Her2-Lapatinib.png", width = 5, height = 5, res = 600, units = "in")
 ggplot(df[df$drug == "Lapatinib",], aes(x = label, y = value)) +
-    geom_hline(yintercept = 0.5, color = "#ABC8C0", linetype = "dashed") +
-    geom_boxplot(fill = "#ABC8C0") + geom_jitter(shape = 16, position=position_jitter(0.2)) +
-    theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(x = "PSet", y = "AAC", title = "Her2-Lapatinib")
+  geom_boxplot(aes(fill = subtype)) + 
+  scale_fill_manual("Subtype", values = c("#ABC8C0", "#9F9F92"), labels = c("Her2", "Other")) +
+  theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = "PSet", y = "AAC", title = "Her2 and Lapatinib")
 dev.off()
 
 png("DataExploration/results/figures/Her2-Trastuzumab.png", width = 3, height = 5, res = 600, units = "in")
 ggplot(df[df$drug == "Trastuzumab",], aes(x = label, y = value)) +
-    geom_hline(yintercept = 0.5, color = "#ABC8C0", linetype = "dashed") +
-    geom_boxplot(fill = "#ABC8C0") + geom_jitter(shape = 16, position=position_jitter(0.2)) +
-    theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(x = "PSet", y = "AAC", title = "Her2-Trastuzumab")
+  geom_boxplot(aes(fill = subtype)) + 
+  scale_fill_manual("Subtype", values = c("#ABC8C0", "#9F9F92"), labels = c("Her2", "Other")) +
+  theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = "PSet", y = "AAC", title = "Her2 and Trastuzumab")
 dev.off()
 
 
@@ -100,56 +104,56 @@ dev.off()
 drugs <- c("Tamoxifen")
 df <- get_drugresponse(c("LumA", "LumB", "Normal"), drugs)
 
-png("DataExploration/results/figures/ER-Tamoxifen.png", width = 3, height = 5, res = 600, units = "in")
+png("DataExploration/results/figures/ER-Tamoxifen.png", width = 3.5, height = 5, res = 600, units = "in")
 ggplot(df[df$drug == "Tamoxifen",], aes(x = label, y = value)) +
-    geom_hline(yintercept = 0.5, color = "#ABC8C0", linetype = "dashed") +
-    geom_boxplot(fill = "#ABC8C0") + geom_jitter(shape = 16, position=position_jitter(0.2)) +
-    theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(x = "PSet", y = "AAC", title = "ER-Tamoxifen")
+  geom_boxplot(aes(fill = subtype)) + 
+  scale_fill_manual("Subtype", values = c("#ABC8C0", "#9F9F92"), labels = c("ER+", "Other")) +
+  theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = "PSet", y = "AAC", title = "ER+ and Tamoxifen")
 dev.off()
 
 #TNBC
 drugs <- c("Paclitaxel", "Docetaxel", "Doxorubicin", "Epirubicin")
 df <- get_drugresponse(c("Basal"), drugs)
 
-png("DataExploration/results/figures/Basal-Docetaxel.png", width = 3, height = 5, res = 600, units = "in")
+png("DataExploration/results/figures/Basal-Docetaxel.png", width = 4, height = 5, res = 600, units = "in")
 ggplot(df[df$drug == "Docetaxel",], aes(x = label, y = value)) +
-    geom_hline(yintercept = 0.5, color = "#ABC8C0", linetype = "dashed") +
-    geom_boxplot(fill = "#ABC8C0") + geom_jitter(shape = 16, position=position_jitter(0.2)) +
-    theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(x = "PSet", y = "AAC", title = "Basal-Docetaxel")
+  geom_boxplot(aes(fill = subtype)) + 
+  scale_fill_manual("Subtype", values = c("#ABC8C0", "#9F9F92"), labels = c("Basal", "Other")) +
+  theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = "PSet", y = "AAC", title = "Basal and Docetaxel")
 dev.off()
 
-png("DataExploration/results/figures/Basal-Doxorubicin.png", width = 3, height = 5, res = 600, units = "in")
+png("DataExploration/results/figures/Basal-Doxorubicin.png", width = 3.5, height = 5, res = 600, units = "in")
 ggplot(df[df$drug == "Doxorubicin",], aes(x = label, y = value)) +
-    geom_hline(yintercept = 0.5, color = "#ABC8C0", linetype = "dashed") +
-    geom_boxplot(fill = "#ABC8C0") + geom_jitter(shape = 16, position=position_jitter(0.2)) +
+    geom_boxplot(aes(fill = subtype)) + 
+    scale_fill_manual("Subtype", values = c("#ABC8C0", "#9F9F92"), labels = c("Basal", "Other")) +
     theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(x = "PSet", y = "AAC", title = "Basal-Doxorubicin")
+            plot.title = element_text(hjust = 0.5)) +
+    labs(x = "PSet", y = "AAC", title = "Basal and Doxorubicin")
 dev.off()
 
-png("DataExploration/results/figures/Basal-Epirubicin.png", width = 3, height = 5, res = 600, units = "in")
+png("DataExploration/results/figures/Basal-Epirubicin.png", width = 3.5, height = 5, res = 600, units = "in")
 ggplot(df[df$drug == "Epirubicin",], aes(x = label, y = value)) +
-    geom_hline(yintercept = 0.5, color = "#ABC8C0", linetype = "dashed") +
-    geom_boxplot(fill = "#ABC8C0") + geom_jitter(shape = 16, position=position_jitter(0.2)) +
-    theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(x = "PSet", y = "AAC", title = "Basal-Epirubicin")
+  geom_boxplot(aes(fill = subtype)) + 
+  scale_fill_manual("Subtype", values = c("#ABC8C0", "#9F9F92"), labels = c("Basal", "Other")) +
+  theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = "PSet", y = "AAC", title = "Basal and Epirubicin")
 dev.off()
 
-png("DataExploration/results/figures/Basal-Paclitaxel.png", width = 3, height = 5, res = 600, units = "in")
+png("DataExploration/results/figures/Basal-Paclitaxel.png", width = 5, height = 5, res = 600, units = "in")
 ggplot(df[df$drug == "Paclitaxel",], aes(x = label, y = value)) +
-    geom_hline(yintercept = 0.5, color = "#ABC8C0", linetype = "dashed") +
-    geom_boxplot(fill = "#ABC8C0") + geom_jitter(shape = 16, position=position_jitter(0.2)) +
-    theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(x = "PSet", y = "AAC", title = "Basal-Paclitaxel")
+  geom_boxplot(aes(fill = subtype)) + 
+  scale_fill_manual("Subtype", values = c("#ABC8C0", "#9F9F92"), labels = c("Basal", "Other")) +
+  theme_classic() + scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = "PSet", y = "AAC", title = "Basal and Paclitaxel")
 dev.off()
