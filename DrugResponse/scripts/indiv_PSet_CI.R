@@ -325,6 +325,11 @@ ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
     labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "Signature") + coord_flip()
 dev.off()
 
+
+# save class A biomarkers
+write.csv(strict_sig_com, file = "DrugResponse/results/data/ClassA_Biomarkers.csv", quote = F, row.names = F)
+
+
 # function to make plot for each signature
 waterfallplot_signature <- function(signature) {
     # subset dataframe to keep only signature of interest
