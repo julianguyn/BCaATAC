@@ -30,6 +30,7 @@ samples <- rbind(samples[-which(samples$sample %in% dup),], tmp[which(tmp$seq ==
 # save subtype
 cells_meta <- cells_meta[which(cells_meta$sample %in% samples$file),]
 samples$subtype <- cells_meta[match(samples$file, cells_meta$sample),]$subtype
+write.table(samples, file = "DataExploration/data/bcacells_annotation.tsv", quote = F, sep = "\t", col.names = T, row.names = F)
 
 # match cells to metadata (samples)
 # missing: "SUM52PE" "HBL100" "HCC1008" 
@@ -43,5 +44,6 @@ cells <- cells[,colnames(cells) %in% samples$match]
 
 # format dataframe
 cells <- as.data.frame(t(cells))
+df <- cbind(data.frame(Genes = rownames(cells), cells))
 
-write.table(cells, file = "Signatures/data/bcacells_gene_counts.matrix",  quote = F, sep = "\t", col.names = T)
+write.table(df, file = "Signatures/data/bcacells_gene_counts.matrix",  quote = F, sep = "\t", col.names = T, row.names = F)
