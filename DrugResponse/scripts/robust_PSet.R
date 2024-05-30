@@ -143,6 +143,10 @@ write.csv(estimates, file = "DrugResponse/results/tables/robust_PSet/meta_estima
 # get Class C biomarkers
 classC <- estimates[which(estimates$TE > 0.6 | estimates$TE < 0.4),]
 classC <- classC[classC$FDR < 0.05,]
+classC$type <- ifelse(classC$TE > 0.5, "Sensitivy", "Resistance")
+
+write.csv(classC, file = "DrugResponse/results/data/ClassC_Biomarkers.csv", quote = F, row.names = F)
+
 
 # only plot classC
 df <- df[which(df$pairs %in% classC$pairs),]
@@ -159,7 +163,6 @@ df <- rbind(df, data.frame(signature = classC$signature, drug = classC$signature
 
 df$pairs <- gsub("_", " and ", df$pairs)
 
-write.csv(df, file = "DrugResponse/results/data/ClassC_Biomarkers.csv", quote = F, row.names = F)
 
 
 png("DrugResponse/results/figures/robust_PSet/classC.png", width = 14.3, height = 10, res = 600, units = "in")
