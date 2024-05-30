@@ -62,6 +62,8 @@ for (pair in unique(df$pairs)) {
 df <- df[df$classB == TRUE,]
 df <- df[df$sig == "sig",]
 
+write.csv(df, file = "DrugResponse/results/data/ClassB_Biomarkers.csv", quote = F, row.names = F)
+
 # plot class B
 png("DrugResponse/results/figures/robust_PSet/classB.png", width = 15, height = 6, res = 600, units = "in")
 ggplot(df, aes(x = pset, y = ci - 0.5, fill = signature)) + geom_bar(stat="identity", color = "black") +
@@ -156,6 +158,9 @@ df <- rbind(df, data.frame(signature = classC$signature, drug = classC$signature
                             pset = "Meta Estimate", sig = NA, meta = TRUE))
 
 df$pairs <- gsub("_", " and ", df$pairs)
+
+write.csv(df, file = "DrugResponse/results/data/ClassC_Biomarkers.csv", quote = F, row.names = F)
+
 
 png("DrugResponse/results/figures/robust_PSet/classC.png", width = 14.3, height = 10, res = 600, units = "in")
 ggplot(df, aes(x = ci, y = pset)) + geom_linerange(aes(xmin = lower, xmax = upper)) + 
