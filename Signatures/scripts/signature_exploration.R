@@ -1,4 +1,4 @@
-### Script to look at features of each signature (regions, annotate peaks, etc)
+### Script to look at features of each signature (regions, annotate peaks, correlation, etc)
 
 setwd("C:/Users/julia/Documents/BCaATAC")
 
@@ -107,4 +107,81 @@ ggplot(toPlot, aes(fill=Feature, y=Frequency, x=Signature)) +
     geom_bar(position="fill", stat="identity", color = "black", size = 0.3) +
     scale_fill_manual(values = brewer.pal(11, name = "Paired")) +
     theme_minimal() + labs(y = "Percentage (%)")
+dev.off()
+
+
+############################
+### Correlate Signatures ###
+############################ # run on server
+
+setwd("/home/bioinf/bhklab/julia/projects/ATACseq")
+
+library(data.table)
+library(reshape2)
+library(ggplot2)
+
+# helper function to keep only upper triangle / lower triangle
+# from: https://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+# Get lower triangle of the correlation matrix
+get_upper_tri<-function(cormat){
+cormat[upper.tri(cormat)] <- NA
+return(cormat)
+}
+# Get upper triangle of the correlation matrix
+get_lower_tri <- function(cormat){
+cormat[lower.tri(cormat)]<- NA
+return(cormat)
+}
+
+# read in ATAC mixture
+mixture <- fread("Signatures/results/ATAC_NMF_output/rank6Mixture.csv")
+mixture <- t(mixture)
+colnames(mixture) <- paste0("Signature", 1:6)
+
+# compute correlation matrix
+corr <- cor(mixture)
+
+tri <- get_lower_tri(corr)
+corr <- melt(tri)
+
+# plot correlation matrix
+png("Signatures/results/figures/ATAC_sig_corr.png", width = 6, height = 5, res = 600, units = "in", bg = "transparent")
+ggplot(data = corr, aes(Var2, Var1, fill = value))+
+    geom_tile(color = "transparent") + 
+    scale_fill_gradient2(low = "#273469", high = "#6C2338", mid = "#F8E5EE", na.value = "transparent",
+            midpoint = 0, limit = c(-1,1), space = "Lab", name="Correlation") +
+    theme_void() + labs(y = "RNA-Seq Signatures\n", x = "\nATAC-Seq Signatures") +
+    theme(axis.text.y = element_text(vjust = 0.5, hjust = 1),
+          axis.title.y = element_text(angle = 90, margin = margin(t = 10)),
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+          axis.title.x = element_text(margin = margin(t = 10)),
+          plot.background = element_rect(fill = "transparent", color = NA),
+          panel.background = element_rect(fill = "transparent", color = NA),) + coord_fixed()
+dev.off()
+
+
+# read in RNA mixture
+mixture <- fread("Signatures/results/RNA_NMF_output/rank6Mixture.csv")
+mixture <- t(mixture)
+colnames(mixture) <- paste0("Signature", 1:6)
+
+# compute correlation matrix
+corr <- cor(mixture)
+
+tri <- get_upper_tri(corr)
+corr <- melt(tri)
+
+# plot correlation matrix
+png("Signatures/results/figures/RNA_sig_corr.png", width = 6, height = 5, res = 600, units = "in", bg = "transparent")
+ggplot(data = corr, aes(Var2, Var1, fill = value))+
+    geom_tile(color = "transparent") + 
+    scale_fill_gradient2(low = "#273469", high = "#6C2338", mid = "#F8E5EE", na.value = "transparent",
+            midpoint = 0, limit = c(-1,1), space = "Lab", name="Correlation") +
+    theme_void() + labs(y = "RNA-Seq Signatures\n", x = "\nATAC-Seq Signatures") +
+    theme(axis.text.y = element_text(vjust = 0.5, hjust = 1),
+          axis.title.y = element_text(angle = 90, margin = margin(t = 10)),
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+          axis.title.x = element_text(margin = margin(t = 10)),
+          plot.background = element_rect(fill = "transparent", color = NA),
+          panel.background = element_rect(fill = "transparent", color = NA),) + coord_fixed()
 dev.off()

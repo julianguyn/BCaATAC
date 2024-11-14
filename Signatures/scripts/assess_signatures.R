@@ -93,7 +93,7 @@ dev.off()
 ##### label by subtype
 
 # set up palette for plotting
-subtype_pal <- c("Basal" = "#394032", "Her2" = "#A6A57A","LumA" = "#8C5E58","LumB" = "#5A352A","Normal" = "#8F8073", "#eFeBF7")
+subtype_pal <- c("Basal" = "#AF4C5B","Her2" = "#EED4D3", "LumA" = "#B3B4D0", "LumB" = "#363E62", "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
 
 
 # load in TCGA annotation
@@ -129,3 +129,62 @@ ggplot(data = umap_df, aes(x = UMAP1, y = UMAP2, shape = type, fill = subtype)) 
     labs(x = "UMAP1", y = "UMAP2", shape = "Type", fill = "Subtype")
 dev.off()
 
+
+
+
+
+# Umap of just tumours
+mat <- fread("Signatures/data/BCa_binary.2.matrix", header = T)
+
+# extract consensus sequences and sample names
+consensus <- mat[,1:3]
+mat <- mat[,-c(1:3)]
+
+# transform matrix
+mat <- t(mat)
+mat[is.na(mat)] <- 0
+
+# create UMAP projection
+umap_df <- as.data.frame(umap(mat)$layout)
+save(umap_df, file = "Signatures/results/data/umap_tumours.RData")
+
+load("Signatures/results/data/umap_tumours.RData")
+colnames(umap_df) <- c("UMAP1", "UMAP2")
+
+# set up palette for plotting
+pal <- c("Signature1" = "#046C9A", "Signature2" = "#BBADB9", "Signature3" = "#7294D4", 
+        "Signature4" = "#E8E1D9", "Signature5" = "#AFC5D8", "Signature6" = "#DF9C93")
+subtype_pal <- c("Basal" = "#AF4C5B","Her2" = "#EED4D3", "LumA" = "#B3B4D0", "LumB" = "#363E62", "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
+
+
+# load in TCGA binary matrix
+nmf_scores <- read.table("Signatures/results/data/ATAC_heatmap_rank6.png.order.matrix", header = T)
+
+# extract signatures
+nmf_scores$Signature <- paste0("Signature", 1:6)
+nmf_scores <- melt(nmf_scores)
+nmf_scores <- as.data.frame(nmf_scores %>% group_by(variable) %>% filter(value == max(value)) %>% ungroup())
+
+# load in TCGA annotation
+meta <- read.csv("Signatures/data/TCGA_subtype_label.csv")
+
+# save signature and subtype annotation
+umap_df$signature <- nmf_scores[match(rownames(umap_df), gsub("\\.", "-", gsub("X", "", nmf_scores$variable))),]$Signature
+umap_df$subtype <- meta[match(rownames(umap_df), meta$File.Name),]$bca_subtype
+
+# plot umap by subtype
+png("Signatures/results/figures/ATAC_tumours_umap_subtype.png", width = 5, height = 4, res = 600, units = "in")
+ggplot(data = umap_df, aes(x = UMAP1, y = UMAP2, fill = subtype)) + geom_point(size = 4, shape = 22) +
+    scale_fill_manual(values = c(subtype_pal, "Not Available" = "white")) +
+    theme_classic() + 
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), legend.key.size = unit(0.7, 'cm')) +
+    labs(x = "UMAP1", y = "UMAP2", fill = "Subtype")
+dev.off()
+
+png("Signatures/results/figures/ATAC_tumours_umap_signature.png", width = 5.007, height = 4, res = 600, units = "in")
+ggplot(data = umap_df, aes(x = UMAP1, y = UMAP2, fill = signature)) + geom_point(size = 4, shape = 22) +
+    scale_fill_manual(values = c(pal)) +
+    theme_classic() + 
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), legend.key.size = unit(0.7, 'cm')) +
+    labs(x = "UMAP1", y = "UMAP2", fill = "Signature")
+dev.off()

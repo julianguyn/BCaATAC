@@ -20,6 +20,7 @@ lupien$sample_name <- meta[match(lupien$case_id, meta$case_id),]$submitter_id
 # note: b0f8d698-a30e-4d8d-b0a2-a5a01fac8406 | TCGA.A2.A0T4 is a duplicate
 
 lupien$sample_name <- gsub("-", "\\.", lupien$sample_name)
+write.csv(lupien, file = "Signatures/data/TCGA_subtype_label.csv", quote = F, row.names = F)
 
 # read in tcga tumour gene counts from https://linkedomics.org/data_download/TCGA-BRCA/
 counts <- read.table("Signatures/data/Human__TCGA_BRCA__UNC__RNAseq__HiSeq_RNA__01_28_2016__BI__Gene__Firehose_RSEM_log2.cct", header = T)

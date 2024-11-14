@@ -100,26 +100,25 @@ get_overlap <- function(filename, rank) {
     # reorder RNA-Seq signatures
     combinations$RNASeq <- factor(combinations$RNASeq, levels = paste0("Signature",rank:1))
 
-    
-    p <- ggplot(combinations, aes(x = ATACSeq, y = RNASeq, fill = proportion)) + geom_tile(color = "black") +
-            scale_fill_gradientn("Proportion of\nOverlapping\nSamples", colours = brewer.pal(9, "Blues"), limits = c(0, 1)) + 
-            theme_void() +
+    p <- ggplot(combinations, aes(x = ATACSeq, y = RNASeq, color = proportion, size = count)) + 
+            geom_point(shape = 19) + scale_size(range = c(4, 18)) +
+            scale_color_gradient2("Proportion of\nOverlap", low = "white", mid = "#8987BF", high = "#0B1465", midpoint = 0.5, limits = c(0, 1)) + 
+            theme_classic() + 
             theme(axis.text.x = element_text(size=11, angle = 90, vjust = 0.5), axis.title.x = element_text(size=12),
-                axis.text.y = element_text(size=11), axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
-            labs(x = "\nATAC-Seq Signatures", y = "RNA-Seq Signatures\n")
+                axis.text.y = element_text(size=11), axis.title.y = element_text(size=12, angle = 90, vjust = 0.5),
+                panel.border = element_rect(color = "black", fill = NA, size = 0.5)) + 
+            labs(x = "\nATAC-Seq Signatures", y = "RNA-Seq Signatures\n", size = "\nCount of\nOverlap")
+    # old code for heatmap version:
+    #p <- ggplot(combinations, aes(x = ATACSeq, y = RNASeq, fill = proportion)) + geom_tile(color = "black") + scale_fill_gradient("Proportion of\nOverlapping\nSamples", low = "white", high = "#0B1465", limits = c(0, 1)) + 
+    #        theme_void() + theme(axis.text.x = element_text(size=11, angle = 90, vjust = 0.5), axis.title.x = element_text(size=12), axis.text.y = element_text(size=11), axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
+    #        labs(x = "\nATAC-Seq Signatures", y = "RNA-Seq Signatures\n")
 
     return(p)
 }
 
-png("Signatures/results/figures/RNA_ATAC/overlap_rank4.png", width = 5, height = 5, res = 600, units = "in")
-get_overlap("Signatures/results/data/RNA_heatmap_rank4.png.order.matrix", 4)
-dev.off()
 
-png("Signatures/results/figures/RNA_ATAC/overlap_rank5.png", width = 5, height = 5, res = 600, units = "in")
-get_overlap("Signatures/results/data/RNA_heatmap_rank5.png.order.matrix", 5)
-dev.off()
 
-png("Signatures/results/figures/RNA_ATAC/overlap_rank6.png", width = 5, height = 5, res = 600, units = "in")
+png("Signatures/results/figures/RNA_ATAC/overlap_rank6.png", width = 6.5, height = 5.25, res = 600, units = "in")
 get_overlap("Signatures/results/data/RNA_heatmap_rank6.png.order.matrix", 6)
 dev.off()
 
@@ -127,10 +126,3 @@ png("Signatures/results/figures/RNA_ATAC/overlap_rank7.png", width = 5, height =
 get_overlap("Signatures/results/data/RNA_heatmap_rank7.png.order.matrix", 7)
 dev.off()
 
-png("Signatures/results/figures/RNA_ATAC/overlap_rank8.png", width = 5, height = 5, res = 600, units = "in")
-get_overlap("Signatures/results/data/RNA_heatmap_rank8.png.order.matrix", 8)
-dev.off()
-
-png("Signatures/results/figures/RNA_ATAC/overlap_rank9.png", width = 5, height = 5, res = 600, units = "in")
-get_overlap("Signatures/results/data/RNA_heatmap_rank9.png.order.matrix", 9)
-dev.off()
