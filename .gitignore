@@ -6,6 +6,7 @@ DrugResponse/data
 Signatures/data
 DrugResponsePDX/data
 RNAChemoResistance/data
+SignatureScoring/data
 
 # all results folders
 DataExploration/results
