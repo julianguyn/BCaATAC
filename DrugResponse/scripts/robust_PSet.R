@@ -188,10 +188,11 @@ dev.off()
 png("DrugResponse/results/figures/robust_PSet/classCv2.png", width = 12, height = 14, res = 600, units = "in")
 ggplot(df, aes(x = ci, y = pset)) + geom_linerange(aes(xmin = lower, xmax = upper)) + 
     geom_vline(xintercept = 0.5) + geom_vline(xintercept = c(0.4, 0.6), linetype = "dotted") + 
-    geom_point(data = df, aes(fill = FDRsig, shape = meta), size=8) +
-    scale_shape_manual(values=c(18, 22)) + scale_y_discrete(limits=rev) +
-    guides(shape = "none", fill = guide_legend(override.aes=list(shape=22, size = 9))) +
-    scale_fill_manual(guide = guide_legend(reverse = FALSE), values = unname(pal), label = c("Significant", "Not Significant")) + 
+    geom_point(data = df, aes(shape = meta), size=8, fill = "#DB504A") +
+    scale_shape_manual(values=c(23, 15), labels = c("Meta Estimate", "Concordance Index")) + scale_y_discrete(limits=rev) +
+    #guides(shape = "none", fill = guide_legend(override.aes=list(shape=22, size = 9))) +
+    guides(shape = guide_legend(title = NULL)) +
+    #scale_fill_manual(guide = guide_legend(reverse = FALSE), values = unname(pal), label = c("Significant", "Not Significant")) + 
     scale_x_continuous(limits = c(0, 1), expand = c(0.02, 0.02), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c(0, 0.25, 0.5, 0.75, 1)) +
     facet_wrap(pairs ~ ., ncol = 3, nrow = 4) + theme_classic() + 
     theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5),
@@ -202,7 +203,7 @@ ggplot(df, aes(x = ci, y = pset)) + geom_linerange(aes(xmin = lower, xmax = uppe
           axis.title.x = element_text(size = 16),
           strip.text = element_text(size = 14),
           axis.title.y = element_text(size = 16)) +
-    labs(x = "Concordance Index (CI) | Meta Estimate", y = "PSet", fill = "FDR Significance")
+    labs(x = "Concordance Index | Meta Estimate", y = "PSet", fill = "FDR Significance")
 dev.off()
 
 

@@ -81,6 +81,9 @@ plot_signature_AAC <- function(signature, drug, corr_res) {
         corr_res <- rbind(corr_res, data.frame(Signature_Drug = paste0(signature, " - ", drug), PSet = pset, Correlation = corr))
     }
 
+    # pearson's for all
+    print(cor(all_drug_sen$AAC, all_drug_sen$Score, use="complete.obs", method = "pearson"))
+
     # get x axis limits for plotting
     x <- max(max(all_drug_sen$Score), abs(min(all_drug_sen$Score)))
 
@@ -155,3 +158,24 @@ for (i in 1:nrow(plotC)) {
 }
 
 write.csv(resC, file = "DrugResponse/results/data/Top_C_Biomarkers.csv", quote = F, row.names = F)
+
+
+# Plot signature 3 with paclitaxel
+tmp <- data.frame(matrix(nrow=0, ncol=3)) 
+plot_signature_AAC("Signature3", "Paclitaxel", tmp)
+
+
+# TEMP CODE: Plot association with TOP1 inhibitors
+drugs <- c("Irinotecan", "Topotecan")
+
+# create dataframe to store results
+tmp <- data.frame(matrix(nrow=0, ncol=3)) 
+colnames(tmp) <- c("Signature_Drug", "PSet", "Correlation")
+
+# take top and bottom 5
+toPlot <- data.frame(Signature = rep(paste0("Signature", 1:6), 2), Drug = c(rep(drugs[1], 6), rep(drugs[2], 6)))
+
+# loop through to plot all class B biomarkers
+for (i in 1:nrow(toPlot)) {
+    tmp <- plot_signature_AAC(toPlot$Signature[i], toPlot$Drug[i], tmp)
+}
