@@ -3,9 +3,80 @@ setwd("C:/Users/julia/Documents/BCaATAC")
 library(readxl)
 library(ggplot2)
 library(RColorBrewer)
+library(dplyr)
 
 # read in drug response data
 response <- as.data.frame(read_excel("DrugResponsePDX/data/drugresponse/DrugResponse_PDX.xlsx", sheet = 1))
+
+# keep only mRECIST
+response <- response[,colnames(response) %in% c("patient.id", "mRECIST", "drug")]
+
+# read in signature scores
+scores <- as.data.frame(t(read.table("DrugResponsePDX/data/chromvar/bca_sign.Zscore.txt")))
+colnames(scores) <- paste0("Signature", 1:6)
+# sample colname
+
+
+# subset for just paclitaxel
+pac <- response[response$drug == "TAXOL",]
+pac <- pac[-which(is.na(pac$patient.id)),]
+pac$sig5 <- NA
+
+# get signature scores
+for (i in 1:nrow(pac)) {
+    sample = pac$patient.id[i]
+    pac$sig5[i] <- scores[gsub("_", "", gsub("X", "", rownames(scores))) == sample,]$Signature5
+}
+
+# remove NA
+pac <- pac[-which(pac$mRECIST == "NA"),]
+pac$mRECIST <- factor(pac$mRECIST, levels = c("CR", "PR", "SD", "PD"))
+
+# create ranking order
+pac <- pac[order(pac$sig5, decreasing = T),]
+pac$rank <- 1:nrow(pac)
+
+png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
+ggplot(pac, aes(x = rank, y = sig5, fill = mRECIST)) + 
+    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
+    scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
+                      labels = c('CR' = 'Complete\nResponse', 
+                              'PD' = 'Progressive\nDisease', 
+                              'SD' = 'Stable\nDisease',
+                              'PR' = 'Partial\nResponse')) +
+    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+    ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
+dev.off()
+
+
+pac <- pac %>%
+  group_by(mRECIST) %>%
+  summarize(mean_score = mean(sig5), sd_score = sd(sig5))
+
+
+png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist.png", width = 4, height = 5, res = 600, units = "in")
+ggplot(pac, aes(x = mRECIST, y = mean_score)) +
+  geom_bar(stat = "identity", color = "black", aes(fill = mRECIST)) + ylim(c(-50, 50)) +
+  geom_hline(yintercept = 0) +
+  geom_errorbar(aes(ymin = mean_score - sd_score, ymax = mean_score + sd_score), width = 0.2) +
+  scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
+                      labels = c('CR' = 'Complete\nResponse', 
+                              'PD' = 'Progressive\nDisease', 
+                              'SD' = 'Stable\nDisease',
+                              'PR' = 'Partial\nResponse')) +
+  scale_x_discrete(labels = c('CR' = 'Complete\nResponse', 
+                              'PD' = 'Progressive\nDisease', 
+                              'SD' = 'Stable\nDisease',
+                              'PR' = 'Partial\nResponse')) +
+  labs(x = "\nmRECIST", y = "Signature 5 Similarity Score") +
+  theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), legend.position = "none")
+dev.off()
+
+
+######################################
+############### AUC ##################
+######################################
+
 
 # keep only AUC
 response <- response[,colnames(response) %in% c("patient.id", "AUC", "drug")]
