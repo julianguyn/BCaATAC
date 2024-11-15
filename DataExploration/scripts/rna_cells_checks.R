@@ -2,15 +2,17 @@
 
 setwd("C:/Users/julia/Documents/BCaATAC")
 
-library(PharmacoGx)
-library(umap)
-library(ggplot2)
-library(reshape2)
+# load libraries
+suppressPackageStartupMessages({
+    library(PharmacoGx)
+    library(ggplot2)
+    library(reshape2)
+    library(ggpubr)
+    library(ComplexHeatmap)
+    library(circlize)
+})
 
 set.seed(101)
-
-# set up palette for plotting
-subtype_pal <- c("Basal" = "#394032", "Her2" = "#A6A57A","LumA" = "#8C5E58","LumB" = "#5A352A","Normal" = "#8F8073", "#eFeBF7")
 
 # load in cell line RNA seq counts
 uhnbreast2 <- readRDS("DrugResponse/data/PharmacoSet.RDS")
@@ -24,8 +26,7 @@ cells_meta[which(cells_meta$subtype == "cell_line"),]$subtype <- "LumA"
 
 # keep only cell lines being used
 samples <- read.csv("DrugResponse/data/cl_samples.csv")
-samples$file <- gsub("\\.$", "", samples$file)
-samples$file <- gsub("\\.", "-", samples$file)
+samples$file <- gsub("\\.", "-", gsub("\\.$", "", samples$file))
 samples$match <- gsub("-", "", samples$sample)
 
 # remove dups
@@ -85,21 +86,12 @@ gray <- melt(gray)
 gcsi <- melt(gcsi)
 ccle <- melt(ccle)
 
+save(cells, gray, gcsi, ccle, file = "DataExploration/data/rnaseq_melted.RData")
+
+### ===== Compute correlations between RNA-Seq data of PSets ===== ###
 
 # function to create a correlation plot and compute correlation coefficient between two psets
 corr_pset <- function(pset1, pset2, lab1, lab2) {
-    ################################################
-    # Inputs:
-    #   pset1: rna counts of first pset
-    #   pset2: rna counts of second pset
-    #   lab1: label of first pset
-    #   lab2: label of second pset
-    # Outputs:
-    #   p: correlation graph 
-    #   corr_df: will update this dataframe with 
-    #            Pearson's correlation coefficient
-    #            and number of overlapping features
-    ################################################
 
     # intersected cell-gene pairs
     pset1$pairs <- paste0(pset1$Var1, pset1$Var2)
@@ -113,21 +105,12 @@ corr_pset <- function(pset1, pset2, lab1, lab2) {
     pset2_intersect <- pset2[pset2$pairs %in% overlap,]
     pset2_intersect <- pset2[match(overlap, pset2$pairs),]
 
-    # scatter plot of drug response difference for CTRP and GDSC 
-    toPlot <- data.frame(pair = overlap, pset1 = pset1_intersect$value, pset2 = pset2_intersect$value)
-    
     # pearson correlation coefficient
-    corr <- cor(toPlot$pset1, toPlot$pset2,  method = "pearson", use = "complete.obs")
+    df <- data.frame(pair = overlap, pset1 = pset1_intersect$value, pset2 = pset2_intersect$value)
+    corr <- cor(df$pset1, df$pset2,  method = "pearson", use = "complete.obs")
+    print(paste("Correlation between", lab1, "and", lab2, ":", corr))
 
-    p <- ggplot(toPlot, aes(x = pset1, y = pset2)) + 
-            geom_smooth(method=lm, show.legend = FALSE, color = "#046C9A") + geom_point(shape = 21, size = 2.5, color = "black", fill = "#899DA4") + 
-            geom_abline(intercept = 0, slope = 1, color = "grey", linetype = "dashed") + 
-            theme_classic() + xlim(c(0, 1)) + ylim(c(0, 1)) + theme(legend.key.size = unit(0.5, 'cm')) +
-            labs(x = lab1, y = lab2) + geom_text(x = 0.01, y = 1, label = paste("Corr: ", round(corr, digits = 3)), color = "black")
-
-    print(paste0("Correlation between ", lab1, " and ", lab2, ": ", corr))
-
-    return(p)
+    return(corr)
 }
 
 # UHN Breast2
@@ -142,47 +125,118 @@ p5 <- corr_pset(gray, ccle, "GRAY", "CCLE") #0.915262101138858
 # gCSI
 p6 <- corr_pset(gcsi, ccle, "gCSI", "CCLE") #0.943145494132632
 
+# initialize correlation matrix
+psets <- c("UHNBreast2", "GRAY", "gCSI", "CCLE")
+mat <- matrix(NA, nrow = 4, ncol = 4, dimnames = list(psets, psets))
 
-suppressMessages(library(ggpubr))
-suppressMessages(library(grid))
-suppressMessages(library(gridExtra))
+# fill in matrix values
+mat[1,2] <- mat[2,1] <- p1
+mat[1,3] <- mat[3,1] <- p2
+mat[1,4] <- mat[4,1] <- p3
+mat[2,3] <- mat[3,2] <- p4
+mat[2,4] <- mat[4,2] <- p5
+mat[3,4] <- mat[4,3] <- p6
 
-png("DataExploration/results/figures/rna_cells_checks.png", width = 15, height = 13, res = 600, units = "in")
-grid.arrange(p1, p2, p3, p4, p5, p6,
-             ncol = 3, nrow = 3,
-             layout_matrix = rbind(c(1, NA, NA),
-                                   c(2,  4, NA),
-                                   c(3,  5, 6)))
+# set diagonal as 1
+diag(mat) <- 1
+
+save(mat, file = "DataExploration/data/corr_mat.RData")
+
+# set palette for plotting
+col_fun <- colorRamp2(c(-1, 0, 1), c("#A85751", "white", "#66999B"))
+
+# function to create heatmap
+plot_heatmap <- function(mat, legend_label) {
+    plot <- Heatmap(mat,
+        col = col_fun,
+        cluster_rows = TRUE,
+        cluster_columns = TRUE,
+        heatmap_legend_param = list(
+            title = legend_label,
+            color_bar = "continuous"
+        ),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+            grid.text(round(mat[i, j], 2), x, y, gp = gpar(fontsize = 8))
+        }
+    )
+    return(plot)
+}
+
+png("DataExploration/results/figures/pearsons_corr.png", width=125, height=100, units='mm', res = 600, pointsize=80)
+plot_heatmap(mat, "Pearson's")
 dev.off()
 
 
-cp HDQP-1_2_S25_L002_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp HS-578-T_2_S1_L001_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp HS578._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp JIMT-1_2_S3_L000_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp KPL1_2_S15_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp LY2_1_S2_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MB157._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp MCF10A_1_S2_L001_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MCF7_1_S14_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MDA_MB_175_VII_2_S5_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MDA-MB-231._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp MDA-MB-436._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp MDA-MB-468._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp MDA231_1_S2_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MDA361_2_S16_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MDA468_2_S11_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MPE600_2_S10_L001_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp MX1._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp SKBR-7_2_S17_L002_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp SKBR3_2_S8_L001_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp SKBR5_2_S2_L001_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp SUM149_2_S15_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp SUM149PT._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp SUM159PT_2_S8_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp SUM159PT._peaks.narrowPeak /cluster/home/julian/temp/peaks
-cp SUM52PE_1_S7_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp T47D_2_S14_L002_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp UACC812_2_S14_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
-cp ZR-75-1_2_S1_L001_peaks.filtered.narrowPeak /cluster/home/julian/temp/peaks
- 
+### ===== Identify Highly Correlated Cell Lines from UBR2 ===== ###
+
+# function to correlate cell lines from UBR2 to cell lines in other psets
+corr_cells <- function(pset, pset_label) {
+
+    # get unique cell lines from UHNBreast2 and pset
+    ubr2_cells <- unique(cells$Var2)
+    pset_cells <- unique(pset$Var2)
+
+    # initalize df to store results
+    num_combo <- length(ubr2_cells) * length(pset_cells)
+    corr_res <- data.frame(matrix(nrow=num_combo, ncol=3))
+    colnames(corr_res) <- c("UBR2_Cell", "PSet_Cell", "Pearsons")
+
+    # set iteration
+    i = 0
+
+    # loop through for every cell line in UBR2
+    for (cl in ubr2_cells) {
+
+        # subset for unique cell line
+        subset_ubr2 <- cells[cells$Var2 == cl,]
+
+        # loop through for every cell line in pset
+        for (pset_cl in pset_cells) {
+
+            # increment iteration
+            i = i + 1
+            #if (i %% 20 == 0) {print(paste0(i, " out of ", num_combo, " complete"))}
+
+            # subset for this unique cell line
+            subset_pset <- pset[pset$Var2 == pset_cl,]
+
+            # check genes are ordered same TODO: print message if not all TRUE
+            #print(table(subset_ubr2$Var1 == subset_pset$Var1))
+
+            # compute pearson's correlation coefficient
+            corr <- cor(subset_ubr2$value, subset_pset$value,  method = "pearson", use = "complete.obs")
+
+            # store correlation results in dataframe
+            corr_res$UBR2_Cell[i] <- cl
+            corr_res$PSet_Cell[i] <- pset_cl
+            corr_res$Pearsons[i] <- corr
+        }
+    }
+
+    corr_res$PSet <- pset_label
+    return(corr_res)
+}
+
+
+# rename replicate in gray
+gray$Var2 <- as.character(gray$Var2)
+gray$Var2[1380149:1429439] <- rep("UACC812_r2", 49291)
+corr_gray <- corr_cells(gray, "GRAY")
+corr_gcsi <- corr_cells(gcsi, "gCSI")
+corr_ccle <- corr_cells(ccle, "CCLE")
+
+save(corr_gray, corr_gcsi, corr_ccle, file = "DataExploration/data/rnaseq-corr.RData")
+
+
+# function to identify top 5 correlations for each UBR2 cell line
+top_corr <- function(corr_df) {
+
+    # get unique cell lines from UHNBreast2
+    ubr2_cells <- unique(corr_df$UBR2_Cell)
+
+    # initalize df to store results
+    top_res <- data.frame(matrix(ncol=4))
+    colnames(top_res) <- colnames(corr_res)
+
+}
+
