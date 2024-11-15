@@ -228,15 +228,51 @@ corr_ccle <- corr_cells(ccle, "CCLE")
 save(corr_gray, corr_gcsi, corr_ccle, file = "DataExploration/data/rnaseq-corr.RData")
 
 
-# function to identify top 5 correlations for each UBR2 cell line
-top_corr <- function(corr_df) {
+# function to identify top correlations (num_top) for each UBR2 cell line
+top_corr <- function(corr_df, num_top) {
 
     # get unique cell lines from UHNBreast2
     ubr2_cells <- unique(corr_df$UBR2_Cell)
 
     # initalize df to store results
-    top_res <- data.frame(matrix(ncol=4))
-    colnames(top_res) <- colnames(corr_res)
+    top_res <- data.frame(matrix(NA, nrow = 0, ncol=4))
+    colnames(top_res) <- colnames(corr_df)
 
+    # loop through each unique cell line
+    for (cl in ubr2_cells) {
+
+        # subset for unique cell line
+        subset_ubr2 <- corr_df[corr_df$UBR2_Cell == cl,]
+
+        # order and extract top num_top pearson's correlation
+        subset_ubr2 <- subset_ubr2[order(subset_ubr2$Pearsons, decreasing = T),]
+        subset_ubr2 <- subset_ubr2[1:num_top,]
+
+        # save results
+        top_res <- rbind(top_res, subset_ubr2)
+    }
+
+    return(top_res)
 }
 
+# get top correlations
+gray_top <- top_corr(corr_gray, num_top = 1)
+gcsi_top <- top_corr(corr_gcsi, num_top = 1)
+ccle_top <- top_corr(corr_ccle, num_top = 1)
+
+# merge and melt results for plotting
+merge_df <- rbind(gray_top, gcsi_top, ccle_top)
+merge_df <- melt(merge_df)
+
+# plot top cell line match
+png("DataExploration/results/figures/cl_correlations.png", width=150, height=150, units='mm', res = 600, pointsize=80)
+ggplot(merge_df, aes(x = PSet, y = UBR2_Cell, fill = value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = PSet_Cell), color = "black", size = 3) +
+  scale_fill_gradient(low = "white", high = "#008DD5", limits = c(0, 0.5)) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        panel.grid = element_blank(),
+        legend.key.size = unit(0.5, 'cm')) +
+  labs(fill = "Pearsons", y = "UHNBreast2 Cell Line")
+dev.off()
