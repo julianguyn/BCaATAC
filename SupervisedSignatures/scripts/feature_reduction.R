@@ -8,6 +8,9 @@ suppressPackageStartupMessages({
     library(survcomp)
 })
 
+# load in cell line drug response data
+load("DrugResponse/results/data/sensitivity_data.RData")
+
 # load in and extract needed cell lines
 samples <- read.csv("DrugResponse/data/cl_samples.csv")
 dup <- samples$sample[duplicated(samples$sample)]
@@ -91,6 +94,20 @@ ubr2_sen <- ubr2_sen["Paclitaxel",]
 gray_sen <- gray_sen["Paclitaxel",]
 ctrp_sen <- ctrp_sen["Paclitaxel",]
 
+# function to binarize drug repsonse
+binarize_dr <- function(sensitivity_data) {
+    return(as.data.frame(ifelse(sensitivity_data >= 0.5, 1, 0)))
+}
+
+# binarize drug response data
+ubr1_sen <- binarize_dr(ubr1_sen)
+ubr2_sen <- binarize_dr(ubr2_sen)
+gray_sen <- binarize_dr(gray_sen)
+gcsi_sen <- binarize_dr(gcsi_sen)
+gdsc_sen <- binarize_dr(gdsc_sen)
+ctrp_sen <- binarize_dr(ctrp_sen)
+ccle_sen <- binarize_dr(ccle_sen)
+
 # compute associations
 ubr1_com <- computeCI(peak_mat, ubr1_sen, "UHNBreast1")
 ubr2_com <- computeCI(peak_mat, ubr2_sen, "UHNBreast2")
@@ -123,7 +140,6 @@ dim(peak_mat) # 49     1224557
 corr_mat <- cor(peak_mat, use = "pairwise.complete.obs")        # current dim: # 49     1224557
 save(corr_mat, file = "corr-mat.RData")
 
-
 upper_tri <- upper.tri(corr_mat)
 
 # set threshold
@@ -138,12 +154,3 @@ dim(peak_reduced)
 
 save(corr_mat, file = "corr-mat.RData")
 
-
-
-cd /cluster/projects/bhklab/projects/BCaATAC/SupervisedSignatures/scripts/scripts
-# running:
-# ci1.R
-# ci7.R
-
-
-# need to run:
