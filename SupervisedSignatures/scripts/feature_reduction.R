@@ -223,6 +223,9 @@ load("SupervisedSignatures/results/data/pac-binarized.RData")
 pac <- pac[!is.na(pac$response), ]
 peak_reduced <- peak_reduced[rownames(peak_reduced) %in% rownames(pac),]
 
+# convert drug response to binary encoding
+pac$response <- ifelse(pac$response == "Sensitive", 1, 0)
+
 # order cell lines
 pac <- pac[order(rownames(pac)),]
 peak_reduced <- peak_reduced[order(rownames(peak_reduced)),]
