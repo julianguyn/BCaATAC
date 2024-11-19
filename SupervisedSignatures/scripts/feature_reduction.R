@@ -213,5 +213,19 @@ correlated <- which(upper_tri & abs(corr_mat) > thres, arr.ind = TRUE)
 # remove correlated peak from identified pairs
 peak_reduced <- peak_mat[,-unique(correlated[,2])]
 
-write.csv(peak_reduced, file = "SupervisedSignatures/results/data/bca_peakmat.csv", quote = FALSE, row.names = TRUE)
 
+### ===== Prepare data for model training and testing ===== ###
+
+# load in drug response data
+load("SupervisedSignatures/results/data/pac-binarized.RData")
+
+# remove cells with <NA> overall response
+pac <- pac[!is.na(pac$response), ]
+peak_reduced <- peak_reduced[rownames(peak_reduced) %in% rownames(pac),]
+
+# order cell lines
+pac <- pac[order(rownames(pac)),]
+peak_reduced <- peak_reduced[order(rownames(peak_reduced)),]
+
+write.csv(peak_reduced, file = "SupervisedSignatures/results/data/bca_peakmat.csv", quote = FALSE, row.names = TRUE)
+write.csv(pac, file = "SupervisedSignatures/results/data/pac-binarized.csv", quote = FALSE, row.names = TRUE)
