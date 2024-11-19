@@ -9,7 +9,14 @@ suppressPackageStartupMessages({
     library(plyr)
     library(ComplexHeatmap)
     library(circlize)
+    library(reshape2)
+    library(ggplot2)
+    library(ggh4x)
+    library(ggpubr)
+    library(grid)
+    library(gridExtra)
 })
+
 
 ### ===== Get drugs of interest ===== ###
 
@@ -122,7 +129,7 @@ pac <- binarize_dr(pac)
 car <- binarize_dr(car)
 
 
-# function to compute jaccard similarity from: https://www.r-bloggers.com/2021/11/how-to-calculate-jaccard-similarity-in-r/
+# function to compute jaccard similarity 
 jaccard <- function(a, b) {
     # remove cell lines with NAs
     keep <- !is.na(a) & !is.na(b)
@@ -173,6 +180,57 @@ png("SupervisedSignatures/results/figures/dr_corr/jacc-carboplatinum.png", width
 plot_heatmap(jacc_car,"Jaccard\nSimilarity")
 dev.off()
 
+
+
+# plot heatmap of paclitaxel drug response
+pac$Cell <- rownames(pac)
+toPlot <- melt(pac)
+toPlot$value <- factor(toPlot$value, levels = c("1", "0", "NA"))
+
+p1 <- ggplot(toPlot, aes(x = variable, y = Cell, fill = value)) + 
+  geom_tile(color = "white") + theme_void() +
+  scale_fill_manual(values = c("#7294D4", "#BC4749"), labels = c("Sensitive", "Not Sensitive"), na.value = "#D1D7DD") +
+  theme(
+        axis.text.x = element_text(vjust = 0.5),
+        axis.title.x = element_text(),
+        axis.text.y = element_text(vjust = 0.5, hjust = 1),
+        axis.title.y = element_text(angle = 90),
+        strip.text.x = element_text(),
+        legend.key.size = unit(0.7, 'cm')
+    ) +
+  labs(x = "\nPSet", y = "Cell Line", fill = "")
+
+
+# compute average drug response
+pac <- pac[,-which(colnames(pac) == "Cell")]
+pac$avg <- rowMeans(pac, na.rm = TRUE)
+pac$response <- ifelse(pac$avg > 0.5, "Sensitive", ifelse(pac$avg < 0.5, "Not Sensitive", NA))
+
+
+# plot combined paclitaxel response
+toPlot <- data.frame(Cell = rownames(pac), Response = pac$response)
+toPlot$Response <- factor(toPlot$Response, levels = c("Sensitive", "Not Sensitive"))
+toPlot$Label <- "Overall"
+
+p2 <- ggplot(toPlot, aes(x = Label, y = Cell, fill = Response)) + 
+  geom_tile(color = "white") + theme_void() +
+  scale_fill_manual(values = c("#7294D4", "#BC4749"), na.value = "#D1D7DD") +
+  theme(
+        axis.text.x = element_text(vjust = 0.5),
+        axis.title.x = element_text(),
+        strip.text.x = element_text(),
+        legend.position = "none"
+    ) +
+  labs(x = "\n", fill = "")
+
+# extract legends
+l1 <- as_ggplot(get_legend(p1))
+p1 <- p1+theme(legend.position = "none")
+
+png("SupervisedSignatures/results/figures/pac_sen_heatmap.png", width=180, height=200, units='mm', res = 600, pointsize=80)
+grid.arrange(p1, p2, l1, ncol = 15, nrow = 1,
+    layout_matrix = rbind(c(1,1,1,1,1,1,1,1,1,1,1,2,3,3,3)))
+dev.off()
 
 # save binarized paclitaxel drug response
 save(pac, file = "SupervisedSignatures/results/data/pac-binarized.RData")
