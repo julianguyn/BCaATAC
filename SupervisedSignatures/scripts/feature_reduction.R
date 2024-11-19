@@ -22,7 +22,7 @@ samples <- rbind(samples[-which(samples$sample %in% dup),], tmp[which(tmp$seq ==
 # load in binary peak matrix
 peak_mat <- fread("Signatures/data/bcacell_lines.tsv") |> as.data.frame()
 rownames(peak_mat) <- paste(peak_mat$V1, peak_mat$V2, peak_mat$V3, sep = ":")
-peak_mat <- peak_mat[,-c(1:3)]
+peak_mat <- peak_mat[,-c(1:3)] #num peaks: 1224557
 
 # keep only needed samples and rename sample names
 colnames(peak_mat) <- gsub("-", "\\.", colnames(peak_mat))
@@ -122,14 +122,6 @@ save(ccle_com, file = "../results/res7.RData")
 
 ### ===== Assess concordance across PSets ===== ###
 
-load("res1.RData")
-load("res2.RData")
-load("res3.RData")
-load("res4.RData")
-load("res5.RData")
-load("res6.RData")
-load("res7.RData")
-
 # function to filter for peaks with CI and FDR threshold
 # CI threshold: CI > 0.8 or CI < 0.2
 # FDR threshold: FDR < 0.05
@@ -199,38 +191,27 @@ UpSet(toPlot, set_order = c("UBR1", "UBR2", "GRAY", "gCSI", "GDSC", "CTRP", "CCL
 dev.off()
 
 
-
-
-
-
 # filter peak matrix to only keep peaks 
 peak_mat <- peak_mat[rownames(peak_mat) %in% keep, ]
+#save(peak_mat, file = "SupervisedSignatures/results/data/peak-filtered-peakmat.RData")
 
 
 ### ===== Remove correlated peaks ===== ###
 
-# on H4H: /cluster/projects/bhklab/projects/BCaATAC/SupervisedSignatures/procdata/peak-counts
-
 # compute correlation matrix
 peak_mat <- t(peak_mat)
-dim(peak_mat) # 49     1224557
-corr_mat <- cor(peak_mat, use = "pairwise.complete.obs")        # current dim: # 49     1224557
-save(corr_mat, file = "corr-mat.RData")
-
-upper_tri <- upper.tri(corr_mat)
+corr_mat <- cor(peak_mat, use = "pairwise.complete.obs")
+#save(corr_mat, file = "SupervisedSignatures/results/data/corr-mat.RData")
 
 # set threshold
 thres <- 0.8
-correlated <- which(upper_tri & abs(corr_mat) > thres, arr.ind = TRUE)
 
-print(length(-unique(correlated[,2])))
+# identify correlated peaks
+upper_tri <- upper.tri(corr_mat)
+correlated <- which(upper_tri & abs(corr_mat) > thres, arr.ind = TRUE)
 
 # remove correlated peak from identified pairs
 peak_reduced <- peak_mat[,-unique(correlated[,2])]
 
-# Check the new dimensions of the matrix
-dim(peak_reduced)
-
-save(corr_mat, file = "corr-mat.RData")
-write.csv(peak_reduced, file = "SupervisedSignatures/results/data/bca_peakmat.csv", quote = FALSE, header = TRUE)
+write.csv(peak_reduced, file = "SupervisedSignatures/results/data/bca_peakmat.csv", quote = FALSE, row.names = TRUE)
 
