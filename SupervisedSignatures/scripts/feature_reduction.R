@@ -224,6 +224,9 @@ load("SupervisedSignatures/results/data/pac-binarized.RData")
 pac_bin <- pac_bin[!is.na(pac_bin$response), ]
 peak_bin_reduced <- peak_reduced[rownames(peak_reduced) %in% rownames(pac_bin),]
 
+# keep cells with drug response (AAC)
+peak_reduced <- peak_reduced[rownames(peak_reduced) %in% rownames(pac),]
+
 # convert drug response to binary encoding
 pac_bin$response <- ifelse(pac_bin$response == "Sensitive", 1, 0)
 
