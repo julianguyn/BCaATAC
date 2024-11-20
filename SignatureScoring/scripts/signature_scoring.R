@@ -10,7 +10,7 @@ library(reshape2)
 num_signatures <- 6
 
 # set colours for plotting
-subtype_pal = c("Basal" = "#394032", "Her2" = "#A6A57A","LumA" = "#8C5E58","LumB" = "#5A352A","Normal" = "#8F8073", "#eFeBF7")
+subtype_pal <- c("Basal" = "#AF4C5B","Her2" = "#EED4D3", "LumA" = "#B3B4D0", "LumB" = "#363E62", "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
 
 
 # functon to compute deviations from mean to normalize data
@@ -138,6 +138,7 @@ ht <- Heatmap(corr_df, name = "Correlation", col = score_pal)
 ht <- draw(ht)
 atac_order <- row_order(ht)
 order_df <- data.frame(sample = colnames(corr_df)[atac_order], order = 1:49)
+save(order_df, file = "SignatureScoring/results/cell_line_order.RData")
 
 # set subtype and clustering order annotation
 col_fun <- colorRamp2(c(0, 30, 50), c("#CEF0F2", "#42B6A3", "#446D73"))
