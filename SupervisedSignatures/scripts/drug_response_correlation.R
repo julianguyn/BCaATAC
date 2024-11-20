@@ -88,7 +88,7 @@ pac <- rbind.fill(
     gdsc_sen[rownames(gdsc_sen) == "Paclitaxel",],
     ccle_sen[rownames(ccle_sen) == "Paclitaxel",],
     ctrp_sen[rownames(ctrp_sen) == "Paclitaxel",]
-) |> t()
+) |> t() |> as.data.frame()
 colnames(pac) <- c("UBR1", "UBR2", "GRAY", "gCSI", "GDSC", "CCLE", "CTRP")
 
 # create correlation matrix
@@ -125,8 +125,8 @@ binarize_dr <- function(sensitivity_data) {
 }
 
 # binarize drug repsonse matrices
-pac <- binarize_dr(pac)
-car <- binarize_dr(car)
+pac_bin <- binarize_dr(pac)
+car_bin <- binarize_dr(car)
 
 
 # function to compute jaccard similarity 
@@ -167,8 +167,8 @@ jaccard_mat <- function(drug_response_mat) {
 
 
 # create jaccarad matrices
-jacc_pac <- jaccard_mat(pac)
-jacc_car <- jaccard_mat(car)
+jacc_pac <- jaccard_mat(pac_bin)
+jacc_car <- jaccard_mat(car_bin)
 
 # correlation heatmap for paclitaxel
 png("SupervisedSignatures/results/figures/dr_corr/jacc-paclitaxel.png", width=125, height=100, units='mm', res = 600, pointsize=80)
@@ -181,12 +181,116 @@ plot_heatmap(jacc_car,"Jaccard\nSimilarity")
 dev.off()
 
 
+### ===== Compute overall paclitaxel responses ===== ### 
 
-# plot heatmap of paclitaxel drug response
+# compute average drug response (AAC)
+pac$response <- rowMeans(pac, na.rm = TRUE)
+
+# compute average drug response (binarized response)
+pac_bin$avg <- rowMeans(pac_bin, na.rm = TRUE)
+pac_bin$response <- ifelse(pac_bin$avg > 0.5, "Sensitive", ifelse(pac_bin$avg < 0.5, "Not Sensitive", NA))
+
+
+# save binarized paclitaxel drug response
+save(pac, file = "SupervisedSignatures/results/data/pac-response.RData")
+save(pac_bin, file = "SupervisedSignatures/results/data/pac-binarized.RData")
+
+
+### ===== Plot heatmap of paclitaxel response (AAC) ===== ### 
+
+# get cell line clustering order (from signature scoring)
+order <- c("HCC70", "MDA-MB-157", "CAL-85-1", "HCC38", "MDA-MB-468", "HBL-100", "HCC1187", 
+           "CAL-51", "DU4475", "MCF10A", "SK-BR-7", "HDQ-P1", "JIMT-1", "SUM149PT", 
+           "HCC1806", "HCC1143", "BT-20", "HCC1937", "CAL-120", "HCC1395", "MDA-MB-436", 
+           "BT-549", "Hs 578T", "MDA-MB-231", "SUM159PT", "MDA-MB-175-VII", "MDA-MB-361", 
+           "MX-1", "HCC3153", "MCF-7", "KPL-1", "MCF-7/LY2", "HCC1954", "HCC1008", "SK-BR-3", 
+           "CAL-148", "AU565", "BT-474", "CAMA-1", "EFM-192A", "HCC202", "UACC-812", 
+           "SK-BR-5", "600MPE", "EFM-19", "ZR-75-1", "T-47D", "HCC1428", "SUM52PE")
+order <- order[order %in% rownames(pac_bin)]
+
+# set colours for plotting
+subtype_pal <- c("Basal" = "#AF4C5B","Her2" = "#EED4D3", "LumA" = "#B3B4D0", "LumB" = "#363E62", "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
+
+# read in subtype annotation
+meta <- fread("DataExploration/data/bcacells_annotation.tsv")
+anno_plot <- data.frame(Cell = meta$sample, Subtype = meta$subtype)
+anno_plot <- anno_plot[match(order, anno_plot$Cell),]
+anno_plot$Label <- "Subtype"
+anno_plot$Cell <- factor(anno_plot$Cell, levels = order)
+
+# format dataframe for plotting
 pac$Cell <- rownames(pac)
-toPlot <- melt(pac)
-toPlot$value <- factor(toPlot$value, levels = c("1", "0", "NA"))
+toPlot <- melt(pac[,-which(colnames(pac) == "response")])
+toPlot$Cell <- factor(toPlot$Cell, levels = order)
 
+# plot individual response per PSet per cell line
+p1 <- ggplot(toPlot, aes(x = variable, y = Cell, fill = value)) + 
+  geom_tile(color = "white") + theme_void() +
+  geom_text(aes(label = round(value, 2)), color = "black", size = 3) +
+  scale_fill_gradientn(colors = c("#BC4749", "#A69AD8", "#7294D4"), na.value = "#D1D7DD") +        
+  theme(
+        axis.text.x = element_text(vjust = 0.5),
+        axis.title.x = element_text(),
+        axis.text.y = element_text(vjust = 0.5, hjust = 1),
+        axis.title.y = element_text(angle = 90),
+        strip.text.x = element_text(),
+        legend.key.size = unit(0.7, 'cm')
+    ) +
+  labs(x = "\nPSet", y = "Cell Line", fill = "Response\n(AAC)")
+
+# plot overall paclitaxel response
+toPlot <- data.frame(Cell = rownames(pac), Response = pac$response)
+toPlot$Label <- "Overall"
+toPlot$Cell <- factor(toPlot$Cell, levels = order)
+
+p2 <- ggplot(toPlot, aes(x = Label, y = Cell, fill = Response)) + 
+  geom_tile(color = "white") + theme_void() +
+  geom_text(aes(label = round(Response, 2)), color = "black", size = 3) +
+  scale_fill_gradientn(colors = c("#BC4749", "#A69AD8", "#7294D4"), na.value = "#D1D7DD") + 
+  theme(
+        axis.text.x = element_text(vjust = 0.5),
+        axis.title.x = element_text(),
+        strip.text.x = element_text(),
+        legend.position = "none"
+    ) +
+  labs(x = "\n", fill = "")
+
+# plot subtypes
+p3 <- ggplot(anno_plot, aes(x = Label, y = Cell, fill = Subtype)) + 
+  geom_tile(color = "white") + theme_void() +
+  scale_fill_manual(values = subtype_pal) +
+  theme(
+        axis.text.x = element_text(vjust = 0.5),
+        axis.title.x = element_text(),
+        strip.text.x = element_text()
+    ) +
+  labs(x = "\n", fill = "Subtype")
+
+# extract legends
+l1 <- as_ggplot(get_legend(p1))
+l3 <- as_ggplot(get_legend(p3))
+p1 <- p1+theme(legend.position = "none")
+p3 <- p3+theme(legend.position = "none")
+
+png("SupervisedSignatures/results/figures/pac_sen_AAC_heatmap.png", width=200, height=200, units='mm', res = 600, pointsize=80)
+grid.arrange(p1, p2, p3, l1, l3, ncol = 30, nrow = 3,
+    layout_matrix = rbind(c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,NA,NA,NA,NA,NA),
+                          c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,4,4,4,4,4),
+                          c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,5,5,5,5,5),
+                          c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,NA,NA,NA,NA,NA)))
+dev.off()
+
+
+
+### ===== Plot heatmap of binarized paclitaxel response ===== ### 
+
+# format dataframe for plotting
+pac_bin$Cell <- rownames(pac_bin)
+toPlot <- melt(pac_bin[,-which(colnames(pac_bin) %in% c("avg", "response"))])
+toPlot$value <- factor(toPlot$value, levels = c("1", "0", "NA"))
+toPlot$Cell <- factor(toPlot$Cell, levels = order)
+
+# plot individual response per PSet per cell line
 p1 <- ggplot(toPlot, aes(x = variable, y = Cell, fill = value)) + 
   geom_tile(color = "white") + theme_void() +
   scale_fill_manual(values = c("#7294D4", "#BC4749"), labels = c("Sensitive", "Not Sensitive"), na.value = "#D1D7DD") +
@@ -200,17 +304,11 @@ p1 <- ggplot(toPlot, aes(x = variable, y = Cell, fill = value)) +
     ) +
   labs(x = "\nPSet", y = "Cell Line", fill = "")
 
-
-# compute average drug response
-pac <- pac[,-which(colnames(pac) == "Cell")]
-pac$avg <- rowMeans(pac, na.rm = TRUE)
-pac$response <- ifelse(pac$avg > 0.5, "Sensitive", ifelse(pac$avg < 0.5, "Not Sensitive", NA))
-
-
-# plot combined paclitaxel response
-toPlot <- data.frame(Cell = rownames(pac), Response = pac$response)
+# plot overall paclitaxel response
+toPlot <- data.frame(Cell = rownames(pac_bin), Response = pac_bin$response)
 toPlot$Response <- factor(toPlot$Response, levels = c("Sensitive", "Not Sensitive"))
 toPlot$Label <- "Overall"
+toPlot$Cell <- factor(toPlot$Cell, levels = order)
 
 p2 <- ggplot(toPlot, aes(x = Label, y = Cell, fill = Response)) + 
   geom_tile(color = "white") + theme_void() +
@@ -227,10 +325,10 @@ p2 <- ggplot(toPlot, aes(x = Label, y = Cell, fill = Response)) +
 l1 <- as_ggplot(get_legend(p1))
 p1 <- p1+theme(legend.position = "none")
 
-png("SupervisedSignatures/results/figures/pac_sen_heatmap.png", width=180, height=200, units='mm', res = 600, pointsize=80)
-grid.arrange(p1, p2, l1, ncol = 15, nrow = 1,
-    layout_matrix = rbind(c(1,1,1,1,1,1,1,1,1,1,1,2,3,3,3)))
+png("SupervisedSignatures/results/figures/pac_sen_bin_heatmap.png", width=200, height=200, units='mm', res = 600, pointsize=80)
+grid.arrange(p1, p2, p3, l1, l3, ncol = 30, nrow = 3,
+    layout_matrix = rbind(c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,NA,NA,NA,NA,NA),
+                          c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,4,4,4,4,4),
+                          c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,5,5,5,5,5),
+                          c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,NA,NA,NA,NA,NA)))
 dev.off()
-
-# save binarized paclitaxel drug response
-save(pac, file = "SupervisedSignatures/results/data/pac-binarized.RData")
