@@ -217,18 +217,26 @@ peak_reduced <- peak_mat[,-unique(correlated[,2])]
 ### ===== Prepare data for model training and testing ===== ###
 
 # load in drug response data
+load("SupervisedSignatures/results/data/pac-response.RData")
 load("SupervisedSignatures/results/data/pac-binarized.RData")
 
 # remove cells with <NA> overall response
-pac <- pac[!is.na(pac$response), ]
-peak_reduced <- peak_reduced[rownames(peak_reduced) %in% rownames(pac),]
+pac_bin <- pac_bin[!is.na(pac_bin$response), ]
+peak_bin_reduced <- peak_reduced[rownames(peak_reduced) %in% rownames(pac_bin),]
 
 # convert drug response to binary encoding
-pac$response <- ifelse(pac$response == "Sensitive", 1, 0)
+pac_bin$response <- ifelse(pac_bin$response == "Sensitive", 1, 0)
 
 # order cell lines
 pac <- pac[order(rownames(pac)),]
+pac_bin <- pac_bin[order(rownames(pac_bin)),]
 peak_reduced <- peak_reduced[order(rownames(peak_reduced)),]
+peak_bin_reduced <- peak_bin_reduced[order(rownames(peak_bin_reduced)),]
 
-write.csv(peak_reduced, file = "SupervisedSignatures/results/data/bca_peakmat.csv", quote = FALSE, row.names = TRUE)
-write.csv(pac, file = "SupervisedSignatures/results/data/pac-binarized.csv", quote = FALSE, row.names = TRUE)
+# save drug response files
+write.csv(pac, file = "SupervisedSignatures/results/data/pac_AAC.csv", quote = FALSE, row.names = TRUE)
+write.csv(pac_bin, file = "SupervisedSignatures/results/data/pac_bin.csv", quote = FALSE, row.names = TRUE)
+
+# save peak matrices
+write.csv(peak_reduced, file = "SupervisedSignatures/results/data/peakmat_AAC.csv", quote = FALSE, row.names = TRUE)
+write.csv(peak_bin_reduced, file = "SupervisedSignatures/results/data/peakmat_bin.csv", quote = FALSE, row.names = TRUE)
