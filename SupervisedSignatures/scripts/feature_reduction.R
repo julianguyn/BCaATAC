@@ -108,14 +108,6 @@ gdsc_com <- computeCI(peak_mat, gdsc_sen, "GDSC")
 ctrp_com <- computeCI(peak_mat, ctrp_sen, "CTRP")
 ccle_com <- computeCI(peak_mat, ccle_sen, "CCLE")
 
-# save results
-save(ubr1_com, file = "../results/res1.RData")
-save(ubr2_com, file = "../results/res2.RData")
-save(gray_com, file = "../results/res3.RData")
-save(gcsi_com, file = "../results/res4.RData")
-save(gdsc_com, file = "../results/res5.RData")
-save(ctrp_com, file = "../results/res6.RData")
-save(ccle_com, file = "../results/res7.RData")
 
 # save(ubr1_com, ubr2_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com, file = "SupervisedDrugResponseAssociations.RData")
 
@@ -130,13 +122,13 @@ filter_peaks <- function(combinations) {
     return(combinations)
 }
 
-ubr1_com <- filter_peaks(ubr1_com) #86512
-ubr2_com <- filter_peaks(ubr2_com) #137177
-gray_com <- filter_peaks(gray_com) #149838
-gcsi_com <- filter_peaks(gcsi_com) #68110
-gdsc_com <- filter_peaks(gdsc_com) #61316
-ctrp_com <- filter_peaks(ctrp_com) #90075
-ccle_com <- filter_peaks(ccle_com) #71678
+ubr1_com <- filter_peaks(ubr1_com) #86512   86511
+ubr2_com <- filter_peaks(ubr2_com) #137177  137195
+gray_com <- filter_peaks(gray_com) #149838  149799
+gcsi_com <- filter_peaks(gcsi_com) #68110   68110
+gdsc_com <- filter_peaks(gdsc_com) #61316   61300
+ctrp_com <- filter_peaks(ctrp_com) #90075   71682
+ccle_com <- filter_peaks(ccle_com) #71678   90075
 
 # upset plot of common peaks
 set.seed(123)
@@ -166,21 +158,21 @@ dev.off()
 # merge dataframes
 CI_combined <- rbind(ubr1_com, ubr2_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_com)
 
-# keep peaks present in at least 4 PSets
+# keep peaks present in at least 5 PSets
 peak_counts <- table(CI_combined$peak)
-keep <- names(peak_counts[peak_counts > 4])
+keep <- names(peak_counts[peak_counts >= 5])
 CI_combined <- CI_combined[CI_combined$peak %in% keep,]
 
 # upset plot of common peaks
 set.seed(123)
 toPlot <- make_comb_mat(list(
-    UBR1 = CI_combined$peak[CI_combined$pset == "UHNBreast1"],  #1774
-    UBR2 = CI_combined$peak[CI_combined$pset == "UHNBreast2"],  #3003
-    GRAY = CI_combined$peak[CI_combined$pset == "GRAY"],        #2840
-    gCSI = CI_combined$peak[CI_combined$pset == "gCSI"],        #2655
-    GDSC = CI_combined$peak[CI_combined$pset == "GDSC"],        #1127
-    CTRP = CI_combined$peak[CI_combined$pset == "CTRP"],        #2169
-    CCLE = CI_combined$peak[CI_combined$pset == "CCLE"]         #2336
+    UBR1 = CI_combined$peak[CI_combined$pset == "UHNBreast1"],  #6552
+    UBR2 = CI_combined$peak[CI_combined$pset == "UHNBreast2"],  #14654
+    GRAY = CI_combined$peak[CI_combined$pset == "GRAY"],        #14622
+    gCSI = CI_combined$peak[CI_combined$pset == "gCSI"],        #11638
+    GDSC = CI_combined$peak[CI_combined$pset == "GDSC"],        #4066
+    CTRP = CI_combined$peak[CI_combined$pset == "CTRP"],        #10565
+    CCLE = CI_combined$peak[CI_combined$pset == "CCLE"]         #9080
 ))
 
 # upset plot
@@ -193,7 +185,6 @@ dev.off()
 
 # filter peak matrix to only keep peaks 
 peak_mat <- peak_mat[rownames(peak_mat) %in% keep, ]
-#save(peak_mat, file = "SupervisedSignatures/results/data/peak-filtered-peakmat.RData")
 
 
 ### ===== Remove correlated peaks ===== ###
@@ -212,7 +203,7 @@ correlated <- which(upper_tri & abs(corr_mat) > thres, arr.ind = TRUE)
 
 # remove correlated peak from identified pairs
 peak_reduced <- peak_mat[,-unique(correlated[,2])]
-
+#save(peak_reduced, file = "SupervisedSignatures/results/data/peak-filtered-peakmat.RData")
 
 ### ===== Prepare data for model training and testing ===== ###
 
