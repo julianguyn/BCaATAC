@@ -9,6 +9,7 @@ RNAChemoResistance/data
 SignatureScoring/data
 PacResistantPDX/data
 SupervisedSignatures/data
+cfDNA/data
 
 # all results folders
 DataExploration/results
@@ -19,6 +20,7 @@ RNAChemoResistance/results
 SignatureScoring/results
 PacResistantPDX/results
 SupervisedSignatures/results
+cfDNA/results
 
 # others
 MetaData
