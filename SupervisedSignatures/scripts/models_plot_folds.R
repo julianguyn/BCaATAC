@@ -36,7 +36,7 @@ plot_folds <- function(df, avg_df, type) {
 
     # format dataframe for plotting
     df$Fold <- paste(df$PSet, df$Fold, sep = "-")
-    toPlot <- melt(df)
+    toPlot <- reshape2::melt(df)
     toPlot$Fold <- gsub(".*-", "", toPlot$Fold)
 
     # pset options
