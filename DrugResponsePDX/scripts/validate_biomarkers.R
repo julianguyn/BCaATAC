@@ -9,7 +9,7 @@ library(dplyr)
 response <- as.data.frame(read_excel("DrugResponsePDX/data/drugresponse/DrugResponse_PDX.xlsx", sheet = 1))
 
 # keep only mRECIST
-response <- response[,colnames(response) %in% c("patient.id", "mRECIST", "drug")]
+#response <- response[,colnames(response) %in% c("patient.id", "mRECIST", "drug")]
 
 # read in signature scores
 scores <- as.data.frame(t(read.table("DrugResponsePDX/data/chromvar/bca_sign.Zscore.txt")))
@@ -28,14 +28,49 @@ for (i in 1:nrow(pac)) {
     pac$sig5[i] <- scores[gsub("_", "", gsub("X", "", rownames(scores))) == sample,]$Signature5
 }
 
-# remove NA
-pac <- pac[-which(pac$mRECIST == "NA"),]
-pac$mRECIST <- factor(pac$mRECIST, levels = c("CR", "PR", "SD", "PD"))
+
+### ===== Plot AUC ===== ###
+
+# order samples
+pac$AUC <- as.numeric(pac$AUC)
+pac_auc <- pac[order(pac$AUC, decreasing = T),]
+pac_auc$rank <- 1:nrow(pac_auc)
+
+# plot waterfall plot coloured by signature score
+png("DrugResponsePDX/results/figures/paclitaxel_pdx_sig_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
+ggplot(pac_auc, aes(x = rank, y = AUC, fill = sig5)) + 
+    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
+    scale_fill_gradientn(colors = c("#BC4749", "#F8F1F8", "#077293"), limits = c(-45, 45)) +
+    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+    labs(x = "PDX Model", y = "AUC", fill = "Signature 5\nScore") 
+dev.off()
+
+
+
+### ===== Plot Slope ===== ###
+
+# order samples
+pac$slope <- as.numeric(pac$slope)
+pac_slp <- pac[order(pac$slope, decreasing = T),]
+pac_slp$rank <- 1:nrow(pac_slp)
+
+# plot waterfall plot coloured by signature score
+png("DrugResponsePDX/results/figures/paclitaxel_pdx_slope_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
+ggplot(pac_slp, aes(x = rank, y = slope, fill = sig5)) + 
+    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
+    scale_fill_gradientn(colors = c("#BC4749", "#F8F1F8", "#077293"), limits = c(-45, 45)) +
+    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+    labs(x = "PDX Model", y = "Slope", fill = "Signature 5\nScore") 
+dev.off()
+
+
+### ===== Plot mRECIST ===== ###
 
 # create ranking order
 pac <- pac[order(pac$sig5, decreasing = T),]
 pac$rank <- 1:nrow(pac)
 
+# plot waterfall plot coloured by mRESCIST
 png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
 ggplot(pac, aes(x = rank, y = sig5, fill = mRECIST)) + 
     geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
@@ -47,6 +82,44 @@ ggplot(pac, aes(x = rank, y = sig5, fill = mRECIST)) +
     theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
     ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
 dev.off()
+
+
+### ===== Plot mRECIST ===== ###
+# todo: convert pac to pac_mr
+
+# remove NA
+pac_mr <- pac[-which(pac$mRECIST == "NA"),]
+pac_mr$mRECIST <- factor(pac_mr$mRECIST, levels = c("CR", "PR", "SD", "PD"))
+
+# create ranking order
+pac <- pac[order(pac$sig5, decreasing = T),]
+pac$rank <- 1:nrow(pac)
+
+# plot waterfall plot coloured by mRESCIST
+png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
+ggplot(pac, aes(x = rank, y = sig5, fill = mRECIST)) + 
+    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
+    scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
+                      labels = c('CR' = 'Complete\nResponse', 
+                              'PD' = 'Progressive\nDisease', 
+                              'SD' = 'Stable\nDisease',
+                              'PR' = 'Partial\nResponse')) +
+    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+    ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
+dev.off()
+
+# plot waterfall plot coloured by signature score
+toPlot <- pac[order(pac$mRECIST, pac$sig5),]
+toPlot$rank <- 1:nrow(toPlot)
+ggplot(toPlot, aes(x = rank, y = sig5, fill = sig5)) + 
+    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
+    scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
+                      labels = c('CR' = 'Complete\nResponse', 
+                              'PD' = 'Progressive\nDisease', 
+                              'SD' = 'Stable\nDisease',
+                              'PR' = 'Partial\nResponse')) +
+    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+    ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
 
 
 pac <- pac %>%
