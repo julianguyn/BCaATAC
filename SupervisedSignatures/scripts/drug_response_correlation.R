@@ -99,6 +99,13 @@ png("SupervisedSignatures/results/figures/dr_corr/pcc-paclitaxel.png", width=125
 plot_heatmap(corr_mat, "Pearson's")
 dev.off()
 
+# create spearman correlation matrix
+corr_mat <- cor(pac, use = "pairwise.complete.obs", method = "spearman")
+
+# correlation heatmap for paclitaxel
+png("SupervisedSignatures/results/figures/dr_corr/scc-paclitaxel.png", width=125, height=100, units='mm', res = 600, pointsize=80)
+plot_heatmap(corr_mat, "Spearman's")
+dev.off()
 
 # get all carboplatin response
 car <- rbind.fill(
