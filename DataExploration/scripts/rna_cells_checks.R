@@ -276,3 +276,61 @@ ggplot(merge_df, aes(x = PSet, y = UBR2_Cell, fill = value)) +
         legend.key.size = unit(0.5, 'cm')) +
   labs(fill = "Pearsons", y = "UHNBreast2 Cell Line")
 dev.off()
+
+
+
+### ===== Individual sample correlation across PSets ===== ###
+
+load("DataExploration/data/rnaseq_melted.RData")
+
+
+# function to create a correlation plot and compute correlation coefficient between two psets
+indivcorr_pset <- function(ubr2, pset, label) {
+
+    # get intersected samples
+    samples <- intersect(ubr2$Var2, pset$Var2)
+
+    # store results
+    res <- c()
+
+    for (i in seq_along(samples)) {
+
+        sample = samples[i]
+        ubr2_sub <- ubr2[ubr2$Var2 == sample,]
+        pset_sub <- pset[pset$Var2 == sample,]
+
+        # keep intersected genes
+        genes <- intersect(ubr2_sub$Var1, pset_sub$Var1)
+        ubr2_sub <- ubr2_sub[match(genes, ubr2_sub$Var1),]
+        pset_sub <- pset_sub[match(genes, pset_sub$Var1),]
+
+        # pearson's
+        pcc <- cor(ubr2_sub$value, pset_sub$value, method = "pearson", use = "complete.obs")
+        res <- c(res, pcc)
+    }
+
+    # pearson correlation coefficient
+    df <- data.frame(sample = samples, corr = res)
+    df$label <- label
+    return(df)
+}
+
+gray$Var2 <- as.character(gray$Var2)
+gray$Var2[1380149:1429439] <- rep("UACC812_r2", 49291)
+
+# merge results
+indiv_corr <- rbind(indivcorr_pset(cells, gray, "GRAY"), 
+                    indivcorr_pset(cells, gcsi, "gCSI"),
+                    indivcorr_pset(cells, ccle, "CCLE"))
+
+# plot correlations
+png("DataExploration/results/figures/indiv_correlations.png", width=125, height=150, units='mm', res = 600, pointsize=80)
+ggplot(indiv_corr, aes(x = label, y = sample, fill = corr)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "black", high = "#AF4C5B", limits = c(0, 0.5)) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        panel.grid = element_blank(),
+        legend.key.size = unit(0.5, 'cm')) +
+  labs(fill = "Pearsons", y = "UHNBreast2 Cell Line")
+dev.off()
