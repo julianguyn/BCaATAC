@@ -10,6 +10,7 @@ SignatureScoring/data
 PacResistantPDX/data
 SupervisedSignatures/data
 cfDNA/data
+MolecularSigAnalysis/data
 
 # all results folders
 DataExploration/results
@@ -21,6 +22,7 @@ SignatureScoring/results
 PacResistantPDX/results
 SupervisedSignatures/results
 cfDNA/results
+MolecularSigAnalysis/results
 
 # others
 MetaData
