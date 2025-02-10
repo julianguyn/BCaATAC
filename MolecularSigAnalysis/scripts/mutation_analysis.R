@@ -112,6 +112,7 @@ mat <- mutCountMatrix(
   removeNonMutated = TRUE
 )
 
+write.table(mat, file = "MolecularSigAnalysis/results/data/TCGA_mutation_matrix.tsv", quote = F, sep = "\t", col.names = T, row.names = T)
 
 ###########################################################
 # Map files to metadata
