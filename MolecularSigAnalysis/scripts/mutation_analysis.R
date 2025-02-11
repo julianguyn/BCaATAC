@@ -9,7 +9,10 @@ suppressPackageStartupMessages({
   library(grid)
   library(gridExtra)
   library(ggh4x)
-  #library(BSgenome.Hsapiens.UCSC.hg19)
+  library(NMF)
+  library(BSgenome.Hsapiens.UCSC.hg38)
+  library(pheatmap)
+  library(RColorBrewer)
 })
 
 ###########################################################
@@ -52,6 +55,7 @@ meta$Signature <- mat$signature_assign[match(meta$ATAC.Seq.File.Name, mat$variab
 mat$rank = 1:nrow(mat)
 meta$rank <- mat$rank[match(meta$ATAC.Seq.File.Name, mat$variable)]
 
+write.csv(meta, file = "MolecularSigAnalysis/data/TCGA_sourcefiles.csv", quote = F, row.names = F)
 
 ###########################################################
 # MAF summaries all tumours
@@ -198,7 +202,7 @@ p1 <- p1+theme(legend.position = "none")
 p2 <- p2+theme(legend.position = "none")
 p3 <- p3+theme(legend.position = "none")
 
-png("MolecularSigAnalysis/results/figures/heatmap.png", width = 8, height = 6, res = 600, units = "in")
+png("../figures/heatmap.png", width = 6, height = 6, res = 600, units = "in")
 grid.arrange(p1, p2, p3, l1, l2, l3, ncol = 19, nrow = 6,
              layout_matrix = rbind(c(1,1,1,1,1,1,1,1,1,1,1,2,3,4,4,4,4), 
                                    c(1,1,1,1,1,1,1,1,1,1,1,2,3,5,5,5,5), 
@@ -206,4 +210,119 @@ grid.arrange(p1, p2, p3, l1, l2, l3, ncol = 19, nrow = 6,
                                    c(1,1,1,1,1,1,1,1,1,1,1,2,3,6,6,6,6),
                                    c(1,1,1,1,1,1,1,1,1,1,1,2,3,6,6,6,6),
                                    c(1,1,1,1,1,1,1,1,1,1,1,2,3,NA,NA,NA,NA)))
+dev.off()
+
+
+###########################################################
+# Extract BCa mutation calls
+###########################################################
+
+mafs.tnm = trinucleotideMatrix(maf = mafs, ref_genome = "BSgenome.Hsapiens.UCSC.hg38")
+mut_calls = t(mafs.tnm$nmf_matrix)
+colnames(mut_calls) = meta$Sample.Name[match(colnames(mut_calls), meta$snv_label)]
+res <- list(signatures = mut_calls)
+
+
+###########################################################
+# Cosine Similarity against Mutational Signatures
+###########################################################
+ 
+# compare against original 30 mutational signatures
+og30.cosm = compareSignatures(nmfRes = res, sig_db = "legacy")
+og30.cosm <- og30.cosm$cosine_similarities
+
+# compare against updated 60 signatures
+v3.cosm = compareSignatures(nmfRes = res, sig_db = "SBS")
+v3.cosm <- v3.cosm$cosine_similarities
+
+
+###########################################################
+# Heatmaps cluster by mutational signatures
+###########################################################
+
+pheatmap::pheatmap(mat = og30.cosm, 
+                   cluster_rows = FALSE, 
+                   main = "Cosine Similarity against Original 30 Mutational Signatures")
+
+pheatmap::pheatmap(mat = v3.cosm, 
+                   cluster_rows = FALSE, 
+                   main = "Cosine Similarity against Updated 60 Mutational Signatures")
+
+###########################################################
+# Format dataframes for plotting
+###########################################################
+
+# function to add ATAC signature to cs dataframe
+format_sig <- function(cosm_df) {
+  cosm_df <- as.data.frame(cosm_df)
+  cosm_df$Sample.Name <- rownames(cosm_df)
+  cosm_df$Signature <- meta$Signature[match(cosm_df$Sample.Name, meta$Sample.Name)]
+  cosm_df$rank <- meta$rank[match(cosm_df$Sample.Name, meta$Sample.Name)]
+  cosm_df$Subtype <- meta$Subtype[match(cosm_df$Sample.Name, meta$Sample.Name)]
+  cosm_df <- reshape2::melt(cosm_df, id = c("Sample.Name", "Signature", "Subtype", "rank"))
+  cosm_df$rank <- factor(cosm_df$rank, levels = max(cosm_df$rank):1)
+  return(cosm_df)
+}
+
+og30 <- format_sig(og30.cosm)
+v3 <- format_sig(v3.cosm)
+
+
+###########################################################
+# Heatmaps cluster by ATAC signatures
+###########################################################
+
+# function to plot heatmap
+plot_heatmap <- function(toPlot, type = "og") {
+  
+  x_lab <- ifelse(type == "og", "                     ", "                ")
+  
+  p1 <- ggplot(toPlot) + geom_tile(aes(x = variable, y = rank, fill = value), color = "gray") +
+    scale_fill_distiller("Cosine Similarity", palette = "RdYlBu") +
+    geom_hline(yintercept = c(16.5, 24.5, 40.5, 49.5, 58.5), linetype = "dotted", color = "black") +
+    theme_void() + 
+    theme(axis.text.x = element_text(size =8, angle = 90, vjust = 0.5, hjust=1), 
+          axis.title.x = element_text(size=12),
+          axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
+    labs(x = "\nMutational Signatures", y = "Tumour Sample\n")
+  
+  # signature annotation bar
+  p2 <- ggplot(toPlot) + geom_tile(aes(x = 1, y = rank, fill = Signature)) +
+    theme_void() +
+    scale_fill_manual(values = pal) +
+    theme(axis.title.x = element_text(size=12, angle = 90, vjust = 0.5)) + 
+    labs(fill = "Signature          ", x = x_lab)
+  
+  # subtype annotation bar
+  p3 <- ggplot(toPlot) + geom_tile(aes(x = 1, y = rank, fill = Subtype)) +
+    theme_void() +
+    scale_fill_manual(values = subtype_pal) +
+    theme(axis.title.x = element_text(size=12, angle = 90, vjust = 0.5)) + 
+    labs(fill = "Subtype      ", x = x_lab)
+  
+  
+  # extract legends
+  l1 <- as_ggplot(get_legend(p1))
+  l2 <- as_ggplot(get_legend(p2))
+  l3 <- as_ggplot(get_legend(p3))
+  p1 <- p1+theme(legend.position = "none")
+  p2 <- p2+theme(legend.position = "none")
+  p3 <- p3+theme(legend.position = "none")
+  
+  p <- grid.arrange(p1, p2, p3, l1, l2, l3, ncol = 25, nrow = 6,
+         layout_matrix = rbind(c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,4,4,4,4), 
+                               c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,4,4,4,4), 
+                               c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,5,5,5,5), 
+                               c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,5,5,5,5),
+                               c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,6,6,6,6),
+                               c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,6,6,6,6)))
+  return(p)
+}
+
+png("../figures/heatmap_og30.png", width = 8, height = 6, res = 600, units = "in")
+plot_heatmap(og30)
+dev.off()
+
+png("../figures/heatmap_v3.png", width = 9, height = 6, res = 600, units = "in")
+plot_heatmap(v3, type = "v3")
 dev.off()
