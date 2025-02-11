@@ -178,3 +178,46 @@ png("MolecularSigAnalysis/results/figures/volcano_sig6.png", width = 8, height =
 volcano(sig6, "Signature6", topSig6)
 dev.off()
 
+
+###########################################################
+# Plot top 15 genes
+###########################################################
+
+# function to plot top 15 genes
+plot_top15 <- function(top15, label) {
+  
+  top15 <- top15[order(top15$logFC, decreasing = F),]
+  top15$rank <- 1:15
+  top15$Gene <- rownames(top15)
+  top15$Gene <- factor(top15$Gene, levels = top15$Gene)
+  
+  p <- ggplot(top15) + geom_tile(aes(x = 1, y = Gene, fill = logFC), color = "gray") +
+    scale_fill_gradient2(high = "#93E1D8", low = "#AA4465", mid = "white", midpoint = 0) +
+    geom_text(aes(x = 1, y = Gene, label = Gene), color = "black", size = 3) +
+    theme_void() + 
+    theme(axis.title.x = element_text(size=12),
+          axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
+    labs(x = "", y = "Gene") + theme(plot.title = element_text(hjust = 0.5)) +
+    ggtitle(label)
+  return(p)
+}
+
+png("MolecularSigAnalysis/results/figures/topSig2.png", width = 2, height = 4, res = 600, units = "in")
+plot_top15(topSig2, "Signature2")
+dev.off()
+
+png("MolecularSigAnalysis/results/figures/topSig3.png", width = 2, height = 4, res = 600, units = "in")
+plot_top15(topSig3, "Signature3")
+dev.off()
+
+png("MolecularSigAnalysis/results/figures/topSig4.png", width = 2, height = 4, res = 600, units = "in")
+plot_top15(topSig4, "Signature4")
+dev.off()
+
+png("MolecularSigAnalysis/results/figures/topSig5.png", width = 2, height = 4, res = 600, units = "in")
+plot_top15(topSig5, "Signature5")
+dev.off()
+
+png("MolecularSigAnalysis/results/figures/topSig6.png", width = 2, height = 4, res = 600, units = "in")
+plot_top15(topSig6, "Signature6")
+dev.off()
