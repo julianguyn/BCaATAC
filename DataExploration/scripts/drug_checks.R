@@ -1,9 +1,15 @@
-# script to do sanity checks of correlations between known drug and molecular subtypes
-
 setwd("C:/Users/julia/Documents/BCaATAC")
 
-library(ggplot2)
-library(reshape2)
+# load libraries
+suppressPackageStartupMessages({
+  library(reshape2)
+  library(ggplot2)
+})
+
+
+###########################################################
+# Load in data
+###########################################################
 
 # load in drug sensitivity data from PSets
 load("DrugResponse/results/data/sensitivity_data.RData")
@@ -18,17 +24,24 @@ dup <- samples$sample[duplicated(samples$sample)]
 tmp <- samples[samples$sample %in% dup,]
 samples <- rbind(samples[-which(samples$sample %in% dup),], tmp[which(tmp$seq == "Nergiz"),]) # from dups, keep only the ones by Nergiz
 
-
 # load in metadata
 meta <- read.csv("MetaData/Lupien/BCa_samples.csv")
 meta <- meta[meta$sample %in% samples$file,]
 
-# get intrinsic molecular subtype
+
+###########################################################
+# Get intrinsic molecular subtype
+###########################################################
+
 samples$subtype <- meta[match(samples$file, meta$sample),]$subtype
 
 # from https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-016-2911-z/tables/3, set 600MPE to LuminalA
 samples[samples$subtype == "cell_line",]$subtype <- "LumA"
 
+
+###########################################################
+# Functions for drug response associations
+###########################################################
 
 # function to return dataframe of drug sensitivity for list of drugs and cell lines needed
 subset_sen <- function(sen, need_cl, drugs, df, label) {
@@ -46,6 +59,7 @@ subset_sen <- function(sen, need_cl, drugs, df, label) {
     return(df)
 }
 
+# function calls above on all PSets
 get_drugresponse <- function(subtype, drugs) {
     # inputs:
     #   subtype: vector of subtypes from samples$subtype to subset for
@@ -74,7 +88,10 @@ get_drugresponse <- function(subtype, drugs) {
 }
 
 
-## HER2
+###########################################################
+# Plot HER2 drug response assocaitions
+###########################################################
+
 drugs <- c("Trastuzumab", "Lapatinib")
 df <- get_drugresponse(c("Her2"), drugs)
 
@@ -100,7 +117,10 @@ ggplot(df[df$drug == "Trastuzumab",], aes(x = label, y = value)) +
 dev.off()
 
 
-#ER+
+###########################################################
+# Plot ER+ drug response associations
+###########################################################
+
 drugs <- c("Tamoxifen")
 df <- get_drugresponse(c("LumA", "LumB", "Normal"), drugs)
 
@@ -114,7 +134,11 @@ ggplot(df[df$drug == "Tamoxifen",], aes(x = label, y = value)) +
   labs(x = "PSet", y = "AAC", title = "ER+ and Tamoxifen")
 dev.off()
 
-#TNBC
+
+###########################################################
+# Plot TNBC drug response associations
+###########################################################
+
 drugs <- c("Paclitaxel", "Docetaxel", "Doxorubicin", "Epirubicin")
 df <- get_drugresponse(c("Basal"), drugs)
 
