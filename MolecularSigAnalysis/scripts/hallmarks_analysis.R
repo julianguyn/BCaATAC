@@ -27,7 +27,7 @@ mat <- read.table("ATAC_heatmap_rank6.png.order.matrix", header = T) |>
   as.data.frame()
 
 # read in meta data file
-meta <- read.csv("TCGA_sourcefiles.csv")
+meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
 meta$ATAC.Seq.File.Name <- gsub("-", "\\.", meta$ATAC.Seq.File.Name)
 
 
