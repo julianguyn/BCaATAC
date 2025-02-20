@@ -1,4 +1,4 @@
-setwd("Downloads/maf")
+setwd("Documents/BCaATAC")
 
 # load libraries
 suppressPackageStartupMessages({
@@ -20,7 +20,7 @@ suppressPackageStartupMessages({
 ###########################################################
 
 # load in matrix file from NMF
-mat <- read.table("../ATAC_heatmap_rank6.png.order.matrix", header = T)
+mat <- read.table("ATAC_heatmap_rank6.png.order.matrix", header = T)
 
 # read in meta data file
 meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
@@ -109,20 +109,20 @@ dev.off()
 ###########################################################
 
 # create counts matrix
-mat <- mutCountMatrix(
+mut <- mutCountMatrix(
   mafs,
   includeSyn = FALSE,
   countOnly = NULL,
   removeNonMutated = TRUE
 )
 
-write.table(mat, file = "MolecularSigAnalysis/results/data/TCGA_mutation_matrix.tsv", quote = F, sep = "\t", col.names = T, row.names = T)
+write.table(mut, file = "MolecularSigAnalysis/results/data/TCGA_mutation_matrix.tsv", quote = F, sep = "\t", col.names = T, row.names = T)
 
 ###########################################################
 # Map files to metadata
 ###########################################################
 
-mapping <- data.frame(snv = colnames(mat))
+mapping <- data.frame(snv = colnames(mut))
 mapping$Sample.Name <- sub("^([^-]+-[^-]+-[^-]+).*", "\\1", mapping$snv)
 mapping$Sample.Name <- gsub("-", "\\.", mapping$Sample.Name)
 
@@ -136,7 +136,7 @@ meta$snv_label <- mapping$snv[match(meta$Sample.Name, mapping$Sample.Name)]
 common_mut <- c("PIK3CA", "TP53", "CDH1", "ERBB2", "MUC16", "TG", "TTN",
                  "QSER1", "SPTA1", "PTPRB", "GATA3", "USH2A", "TMCC3", "NCOR1", "ZFHX4", 
                  "PTEN", "BRCA1", "BRCA2", "ATM", "CHEK2")
-toPlot <- mat[rownames(mat) %in% common_mut,]
+toPlot <- mut[rownames(mut) %in% common_mut,]
 
 # save labels for plotting
 toPlot <- reshape2::melt(toPlot)
