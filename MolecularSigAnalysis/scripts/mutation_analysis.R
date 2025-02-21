@@ -20,7 +20,7 @@ suppressPackageStartupMessages({
 ###########################################################
 
 # load in matrix file from NMF
-mat <- read.table("ATAC_heatmap_rank6.png.order.matrix", header = T)
+atac <- read.table("Signatures/results/data/ATAC_heatmap_rank6.png.order.matrix", header = T)
 
 # read in meta data file
 meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
@@ -32,10 +32,10 @@ meta$SNV.File.Name <- gsub("\\.gz", "", meta$SNV.File.Name)
 ###########################################################
 
 # get signature
-mat$Signature <- paste0("Signature", 1:6)
+atac$Signature <- paste0("Signature", 1:6)
 
 # format for plotting
-mat <- reshape2::melt(mat)
+mat <- reshape2::melt(atac)
 
 # save signature assignment
 mat$signature_assign <- ""
@@ -234,6 +234,14 @@ og30.cosm <- og30.cosm$cosine_similarities
 # compare against updated 60 signatures
 v3.cosm = compareSignatures(nmfRes = res, sig_db = "SBS")
 v3.cosm <- v3.cosm$cosine_similarities
+
+
+###########################################################
+# Save cosine similarity matrices
+###########################################################
+
+write.csv(og30.cosm, file = "MolecularSigAnalysis/results/data/og30_cosm.csv", quote = F, row.names = F)
+write.csv(v3.cosm, file = "MolecularSigAnalysis/results/data/v3_cosm.csv", quote = F, row.names = F)
 
 
 ###########################################################
