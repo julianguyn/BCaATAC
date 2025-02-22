@@ -41,6 +41,8 @@ samples <- rbind(samples[-which(samples$sample %in% dup),], tmp[which(tmp$seq ==
 signature_scores <- signature_scores[,which(colnames(signature_scores) %in% samples$file)]
 rownames(signature_scores) <- paste0("Signature", 1:6)
 
+# read in subtype information
+cl_meta <- read.csv("MetaData/cell_line_subtypes.csv")
 
 ###########################################################
 # Keep common samples
@@ -100,7 +102,6 @@ computeCI <- function(signature_scores, sensitivity_data, label) {
                                             surv.event = rep(1,length(sensitivity_data)), 
                                             # df of all drugs as rows with all samples as columns
                                             outx = TRUE, method="noether", na.rm = TRUE)
-
         combinations$pvalue[i] <- ci$p.value
         combinations$ci[i] <- ci$c.index
         combinations$se[i] <- ci$se
@@ -126,41 +127,84 @@ tdxd_com <- computeCI(signature_scores, tdxd, "TDXd")
 
 
 ###########################################################
-# Plot association for each signature and TDXd
+# Compute associations for HER2 vs non-HER2 samples
 ###########################################################
 
-# combine drug response and signature scores
-combined <- t(rbind(tdxd, signature_scores)) |> as.data.frame()
-combined <- sapply(combined, as.numeric)
-combined <- as.data.frame(combined)
+# stratify samples
+her2 <- cl_meta$X[cl_meta$true_subtype == "Her2"]
+nonher2 <- cl_meta$X[-which(cl_meta$X %in% her2)]
+her2 <- her2[-which(is.na(her2))]
+
+# get mapping
+her2 <- samples$sample[match(her2, samples$mapping)]
+nonher2 <- samples$sample[match(nonher2, samples$mapping)]
+
+# subset signatures
+her2 <- signature_scores[,colnames(signature_scores) %in% her2]
+nonher2 <- signature_scores[,colnames(signature_scores) %in% nonher2]
+
+# subset drug response
+her2_tdxd <- tdxd[,match(colnames(her2), colnames(tdxd))]
+nonher2_tdxd <- tdxd[,match(colnames(nonher2), colnames(tdxd))]
+
+# compute concordance index
+her2_com <- computeCI(her2, her2_tdxd, "TDXd")
+nonher2_com <- computeCI(nonher2, nonher2_tdxd, "TDXd")
+
+
+###########################################################
+# Combine data for plotting
+###########################################################
+
+# function to combine drug response and signature scores
+combine_data <- function(signature_scores, tdxd) {
+    combined <- t(rbind(tdxd, signature_scores)) |> as.data.frame()
+    combined <- sapply(combined, as.numeric)
+    combined <- as.data.frame(combined)
+    return(combined)
+}
+
+combined <- combine_data(signature_scores, tdxd)
+her2_combined <- combine_data(her2, her2_tdxd)
+nonher2_combined <- combine_data(nonher2, nonher2_tdxd)
 
 # list signatures
 signatures <- paste0("Signature", 1:6)
 
-# get axis limits for plotting
-x <- max(max(combined[,-c(1)]), abs(min(combined[,-c(1)])))
-y <- max(max(combined$TDXd, na.rm=T), abs(min(combined$TDXd, na.rm=T)))
+###########################################################
+# Plot association for each signature and TDXd
+###########################################################
 
-for (signature in signatures) {
+# function to plot pearson's correlation
+plot_tdxd <- function(combined, path) {
+    # get axis limits for plotting
+    x <- max(max(combined[,-c(1)]), abs(min(combined[,-c(1)])))
+    y <- max(max(combined$TDXd, na.rm=T), abs(min(combined$TDXd, na.rm=T)))
 
-    # compute pearson's correlation between signature score and ic50
-    corr <- cor(combined$TDXd, combined[,colnames(combined) == signature], 
-              use="complete.obs", method = "pearson")
+    for (signature in signatures) {
 
-    # create plot for plotting
-    toPlot <- combined[,colnames(combined) %in% c("TDXd", signature)]
-    colnames(toPlot) <- c("TDXd", "Signature")
+        # compute pearson's correlation between signature score and ic50
+        corr <- cor(combined$TDXd, combined[,colnames(combined) == signature], 
+                use="complete.obs", method = "pearson")
 
-    # plot correlation
-    png(paste0("DrugResponse/results/figures/tdxd/", signature, ".png"), width=160, height=125, units='mm', res = 600, pointsize=80)
-    print({ggplot(toPlot, aes(x = Signature, y = TDXd)) + 
-        geom_point(size = 3, shape = 21, fill = "#046C9A") + geom_smooth(method = "lm", se=F, color = "#046C9A") + 
-        theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5),
-                                plot.title = element_text(hjust = 0.5, size = 16), legend.key.size = unit(0.7, 'cm')) +
-        #xlim(-x, x) + ylim(-y, y) + 
-        labs(x = paste0(signature, " Similarity Score"), y = "TDXd IC50 Value", 
-        title = paste0(signature, "; Pearson's: ", round(corr, 2))) 
-    })
-    dev.off()
+        # create plot for plotting
+        toPlot <- combined[,colnames(combined) %in% c("TDXd", signature)]
+        colnames(toPlot) <- c("TDXd", "Signature")
+
+        # plot correlation
+        png(paste0(path, signature, ".png"), width=160, height=125, units='mm', res = 600, pointsize=80)
+        print({ggplot(toPlot, aes(x = Signature, y = TDXd)) + 
+            geom_point(size = 3, shape = 21, fill = "#046C9A") + geom_smooth(method = "lm", se=F, color = "#046C9A") + 
+            theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+                                    plot.title = element_text(hjust = 0.5, size = 16), legend.key.size = unit(0.7, 'cm')) +
+            #xlim(-x, x) + ylim(-y, y) + 
+            labs(x = paste0(signature, " Similarity Score"), y = "TDXd IC50 Value", 
+            title = paste0(signature, "; Pearson's: ", round(corr, 2))) 
+        })
+        dev.off()
+    }
 }
 
+plot_tdxd(combined, "DrugResponse/results/figures/tdxd/")
+plot_tdxd(her2_combined, "DrugResponse/results/figures/tdxd_her2/")
+plot_tdxd(nonher2_combined, "DrugResponse/results/figures/tdxd_nonher2/")
