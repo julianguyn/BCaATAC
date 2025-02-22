@@ -97,6 +97,9 @@ true_subtype <- c("ER+", "Her2", "Her2", "Her2", "TNBC", "TNBC", "ER+",
 #https://pmc.ncbi.nlm.nih.gov/articles/PMC5665029/
 toPlot$true_subtype <- true_subtype
 
+# save results
+write.csv(toPlot, file = "MetaData/cell_line_subtypes.csv", quote = F, row.names = T)
+
 # format dataframe for plotting
 toPlot$samples <- rownames(toPlot)
 toPlot <- melt(toPlot, id.vars = "samples")
