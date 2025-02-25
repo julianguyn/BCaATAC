@@ -44,6 +44,25 @@ rownames(signature_scores) <- paste0("Signature", 1:6)
 # read in subtype information
 cl_meta <- read.csv("MetaData/cell_line_subtypes.csv")
 
+
+###########################################################
+# Load BCa RNA-Seq data
+###########################################################
+
+# load in RNA-Seq counts
+uhnbreast2 <- readRDS("DrugResponse/data/PharmacoSet.RDS")
+rna <- uhnbreast2@molecularProfiles@ExperimentList$genes_counts@assays@data$expr |>
+    as.data.frame()
+colnames(rna) <- uhnbreast2@molecularProfiles@ExperimentList$genes_counts@colData$sampleid
+
+# load in gene metadata
+gene_meta <- uhnbreast2@molecularProfiles@ExperimentList$genes_counts@rowRanges |> as.data.frame()
+
+# keep only ERBB2
+keep <- gene_meta$gene_id[gene_meta$gene_name == "ERBB2"]
+erbb2 <- rna[rownames(rna) == keep,]
+
+
 ###########################################################
 # Keep common samples
 ###########################################################
@@ -51,7 +70,7 @@ cl_meta <- read.csv("MetaData/cell_line_subtypes.csv")
 # match filenames to cell line names
 colnames(signature_scores) <- samples$sample[match(colnames(signature_scores), samples$file)]
 
-# manual mapping of mismatches
+# manual mapping of mismatches in tdxd response
 samples$mapping <- gsub("-", "", samples$sample)
 for (i in seq_along(tdxd$Cell.Line)) {
     if (tdxd$Cell.Line[i] %in% samples$mapping) {
@@ -208,3 +227,104 @@ plot_tdxd <- function(combined, path) {
 plot_tdxd(combined, "DrugResponse/results/figures/tdxd/")
 plot_tdxd(her2_combined, "DrugResponse/results/figures/tdxd_her2/")
 plot_tdxd(nonher2_combined, "DrugResponse/results/figures/tdxd_nonher2/")
+
+
+###########################################################
+# Format RNA-Seq data and keep intersecting cells
+###########################################################
+
+#manual mapping of mismatches in rnaseq counts
+colnames(erbb2)[colnames(erbb2) == "LY2"] <- "MCF7/LY2"
+colnames(erbb2)[colnames(erbb2) == "SUM52"] <- "SUM52PE"
+colnames(erbb2)[colnames(erbb2) == "HS578T"] <- "Hs 578T"
+colnames(erbb2)[colnames(erbb2) == "SUM149"] <- "SUM149PT"
+colnames(erbb2)[colnames(erbb2) == "SUM159"] <- "SUM159PT"
+
+erbb2 <- erbb2[,colnames(erbb2) %in% samples$mapping]
+colnames(erbb2) <- samples$sample[match(colnames(erbb2), samples$mapping)]
+
+# keep common samples
+common <- intersect(colnames(tdxd), colnames(erbb2))
+tdxd <- tdxd[,match(common, colnames(tdxd)),]
+signature_scores <- signature_scores[,match(common, colnames(signature_scores))]
+erbb2 <- erbb2[,match(common, colnames(erbb2))]
+
+
+###########################################################
+# Format data for linear modelling
+###########################################################
+
+# continous erbb2 expression 
+erbb2_exp <- as.numeric(erbb2)
+
+# categorized erbb2 expression
+erbb2_cat <- erbb2
+q <- quantile(as.numeric(erbb2_cat))
+erbb2_cat[erbb2_cat <= q[["25%"]]] <- "Q1"
+erbb2_cat[erbb2_cat > q[["25%"]] & erbb2_cat <= q[["50%"]]] <- "Q2"
+erbb2_cat[erbb2_cat > q[["50%"]] & erbb2_cat <= q[["75%"]]] <- "Q3"
+erbb2_cat[erbb2_cat > q[["75%"]] & erbb2_cat <= q[["100%"]]] <- "Q4"
+erbb2_cat <- as.character(erbb2_cat) |> as.factor()
+
+# tdxd response
+tdxd <- as.numeric(tdxd)
+
+###########################################################
+# Linear regression accounting for ERBB2 expression
+###########################################################
+
+# function to run linear regression model
+run_lm <- function(signature, erbb2) {
+
+    # extract vectors
+    scores <- signature_scores[rownames(signature_scores) == signature,] |>
+        as.numeric()
+
+    # run model
+    res <- lm(response ~ scores + erbb2)
+    print(summary(res))
+}
+
+# ERBB2 Continuoue Expression
+run_lm("Signature1", erbb2_exp)
+run_lm("Signature2", erbb2_exp)
+run_lm("Signature3", erbb2_exp)
+run_lm("Signature4", erbb2_exp)
+run_lm("Signature5", erbb2_exp)
+run_lm("Signature6", erbb2_exp)
+
+# ERBB2 Categories
+run_lm("Signature1", erbb2_cat)
+run_lm("Signature2", erbb2_cat)
+run_lm("Signature3", erbb2_cat)
+run_lm("Signature4", erbb2_cat)
+run_lm("Signature5", erbb2_cat)
+run_lm("Signature6", erbb2_cat)
+
+
+###########################################################
+# Plot scatter plot by HER2 expression groups
+###########################################################
+
+merged <- cbind(t(signature_scores), data.frame(IC50 = response, Group = erbb2_cat))
+
+# function to create scatter plot by signature
+plot_scatter <- function(signature) {
+
+    toPlot <- merged[,colnames(merged) %in% c(signature, "IC50", "Group")]
+    colnames(toPlot)[1] <- "Score"
+
+    ggplot(toPlot, aes(x = Score, y = IC50, fill = Group)) + geom_point(size = 3, shape = 21) + 
+        geom_smooth(method = "lm", se=F, aes(color = Group)) + 
+        guides(color = 'none') +
+        theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+                                legend.key.size = unit(0.7, 'cm')) +
+        labs(x = paste(signature, "Similarity Score"), fill = "ERBB2 Group")
+}
+
+plot_scatter("Signature1")
+plot_scatter("Signature2")
+plot_scatter("Signature3")
+plot_scatter("Signature4")
+plot_scatter("Signature5")
+plot_scatter("Signature6")
