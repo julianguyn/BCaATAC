@@ -334,3 +334,106 @@ dev.off()
 png("../figures/heatmap_v3.png", width = 9, height = 6, res = 600, units = "in")
 plot_heatmap(v3, type = "v3")
 dev.off()
+
+###########################################################
+# Format matrices for correlation
+###########################################################
+
+# format atac signature matrix
+atac <- as.data.frame(atac)
+rownames(atac) <- atac$Signature
+atac$Signature <- NULL
+colnames(atac) <- meta$Sample.Name[match(gsub("X", "", colnames(atac)), meta$ATAC.Seq.File.Name)]
+
+# format cosine similarity matrices
+og30.cosm <- t(og30.cosm) |> as.data.frame()
+v3.cosm <- t(v3.cosm) |> as.data.frame()
+
+###########################################################
+# Keep common samples
+###########################################################
+
+common <- intersect(colnames(atac), colnames(og30.cosm))
+atac <- atac[,match(common, colnames(atac))]
+og30.cosm <- og30.cosm[,match(common, colnames(og30.cosm))]
+v3.cosm <- v3.cosm[,match(common, colnames(v3.cosm))]
+
+
+###########################################################
+# Correlate each pair of signatures
+###########################################################
+
+# function to correlate each pair of mut sig to atac
+corr_signatures <- function(mut) {
+  
+  # initiate dataframe to hold results
+  corr <- data.frame(matrix(nrow=0, ncol=3))
+  colnames(corr) <- c("ATAC.Sig", "Mut.Sig", "Corr")
+  
+  for (i in seq_along(rownames(atac))) {
+    
+    atac.sig <- rownames(atac)[i]
+    
+    for (j in seq_along(rownames(mut))) {
+      
+      hallmark <- rownames(mut)[j]
+      s <- cor(as.numeric(atac[i,]), as.numeric(mut[j,]), method = "spearman")
+      corr <- rbind(corr, data.frame(ATAC.Sig = atac.sig, Mut.Sig = hallmark, Corr = s))
+    }
+  }
+  
+  return(corr)
+}
+
+corr_og <- corr_signatures(og30.cosm)
+corr_v3 <- corr_signatures(v3.cosm)
+
+
+###########################################################
+# Save correlations
+###########################################################
+
+write.csv(corr_og, file = "MolecularSigAnalysis/results/data/og30_corr_atac.csv", quote = F, row.names = F)
+write.csv(corr_v3, file = "MolecularSigAnalysis/results/data/v3_corr_atac.csv", quote = F, row.names = F)
+
+
+###########################################################
+# Format mutational signature labels for plotting
+###########################################################
+
+corr_og$Mut.Sig <- factor(corr_og$Mut.Sig, levels = paste0("COSMIC_", 1:30))
+corr_v3$Mut.Sig <- factor(corr_v3$Mut.Sig, levels = paste0("SBS", 
+                            c(1:6, "7a", "7b", "7c", "7d", 8:9, 
+                              "10a", "10b", 11:16, "17a", "17b",
+                              18:60, 84:85)))
+
+###########################################################
+# Plot heatmap of correlations
+###########################################################
+
+# function to plot heatmap of signature correlations
+plot_corr <- function(corr, label) {
+  
+  corr$ATAC.Sig <- factor(corr$ATAC.Sig, levels = c(paste0("Signature", 1:6)))
+  
+  p <- ggplot(corr) + geom_tile(aes(x = Mut.Sig, y = ATAC.Sig, fill = Corr), color = "gray") +
+    scale_fill_gradient2("Spearman\nCorrelation",
+                         low = "#AF4C5B", high = "#046C9A", mid = "white",
+                         midpoint = 0, limits = c(-1, 1)) +
+    theme_void() + 
+    theme(axis.text.x = element_text(size = 8, angle = 90, vjust = 0.5, hjust=1), 
+          axis.text.y = element_text(size = 8, hjust = 0.95),
+          axis.title.x = element_text(size=12),
+          axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
+    labs(x = paste0(label, "\n"), y = "\nATAC Signatures") + coord_flip()
+  
+  return(p)
+}
+
+png("MolecularSigAnalysis/results/figures/og30_corr.png", width = 4, height = 7, res = 600, units = "in")
+plot_corr(corr_og, "Original 30 COSMIC Signatures")
+dev.off()
+
+png("MolecularSigAnalysis/results/figures/v3_corr.png", width = 4, height = 8.5, res = 600, units = "in")
+plot_corr(corr_v3, "v3 60 Mutational Signatures Signatures")
+dev.off()
