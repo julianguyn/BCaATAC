@@ -133,3 +133,9 @@ ggplot(corr) + geom_tile(aes(x = Hallmark, y = ATAC.Sig, fill = Corr), color = "
         axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
   labs(x = "Hallmark Gene Sets", y = "\nATAC Signatures") + coord_flip()
 dev.off()
+
+###########################################################
+# Save correlations
+###########################################################
+
+write.csv(corr, file = "MolecularSigAnalysis/results/data/hallmark_corr_atac.csv", quote = F, row.names = F)
