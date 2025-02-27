@@ -1,4 +1,4 @@
-setwd("Documents/BCaATAC")
+setwd("C:/Users/julia/Documents/BCaATAC")
 
 
 # load libraries
@@ -112,16 +112,22 @@ for (i in seq_along(rownames(mat))) {
   }
 }
 
+###########################################################
+# Rename CAS and Hallmarks
+###########################################################
+
+corr$ATAC.Sig <- gsub("Signature", "CAS-", corr$ATAC.Sig)
+corr$Hallmark <- gsub("HALLMARK_", "", corr$Hallmark)
 
 ###########################################################
 # Plot heatmap of correlations
 ###########################################################
 
 # format for plotting
-corr$ATAC.Sig <- factor(corr$ATAC.Sig, levels = c(paste0("Signature", 1:6)))
+corr$ATAC.Sig <- factor(corr$ATAC.Sig, levels = c(paste0("CAS-", 1:6)))
 
 # plot heatmap
-png("MolecularSigAnalysis/results/figures/hallmarks.png", width = 6, height = 8, res = 600, units = "in")
+png("MolecularSigAnalysis/results/figures/hallmarks.png", width = 5, height = 8, res = 600, units = "in")
 ggplot(corr) + geom_tile(aes(x = Hallmark, y = ATAC.Sig, fill = Corr), color = "gray") +
   scale_fill_gradient2("Spearman\nCorrelation",
                        low = "#AF4C5B", high = "#046C9A", mid = "white",
@@ -131,7 +137,7 @@ ggplot(corr) + geom_tile(aes(x = Hallmark, y = ATAC.Sig, fill = Corr), color = "
         axis.text.y = element_text(size = 8, hjust = 0.95),
         axis.title.x = element_text(size=12),
         axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
-  labs(x = "Hallmark Gene Sets", y = "\nATAC Signatures") + coord_flip()
+  labs(x = "Hallmark Gene Sets", y = "\nCAS") + coord_flip()
 dev.off()
 
 ###########################################################
