@@ -79,7 +79,7 @@ computeCI <- function(signature_scores, sensitivity_data, label) {
     # format dataframe for plotting (order by ci and add variable rank)
     combinations <- combinations[order(combinations$ci),]
     combinations$rank <- 1:nrow(combinations)
-    combinations$pairs <- paste0(combinations$signature, "-", combinations$drug)
+    combinations$pairs <- paste0(combinations$signature, "_", combinations$drug)
     combinations$pset <- c(rep(label, nrow(combinations)))
     
     return(combinations)
@@ -248,7 +248,7 @@ rename_sig <- function(com_df) {
     return(com_df)
 }
 
-sig_com$pairs <- paste(sig_com$signature, sig_com$drug, sep = "-")
+sig_com$pairs <- paste(sig_com$signature, sig_com$drug, sep = "_")
 sig_com <- rename_sig(sig_com)
 ubr1_com <- rename_sig(ubr1_com)
 ubr2_com <- rename_sig(ubr2_com)
