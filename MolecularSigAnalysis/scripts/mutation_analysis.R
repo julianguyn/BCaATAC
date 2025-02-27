@@ -1,4 +1,4 @@
-setwd("Documents/BCaATAC")
+setwd("C:/Users/julia/Documents/BCaATAC")
 
 # load libraries
 suppressPackageStartupMessages({
@@ -408,13 +408,20 @@ corr_v3$Mut.Sig <- factor(corr_v3$Mut.Sig, levels = paste0("SBS",
                               18:60, 84:85)))
 
 ###########################################################
+# Rename CAS
+###########################################################
+
+corr_og$ATAC.Sig <- gsub("Signature", "CAS-", corr_og$ATAC.Sig)
+corr_v3$ATAC.Sig <- gsub("Signature", "CAS-", corr_v3$ATAC.Sig)
+
+###########################################################
 # Plot heatmap of correlations
 ###########################################################
 
 # function to plot heatmap of signature correlations
 plot_corr <- function(corr, label) {
   
-  corr$ATAC.Sig <- factor(corr$ATAC.Sig, levels = c(paste0("Signature", 1:6)))
+  corr$ATAC.Sig <- factor(corr$ATAC.Sig, levels = c(paste0("CAS-", 1:6)))
   
   p <- ggplot(corr) + geom_tile(aes(x = Mut.Sig, y = ATAC.Sig, fill = Corr), color = "gray") +
     scale_fill_gradient2("Spearman\nCorrelation",
@@ -425,7 +432,7 @@ plot_corr <- function(corr, label) {
           axis.text.y = element_text(size = 8, hjust = 0.95),
           axis.title.x = element_text(size=12),
           axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
-    labs(x = paste0(label, "\n"), y = "\nATAC Signatures") + coord_flip()
+    labs(x = paste0(label, "\n"), y = "\nCAS") + coord_flip()
   
   return(p)
 }
@@ -434,6 +441,6 @@ png("MolecularSigAnalysis/results/figures/og30_corr.png", width = 4, height = 7,
 plot_corr(corr_og, "Original 30 COSMIC Signatures")
 dev.off()
 
-png("MolecularSigAnalysis/results/figures/v3_corr.png", width = 4, height = 8.5, res = 600, units = "in")
-plot_corr(corr_v3, "v3 60 Mutational Signatures Signatures")
+png("MolecularSigAnalysis/results/figures/v3_corr.png", width = 3, height = 8.5, res = 600, units = "in")
+plot_corr(corr_v3, "Mutational Signatures")
 dev.off()
