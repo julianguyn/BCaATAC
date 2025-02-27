@@ -30,7 +30,7 @@ mat <- read.table("Signatures/results/data/ATAC_heatmap_rank6.png.order.matrix",
 ###########################################################
 
 # get signatures
-mat$Signature <- paste0("Signature", 1:6)
+mat$Signature <- paste0("CAS-", 1:6)
 
 # format for plotting
 mat <- melt(mat)
@@ -50,7 +50,7 @@ for (sample in mat$variable) {
 
 # reorder signatures
 mat$Signature <- paste0(mat$Signature, " ")
-mat$Signature <- factor(mat$Signature, levels = paste0("Signature",6:1," "))
+mat$Signature <- factor(mat$Signature, levels = paste0("CAS-",6:1," "))
 
 
 ###########################################################
@@ -58,10 +58,10 @@ mat$Signature <- factor(mat$Signature, levels = paste0("Signature",6:1," "))
 ###########################################################
 
 # signature palette
-pal <- c("Signature1" = "#046C9A", "Signature2" = "#BBADB9", "Signature3" = "#7294D4", 
-        "Signature4" = "#E8E1D9", "Signature5" = "#AFC5D8", "Signature6" = "#DF9C93",
-        "Signature7" = "#4E4C67", "Signature8" = "#B4869F", "Signature9" = "#A6B1E1",
-        "Signature10" = "#985F6F")
+pal <- c("CAS-1" = "#046C9A", "CAS-2" = "#BBADB9", "CAS-3" = "#7294D4", 
+        "CAS-4" = "#E8E1D9", "CAS-5" = "#AFC5D8", "CAS-6" = "#DF9C93")
+#        "Signature7" = "#4E4C67", "Signature8" = "#B4869F", "Signature9" = "#A6B1E1",
+#        "Signature10" = "#985F6F")
 # subtype palette
 subtype_pal <- c("Basal" = "#AF4C5B","Her2" = "#EED4D3", "LumA" = "#B3B4D0", "LumB" = "#363E62", "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
 
@@ -73,14 +73,14 @@ subtype_pal <- c("Basal" = "#AF4C5B","Her2" = "#EED4D3", "LumA" = "#B3B4D0", "Lu
 p1 <- ggplot(mat, aes(x = variable, y = 1, fill = subtype)) + geom_tile(color = NA) +
     theme_void() + scale_fill_manual("BCa\nSubtype", values = subtype_pal,
                     labels = c("Basal", "Her2", "LuminalA", "LuminalB", "Normal", "NA")) +
-    theme(axis.title.y = element_text(size=12)) + labs(y = "                 ")
+    theme(axis.title.y = element_text(size=12)) + labs(y = "          ")
 
 p2 <- ggplot(mat, aes(x = variable, y = 1, fill = signature_assign)) + geom_tile(color = NA) +
-    theme_void() + scale_fill_manual("Assigned\nSignature", values = pal) +
-    theme(axis.title.y = element_text(size=12)) + labs(y = "                 ")
+    theme_void() + scale_fill_manual("Assigned\nCAS", values = pal) +
+    theme(axis.title.y = element_text(size=12)) + labs(y = "          ")
 
 p3 <- ggplot(mat, aes(x = variable, y = Signature, fill = value)) + geom_tile(color = NA) +
-    scale_fill_gradientn("Signature    \nScore", colours = brewer.pal(9, "Blues")) + theme_void() +
+    scale_fill_gradientn("CAS          \nExpression\nScore", colours = brewer.pal(9, "Blues")) + theme_void() +
     theme(axis.text.y = element_text(size=11), axis.title.x = element_text(size=12)) + labs(x = "Tumour Sample")
 
 # extract legends
