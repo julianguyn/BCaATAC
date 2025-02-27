@@ -238,6 +238,27 @@ sig_com <- saveSig(sig_com, ccle_com, "ccle")
 
 
 ###########################################################
+# Rename signatures
+###########################################################
+
+# functon to rename signatures
+rename_sig <- function(com_df) {
+    com_df$signature <- gsub("Signature", "CAS-", com_df$signature)
+    com_df$pairs <- gsub("Signature", "CAS-", com_df$pairs)
+    return(com_df)
+}
+
+sig_com$pairs <- paste(sig_com$signature, sig_com$drug, sep = "-")
+sig_com <- rename_sig(sig_com)
+ubr1_com <- rename_sig(ubr1_com)
+ubr2_com <- rename_sig(ubr2_com)
+gray_com <- rename_sig(gray_com)
+gcsi_com <- rename_sig(gcsi_com)
+gdsc_com <- rename_sig(gdsc_com)
+ctrp_com <- rename_sig(ctrp_com)
+ccle_com <- rename_sig(ccle_com)
+
+###########################################################
 # Save signature associations
 ###########################################################
 
@@ -250,7 +271,7 @@ save(sig_com, ubr1_com, ubr2_com, gray_com, gcsi_com, gdsc_com, ctrp_com, ccle_c
 ###########################################################
 
 # signature palette
-pal <- c("CAS-Signature1" = "#046C9A", "CAS-2" = "#BBADB9", "CAS-3" = "#7294D4", 
+pal <- c("CAS-1" = "#046C9A", "CAS-2" = "#BBADB9", "CAS-3" = "#7294D4", 
         "CAS-4" = "#E8E1D9", "CAS-5" = "#AFC5D8", "CAS-6" = "#DF9C93")
 # sensitive vs resistant palette
 pal2 <- c("#899DA4", "#BC4749")
@@ -297,7 +318,7 @@ strict_sig_com$type <- factor(strict_sig_com$type, levels = c("Sensitivity", "Re
 ###########################################################
 
 # plot vertical
-png("DrugResponse/results/figures/indiv_PSet_CI/all_sig.png", width = 7, height = 15, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/ClassA-vertical.png", width = 7, height = 15, res = 600, units = "in")
 ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
     geom_col(aes(fill = signature), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
     scale_y_discrete(breaks = strict_sig_com$rank, labels = strict_sig_com$drug) +
@@ -309,7 +330,7 @@ ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
           axis.text.y = element_text(size = 13),
           axis.title.x = element_text(size = 16),
           axis.title.y = element_text(size = 16)) +
-    labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "Signature") 
+    labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "CAS") 
 dev.off()
 
 # format for same graph but horizontal
@@ -318,12 +339,13 @@ strict_sig_com$rank <- as.factor(strict_sig_com$rank)
 strict_sig_com$drug <- as.factor(strict_sig_com$drug)
  
 # plot horizontal
-png("DrugResponse/results/figures/indiv_PSet_CI/ClassA.png", width = 13, height = 6, res = 600, units = "in")
+png("DrugResponse/results/figures/indiv_PSet_CI/ClassA-horizonal.png", width = 11, height = 5, res = 600, units = "in")
 ggplot(strict_sig_com, aes(x = ci - 0.5, y = rank)) +
     geom_col(aes(fill = signature), color = "black") + scale_x_continuous(limits = c(-0.5, 0.5), labels = function(x) x + 0.5) +
     scale_y_discrete(breaks = strict_sig_com$rank, labels = strict_sig_com$drug) +
-    scale_fill_manual(values = pal) + theme_classic() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + geom_vline(xintercept = 0) +
-    labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "Signature") + coord_flip()
+    scale_fill_manual(values = pal) + theme_classic() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 10)) + geom_vline(xintercept = 0) +
+    labs(y = "Drug", title = "", x = "Concordance Index (CI)", fill = "CAS") + coord_flip()
 dev.off()
 
 
@@ -396,7 +418,7 @@ ggplot(strict_sig_com, aes(x = signature, fill = type)) +
   scale_y_continuous(limits = c(0, 15), expand = c(0, 0)) +
   scale_fill_manual("Association", values = pal2) +
   theme_classic() + theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
-  labs(x = "Signature", y = "Number of Associations")
+  labs(x = "CAS", y = "Number of Associations")
 dev.off()
 
 # table of counts per signature
@@ -408,6 +430,6 @@ ggplot(strict_sig_com, aes(x = "", fill = pset)) +
   geom_bar(stat = "count", size = 0.5, position = "fill", color = "black", width=0.6) +
   scale_fill_manual("PSet", values = wes_palette("Cavalcanti1")) +
   theme_void() + coord_polar("y", start=0) +
-  labs(x = "Signature", y = "Proportion of Associations") +
+  labs(x = "CAS", y = "Proportion of Associations") +
   facet_wrap(~ signature, nrow = 1)
 dev.off()
