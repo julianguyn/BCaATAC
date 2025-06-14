@@ -41,6 +41,12 @@ rep <- gray[gray$Var2 == 'UACC812',]
 rep$value[1:49291] <- (rep$value[1:49291] + rep$value[49292:98582]) / 2
 gray <- rbind(gray[-which(gray$Var2 == 'UACC812'),], rep[1:49291,])
 
+# load in GDSC pset
+#gdsc <- readRDS("C:/Users/julia/Desktop/ncRNA Code/data/PSets/GDSC2-8.2.rds") |> updateObject()
+#gdsc <- summarizeMolecularProfiles(gdsc, mDataType='Kallisto_0.46.1.rnaseq.counts') |> assay() 
+#gdsc <- melt(gdsc)
+#gdsc <- gdsc[gdsc$Var2 %in% subtype_meta$Cell,]
+# too many NA values, unable to compute PAM50
 
 ############################################################
 # Compute PAM50 subtypes
@@ -72,6 +78,7 @@ ccle <- pam50subtype(ccle)
 gcsi <- pam50subtype(gcsi)
 gray <- pam50subtype(gray)
 
+save(ubr2, ccle, gcsi, gray, file = "DrugResponse/results/pam50_scores.RData")
 
 ############################################################
 # Compile results to plot
