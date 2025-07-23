@@ -8,37 +8,66 @@ suppressPackageStartupMessages({
     library(dplyr)
 })
 
+source("DrugResponsePDX/scripts/source/helper.R")
 
 ###########################################################
 # Load in data
 ###########################################################
 
 # read in drug response data
-response <- as.data.frame(read_excel("DrugResponsePDX/data/drugresponse/DrugResponse_PDX.xlsx", sheet = 1))
-
-# keep only mRECIST
-#response <- response[,colnames(response) %in% c("patient.id", "mRECIST", "drug")]
+old_response <- as.data.frame(read_excel("DrugResponsePDX/data/drugresponse/DrugResponse_PDX.xlsx", sheet = 1))
+new_xeva_auc <- read.csv("DrugResponsePDX/data/Jul232025-Xeva/auc_reps.csv")
+new_xeva_mRECIST <- read.csv("DrugResponsePDX/data/Jul232025-Xeva/mRECIST_reps.csv")
 
 # read in signature scores
 scores <- as.data.frame(t(read.table("DrugResponsePDX/data/chromvar/bca_sign.Zscore.txt")))
 colnames(scores) <- paste0("Signature", 1:6)
-# sample colname
+
+
+###########################################################
+# Format sample names
+###########################################################
+
+# using sourced map_pdx() to standardize PDX names
+rownames(scores) <- map_pdx(rownames(scores))
+old_response$patient.id <- map_pdx(old_response$patient.id)
+new_xeva_auc$patient.id <- map_pdx(new_xeva_auc$patient.id)
+new_xeva_mRECIST$patient.id <- map_pdx(new_xeva_mRECIST$patient.id)
 
 
 ###########################################################
 # Assign signature scores
 ###########################################################
 
-# subset for just paclitaxel
-pac <- response[response$drug == "TAXOL",]
-pac <- pac[-which(is.na(pac$patient.id)),]
-pac$sig5 <- NA
+# using sourced get_ARCHE() to extract PDX ARCHE scores
+old_response <- get_ARCHE(old_response)
+new_xeva_auc <- get_ARCHE(new_xeva_auc)
+new_xeva_mRECIST <- get_ARCHE(new_xeva_mRECIST)
 
-# get signature scores
-for (i in 1:nrow(pac)) {
-    sample = pac$patient.id[i]
-    pac$sig5[i] <- scores[gsub("_", "", gsub("X", "", rownames(scores))) == sample,]$Signature5
+
+###########################################################
+# Assess ARCHE treatment response associations 
+###########################################################
+
+# using sourced 
+assess_ARCHE_mRECIST <- function(df, drug) {
+    # subset for variables of interest
+    df <- df[df$drug == drug,]
+    if (c('slope') %in% colnames(df)) {
+        df[,-which(colnames(df) %in% c('slope', 'AUC'))]
+    }
+    df <- df[complete.cases(df),]
+    df$mRECIST <- factor(df$mRECIST, levels = c("CR", "PR", "SD", "PD"))
+
+    # iterate through each ARCHE
+    for (arche in paste0('ARCHE', 1:6)) {
+        p1 <- waterfall_mRECIST(df, arche, drug)
+    }
 }
+
+
+
+# df <- old_response[old_response$drug == "ERIBULIN",]
 
 
 ###########################################################
@@ -76,32 +105,6 @@ ggplot(pac_slp, aes(x = rank, y = slope, fill = sig5)) +
     scale_fill_gradientn(colors = c("#BC4749", "#F8F1F8", "#077293"), limits = c(-45, 45)) +
     theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
     labs(x = "PDX Model", y = "Slope", fill = "Signature 5\nScore") 
-dev.off()
-
-
-###########################################################
-# Plot waterfall for mRECIST
-###########################################################
-
-# remove NA
-pac_mr <- pac[-which(pac$mRECIST == "NA"),]
-pac_mr$mRECIST <- factor(pac_mr$mRECIST, levels = c("CR", "PR", "SD", "PD"))
-
-# create ranking order
-pac_mr <- pac_mr[order(pac_mr$sig5, decreasing = T),]
-pac_mr$rank <- 1:nrow(pac_mr)
-
-# plot waterfall plot coloured by mRESCIST
-png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
-ggplot(pac_mr, aes(x = rank, y = sig5, fill = mRECIST)) + 
-    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
-    scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
-                      labels = c('CR' = 'Complete\nResponse', 
-                              'PD' = 'Progressive\nDisease', 
-                              'SD' = 'Stable\nDisease',
-                              'PR' = 'Partial\nResponse')) +
-    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-    ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
 dev.off()
 
 
