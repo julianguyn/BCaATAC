@@ -1,9 +1,17 @@
 setwd("C:/Users/julia/Documents/BCaATAC")
 
-library(readxl)
-library(ggplot2)
-library(RColorBrewer)
-library(dplyr)
+# load libraries
+suppressPackageStartupMessages({
+    library(readxl)
+    library(ggplot2)
+    library(RColorBrewer)
+    library(dplyr)
+})
+
+
+###########################################################
+# Load in data
+###########################################################
 
 # read in drug response data
 response <- as.data.frame(read_excel("DrugResponsePDX/data/drugresponse/DrugResponse_PDX.xlsx", sheet = 1))
@@ -17,6 +25,10 @@ colnames(scores) <- paste0("Signature", 1:6)
 # sample colname
 
 
+###########################################################
+# Assign signature scores
+###########################################################
+
 # subset for just paclitaxel
 pac <- response[response$drug == "TAXOL",]
 pac <- pac[-which(is.na(pac$patient.id)),]
@@ -29,7 +41,9 @@ for (i in 1:nrow(pac)) {
 }
 
 
-### ===== Plot AUC ===== ###
+###########################################################
+# Plot waterfall by AUC
+###########################################################
 
 # order samples
 pac$AUC <- as.numeric(pac$AUC)
@@ -46,8 +60,9 @@ ggplot(pac_auc, aes(x = rank, y = AUC, fill = sig5)) +
 dev.off()
 
 
-
-### ===== Plot Slope ===== ###
+###########################################################
+# Plot waterfall by slope
+###########################################################
 
 # order samples
 pac$slope <- as.numeric(pac$slope)
@@ -64,40 +79,21 @@ ggplot(pac_slp, aes(x = rank, y = slope, fill = sig5)) +
 dev.off()
 
 
-### ===== Plot mRECIST ===== ###
-
-# create ranking order
-pac <- pac[order(pac$sig5, decreasing = T),]
-pac$rank <- 1:nrow(pac)
-
-# plot waterfall plot coloured by mRESCIST
-png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
-ggplot(pac, aes(x = rank, y = sig5, fill = mRECIST)) + 
-    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
-    scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
-                      labels = c('CR' = 'Complete\nResponse', 
-                              'PD' = 'Progressive\nDisease', 
-                              'SD' = 'Stable\nDisease',
-                              'PR' = 'Partial\nResponse')) +
-    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-    ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
-dev.off()
-
-
-### ===== Plot mRECIST ===== ###
-# todo: convert pac to pac_mr
+###########################################################
+# Plot waterfall for mRECIST
+###########################################################
 
 # remove NA
 pac_mr <- pac[-which(pac$mRECIST == "NA"),]
 pac_mr$mRECIST <- factor(pac_mr$mRECIST, levels = c("CR", "PR", "SD", "PD"))
 
 # create ranking order
-pac <- pac[order(pac$sig5, decreasing = T),]
-pac$rank <- 1:nrow(pac)
+pac_mr <- pac_mr[order(pac_mr$sig5, decreasing = T),]
+pac_mr$rank <- 1:nrow(pac_mr)
 
 # plot waterfall plot coloured by mRESCIST
 png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist_waterfall.png", width=175, height=125, units='mm', res = 600, pointsize=80)
-ggplot(pac, aes(x = rank, y = sig5, fill = mRECIST)) + 
+ggplot(pac_mr, aes(x = rank, y = sig5, fill = mRECIST)) + 
     geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
     scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
                       labels = c('CR' = 'Complete\nResponse', 
@@ -108,27 +104,19 @@ ggplot(pac, aes(x = rank, y = sig5, fill = mRECIST)) +
     ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
 dev.off()
 
-# plot waterfall plot coloured by signature score
-toPlot <- pac[order(pac$mRECIST, pac$sig5),]
-toPlot$rank <- 1:nrow(toPlot)
-ggplot(toPlot, aes(x = rank, y = sig5, fill = sig5)) + 
-    geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
-    scale_fill_manual(values = c("#136F63", "#9DCBBA", "#FFADA1", "#B02E0C"),
-                      labels = c('CR' = 'Complete\nResponse', 
-                              'PD' = 'Progressive\nDisease', 
-                              'SD' = 'Stable\nDisease',
-                              'PR' = 'Partial\nResponse')) +
-    theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-    ylim(c(-50, 50)) + labs(x = "PDX Model", y = "Signature 5 Similarity Score", fill = "mRECIST") 
 
+###########################################################
+# Plot waterfall of average signature score per mRECIST
+###########################################################
 
-pac <- pac %>%
+# average signature 5 score for each mRECIST category
+pac_mr <- pac_mr %>%
   group_by(mRECIST) %>%
   summarize(mean_score = mean(sig5), sd_score = sd(sig5))
 
 
 png("DrugResponsePDX/results/figures/paclitaxel_pdx_mrecist.png", width = 4, height = 5, res = 600, units = "in")
-ggplot(pac, aes(x = mRECIST, y = mean_score)) +
+ggplot(pac_mr, aes(x = mRECIST, y = mean_score)) +
   geom_bar(stat = "identity", color = "black", aes(fill = mRECIST)) + ylim(c(-50, 50)) +
   geom_hline(yintercept = 0) +
   geom_errorbar(aes(ymin = mean_score - sd_score, ymax = mean_score + sd_score), width = 0.2) +
@@ -146,10 +134,9 @@ ggplot(pac, aes(x = mRECIST, y = mean_score)) +
 dev.off()
 
 
-######################################
-############### AUC ##################
-######################################
-
+###########################################################
+# Plot waterfall of prediction accuracy
+###########################################################
 
 # keep only AUC
 response <- response[,colnames(response) %in% c("patient.id", "AUC", "drug")]
@@ -193,7 +180,6 @@ y = max(abs(min(pac$AUC)), max(pac$AUC))
 pac <- pac[order(pac$AUC, decreasing = T),]
 pac$rank <- 1:nrow(pac)
 pac$rank <- as.factor(pac$rank)
-strict_sig_com$drug <- as.factor(strict_sig_com$drug)
 
 pac$pred <- ifelse(pac$quadrant %in% c("Q2", "Q3"), "Accurate", "Inaccurate") 
 pac$pred <- factor(pac$pred, levels = c("Accurate", "Inaccurate"))
@@ -207,6 +193,10 @@ ggplot(pac, aes(x = AUC, y = rank)) +
     labs(y = "PDX Model", title = "", x = "True AUC", fill = "Signature Prediction") + coord_flip()
 dev.off()
 
+
+###########################################################
+# Plot accuracy quadrants
+###########################################################
 
 png("DrugResponsePDX/results/figures/paclitaxel_pdx.png", width=160, height=125, units='mm', res = 600, pointsize=80)
 ggplot(pac, aes(x = sig5, y = AUC, fill = patient.id)) + 
@@ -245,26 +235,3 @@ ggplot(unc, aes(x = sig4, y = AUC, fill = patient.id)) +
                             plot.title = element_text(hjust = 0.5, size = 16), legend.key.size = unit(0.7, 'cm')) +
     xlim(-x, x) + ylim(-y, y) + labs(x = "Signature 4 Similarity Score", fill = "PDX Model", title = "UNC0642") 
 dev.off()
-
-
-# find overlaps with Dave's group
-grep("263", X)
-grep("5305", X)
-grep("8205", X)
-grep("673", X)
-grep("011", X)
-grep("400945", X)
-grep("402257", X)
-grep("5461", X)
-grep("G9A", X)
-grep("400", X)
-grep("0642", X)
-grep("PQ", X)
-grep("carbop", X)
-grep("potomab", X)
-grep("eribulin", X)
-grep("everolimus", X)
-grep("palbociclub", X)
-grep("tax", X)
-grep("zumab", X)
-grep("fluv", X)
