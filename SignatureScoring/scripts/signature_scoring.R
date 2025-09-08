@@ -238,16 +238,21 @@ scores <- 1 - compute_dev(scores)
 scores <- (scores * -1) + 1
 saveRDS(scores, file = "Signature_Scoring/results/data/cl_signaturescores.RDS")
 
+# remove two cell lines (CIHR)
+scores <- scores[,-which(colnames(scores) %in% c("CAL-51", "Hs 578T"))]
+rownames(scores) <- paste0("CAS", 1:6)
+
 # set colours for plotting
-score_pal = colorRamp2(seq(min(scores), max(scores), length = 3), c("#372554", "#F8F1F8", "#148BAF"))
+score_pal = colorRamp2(seq(min(scores), max(scores), length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
 
 # get subtype
-subtype_pal = c("Basal" = "#394032", "Her2" = "#A6A57A","LumA" = "#8C5E58","LumB" = "#5A352A","Normal" = "#8F8073")
+subtype_pal <- c("Basal" = "#AF4C5B","Her2" = "#EED4D3", "LumA" = "#B3B4D0", "LumB" = "#363E62", "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
+
 ha = HeatmapAnnotation(Subtype = meta[match(colnames(scores), meta$sample),]$subtype, 
                        col = list(Subtype = subtype_pal))
 
-png("Signature_Scoring/results/figures/ATAC_cells_signatures_heatmap.png", width = 8, height = 4, res = 600, units = "in")
-Heatmap(scores, cluster_rows = FALSE, name = "Signature\nScore", col = score_pal,
+png("SignatureScoring/results/figures/ATAC_cells_signatures_heatmap.png", width = 8, height = 4, res = 600, units = "in")
+Heatmap(scores, cluster_rows = FALSE, name = "CAS\nExpression\nScore", col = score_pal,
         column_title = "Cell Lines", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9), row_names_gp = gpar(fontsize = 10),
         top_annotation = ha)
 dev.off()
