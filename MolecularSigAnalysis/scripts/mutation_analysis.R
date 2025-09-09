@@ -444,3 +444,27 @@ dev.off()
 png("MolecularSigAnalysis/results/figures/v3_corr.png", width = 3, height = 8.5, res = 600, units = "in")
 plot_corr(corr_v3, "Mutational Signatures")
 dev.off()
+
+###########################################################
+# Plot density plot of corr distributions (CIHR)
+###########################################################
+
+# load in hallmarks
+corr_hm <- read.csv("MolecularSigAnalysis/results/data/hallmark_corr_atac.csv")
+corr_hm$ATAC.Sig <- gsub("Signature", "CAS-", corr_hm$ATAC.Sig)
+
+# merge plots
+corr_v3$Signature <- "Mutational Signatures"
+corr_hm$Signature <- "Hallmark Gene Set"
+toPlot <- rbind(corr_v3[,c(1,3,4)], corr_hm[,c(1,3,4)])
+toPlot$Signature <- factor(toPlot$Signature, levels = c("Mutational Signatures", "Hallmark Gene Set"))
+
+png("MolecularSigAnalysis/results/figures/corr_boxplots.png", width = 6, height = 4.5, res = 600, units = "in")
+ggplot(toPlot, aes(x = ATAC.Sig, y = Corr, fill = Signature)) +
+  geom_boxplot(color = "black") +
+  theme_classic() + ylim(c(-1, 1)) + 
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), legend.key.size = unit(0.7, 'cm')) +
+  scale_fill_manual(values = c("#077293", "#9AA5BD")) +
+  geom_hline(yintercept = c(-0.5, 0.5), linetype = "dashed") +
+  labs(y = "Spearman Correlation", x = "")
+dev.off()
