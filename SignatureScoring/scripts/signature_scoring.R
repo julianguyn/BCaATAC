@@ -258,6 +258,34 @@ Heatmap(scores, cluster_rows = FALSE, name = "CAS\nExpression\nScore", col = sco
 dev.off()
 
 
+####################################
+# Subtype per CAS for CIHR 
+####################################
+
+# Subtype per CAS for CIHR
+meta <- fread("DataExploration/data/bcacells_annotation.tsv")
+
+scores$CAS <- rownames(scores)
+test <- melt(scores) |> suppressWarnings()
+test$Subtype <- meta[match(test$variable, meta$sample),]$subtype
+
+#ggplot(test, aes(x = Subtype, y = value)) + geom_boxplot() + facet_wrap(~ CAS)
+
+png("SignatureScoring/results/figures/subtype_per_CAS.png", width = 5, height = 5.5, res = 600, units = "in")
+ggplot(test, aes(x = value, y = Subtype, fill = Subtype)) + geom_boxplot() + 
+        facet_grid(CAS ~., switch = "y") +
+        scale_fill_manual(values = subtype_pal) +
+        theme_classic() +
+        geom_vline(xintercept = 0.5, linetype = "dashed") +
+        theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), 
+              legend.key.size = unit(0.7, 'cm'),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(), 
+              panel.spacing = unit(0, "pt")) +
+        labs(y = "", x = "CAS Expression Score")
+dev.off()
+
+
 ##########################
 ### RNA-Seq Signatures ###
 ##########################
