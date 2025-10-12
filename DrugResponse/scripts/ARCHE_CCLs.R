@@ -8,6 +8,7 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(ggh4x)
     library(reshape2)
+    library(meta)
 })
 
 source("source/DrugResponse/helper.R")
@@ -88,8 +89,8 @@ save(PC_res, CI_res,
 # Identify Class A Biomarkers
 ###########################################################
 
-# Class A biomarkers: abs(PCC > 0.6) & FDR < 0.05 in 1 PSet
-ClassA <- PC_res[which((abs(PC_res$pc >= 0.6)) & PC_res$FDR < 0.05),]
+# Class A biomarkers: abs(PCC > 0.65) & FDR < 0.05 in 1 PSet
+ClassA <- PC_res[which((abs(PC_res$pc >= 0.65)) & PC_res$FDR < 0.05),]
 ClassA <- ClassA[order(ClassA$pc, decreasing = T),]
 ClassA$rank <- factor(1:nrow(ClassA), levels = c(1:nrow(ClassA)))
 
@@ -128,5 +129,57 @@ plot_ClassA_associationsAcrossPSets(toPlot)
 
 # plot indiv scatter plots for Class A biomarker associations across PSets
 for (pair in ClassA$pair) {
-    plot_ClassA_indivPlot(pair)
+    plot_indivPlot(pair, "ClassA")
 }
+
+###########################################################
+# Identify Class B Biomarkers
+###########################################################
+
+#ClassB biomarkers: abs(PCC > 0.4) & FDR < 0.05 in >1 PSet
+to_keep <- PC_res[which((abs(PC_res$pc >= 0.4)) & PC_res$FDR < 0.05),]
+to_keep <- names(table(to_keep$pairs)[table(to_keep$pairs)>1])
+
+ClassB <- PC_res[which(PC_res$pairs %in% to_keep),]
+ClassB <- ClassB[order(ClassB$pc, decreasing = T),]
+ClassB$rank <- factor(1:nrow(ClassB), levels = c(1:nrow(ClassB)))
+
+
+###########################################################
+# Plots for Class B biomarkers
+###########################################################
+
+# plot Class B biomarker associations
+plot_ClassB_biomarkersAssociations(ClassB)
+
+# plot Class B biomarker associations across PSets
+plot_ClassB_associationsAcrossPSets(ClassB)
+
+# plot indiv scatter plots for Class A biomarker associations across PSets
+for (pair in ClassB$pair) {
+    plot_indivPlot(pair, "ClassB")
+}
+
+###########################################################
+# Identify Class C Biomarkers
+###########################################################
+
+# perform meta analysis and save results
+estimates <- run_meta(PC_res)
+write.csv(estimates, file = "DrugResponse/results/data/meta_estimates.csv", quote = F, row.names = F)
+
+#ClassC biomarkers: abs(TE > 0.4) & FDR < 0.05
+ClassC <- estimates[which(abs(estimates$TE) > 0.4 & estimates$FDR < 0.05),]
+ClassC <- ClassC[order(ClassC$TE, decreasing = T),]
+ClassC$rank <- factor(1:nrow(ClassC), levels = c(1:nrow(ClassC)))
+
+
+###########################################################
+# Plots for Class C biomarkers
+###########################################################
+
+# plot Class C biomarker associations
+plot_ClassC_biomarkersAssociations(ClassC)
+
+# plot Class C biomarker associations as forest plot
+plot_ClassC_forest(PC_res, ClassC)

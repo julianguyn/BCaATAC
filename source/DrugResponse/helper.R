@@ -175,7 +175,8 @@ format_combinations <- function(combinations, label) {
     
     # filtering and multiple test correction
     combinations <- combinations[complete.cases(combinations$pvalue),]
-    combinations$FDR <- p.adjust(combinations$pvalue, method = "BH", n = length(combinations$pvalue))
+    #combinations$FDR <- p.adjust(combinations$pvalue, method = "BH", n = length(combinations$pvalue))
+    combinations$FDR <- ave(combinations$pval, combinations$drug, FUN = function(p) p.adjust(p, method = "BH"))
     combinations$FDRsig <- ifelse(combinations$FDR < 0.05, TRUE, FALSE)
 
     # format dataframe for plotting (ordered by CI/PC already)
@@ -235,21 +236,24 @@ computeCI <- function(signature_scores, sensitivity_data, label) {
 computePC <- function(signature_scores, sensitivity_data, label) {
     
     # create data frame to hold results
-    combinations <- as.data.frame(matrix(data = NA, nrow = nrow(signature_scores) * nrow(sensitivity_data), ncol = 4))
-    colnames(combinations) <- c("signature", "drug", "pc", "pvalue")
+    combinations <- as.data.frame(matrix(data = NA, nrow = nrow(signature_scores) * nrow(sensitivity_data), ncol = 7))
+    colnames(combinations) <- c("signature", "drug", "pc", "pvalue", "n", "upper", "lower")
     combinations$signature <- rep(rownames(signature_scores), nrow(sensitivity_data))
     combinations$drug <- rep(rownames(sensitivity_data), each = nrow(signature_scores))
 
     # compute concordance index
     for (i in 1:nrow(combinations)){
         AAC <- as.numeric(sensitivity_data[combinations$drug[i],])
-        if (length(AAC[!is.na(AAC)]) > 2) {
+        if (length(AAC[!is.na(AAC)]) > 3) {
             pc <- cor.test(AAC, # drug AAC
                     as.numeric(unlist(signature_scores[combinations$signature[i],])), # ARCHE score
                     method = 'pearson', alternative = 'two.sided')
 
             combinations$pvalue[i] <- pc$p.value
             combinations$pc[i] <- pc$estimate
+            combinations$n[i] <- length(AAC)
+            combinations$upper[i] <- pc$conf.int[1]
+            combinations$lower[i] <- pc$conf.int[2]
         }
     }
 
@@ -300,4 +304,61 @@ saveSig <- function(sig_com, combinations, label) {
     #write.csv(res[order(res$FDR, res$ci),], file = paste0("DrugResponse/results/tables/indiv_PSet_CI/", label, "_res.csv"), row.names = F)
 
     return(sig_com)
+}
+
+#' Perform meta analysis
+#'
+#' Compute meta estimates for signature drug response associations in >=3 PSets.
+#' @param df dataframe. Dataframe from computePC()
+#' @return A dataframe of meta analysis results.
+#' 
+run_meta <- function(df) {
+    
+    # keep only signature-drug pairs that are present in at least 3 PSets
+    df <- df[which(df$pairs %in% names(table(df$pairs)[table(df$pairs) > 2])),]
+
+    # data frame to hold meta estimates
+    estimates <- as.data.frame(matrix(data = NA, nrow = length(unique(df$pairs)), ncol = 10))
+    colnames(estimates) <- c("signature","drug", "pair", "TE", "seTE", "upper", "lower", "pval", "pval.Q", "I2")
+
+    # perform meta-analysis
+    for (i in 1:length(unique(df$pair))) {
+        
+        pair <- unique(df$pairs)[i]
+        tmp <- df[which(df$pair == pair),]
+        meta <- metacor(pc, n, data = tmp, method.tau = "DL", studlab = tmp$pset)
+        
+        estimates$signature[i] <- tmp$signature[1]
+        estimates$drug[i] <- tmp$drug[1]
+        estimates$pair[i] <- pair
+        estimates$TE[i] <- meta$TE.random
+        estimates$seTE[i] <- meta$seTE.random
+        estimates$upper[i] <- meta$upper.random
+        estimates$lower[i] <- meta$lower.random
+        estimates$pval[i] <- meta$pval.random
+        estimates$pval.Q[i] <- meta$pval.Q
+        estimates$I2[i] <- meta$I2
+
+        if (abs(meta$TE.random) > 0.4) {
+            # plot forest plot
+            fileName = paste0("DrugResponse/results/figures/ClassC/meta/",pair,".png")
+            
+            png(fileName, width = 10, height = 4, res = 600, units = "in")
+            title <- pair
+            forest(meta,
+                leftcols = c("studlab", "TE", "seTE", "lower", "upper", "pval"),
+                leftlabs = c(title, "Effect", "SE", "95% CI \n Lower", "95% CI \n Upper", "P value"),
+                xlab = "effect estimate", lab.e = "Intervention", sortvar = TE, smlab = " ", text.random = "Random effect", 
+                print.I2.ci = FALSE, print.Q = TRUE, print.pval.Q = TRUE, digits.sd = 2, print.I2 = TRUE, print.tau2 = TRUE,
+                text.random.w = TRUE, colgap.forest.left = "0.5cm", layout = "RevMan5", test.overall.random = TRUE,
+                test.overall.common = TRUE, xlim = "symmetric", col.square = "grey70", col.inside = "grey70", col.square.lines = "grey30", 
+                col.diamond.random = "#526863", col.diamond.common  = "#BD6B73", ff.xlab = "bold", fontsize = 11, fs.heading = 11.5,
+                squaresize = 0.55, scientific.pval = TRUE, lty.random = NULL, lty.fixed  = NULL)
+            dev.off()
+        }
+    }
+
+    estimates$FDR <- ave(estimates$pval, estimates$drug, FUN = function(p) p.adjust(p, method = "BH"))
+    
+    return(estimates)
 }
