@@ -23,3 +23,9 @@ binary_pal = c(
     "#899DA4", 
     "#BC4749"
 )
+
+cohort_pal <- c(
+    "Baseline" = "#D07C7B", 
+    "Progression" = "#8E2C2C", 
+    "On treatment control" = "#F5C6C6"
+)
