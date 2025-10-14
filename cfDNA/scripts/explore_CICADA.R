@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
 })
 
 source("source/cfDNA/helper.R")
+source("source/cfDNA/plots.R")
 source("source/palettes.R")
 
 ###########################################################
@@ -74,3 +75,9 @@ toPlot <- toPlot[complete.cases(toPlot),]
 ###########################################################
 
 plot_ARCHE_score_CICADA(toPlot)
+
+###########################################################
+# Plot Correlation between TF and ARCHE scores
+###########################################################
+
+plot_ARCHE_TF_CICADA(df)
