@@ -62,26 +62,38 @@ plot_indivPlot <- function(pair, class) {
 
 #' Plot Class A associations across PSets
 #'
+#' @param ARCHE string. ARCHE to subset for
+#' @param width int. Width for figure output
 #' Colour by concordance of association with ClassA biomarker
 #' 
-plot_ClassA_allAssociations <- function(toPlot) {
+plot_ClassA_allAssociations <- function(toPlot, ARCHE, width) {
 
-    png("DrugResponse/results/figures/ClassA/allAssociations.png", width = 17, height = 5, res = 600, units = "in")
+    toPlot <- toPlot[toPlot$signature == ARCHE,]
+    filename <- paste0("DrugResponse/results/figures/ClassA/supplementary/allAssociations_", ARCHE, ".png")
+
+    png(filename, width = width, height = 5, res = 600, units = "in")
     print(ggplot(toPlot, aes(x = pset, y = pc, fill = ifelse(pc>0, "Positive", "Negative"))) +
         geom_bar(stat="identity", color = "black") +
+        geom_text(data = subset(toPlot[toPlot$pc > 0,], FDR < 0.05),
+            aes(label = "*", y = pc), 
+            vjust = 0, size = 6) +
+        geom_text(data = subset(toPlot[toPlot$pc < 0,], FDR < 0.05),
+            aes(label = "*", y = pc - 0.17), 
+            vjust = 0, size = 6) +
         facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
         scale_fill_manual(values = binary_pal, breaks = c("Positive", "Negative"),
             labels = c("Positive\n(Concordant)\nAssociation",
                     "Negative\n(Discordant)\nAssociation")) +
-        geom_hline(yintercept = c(-0.6, 0.6), linetype = "dotted") +
+        geom_hline(yintercept = c(-0.5, 0.5), linetype = "dotted") +
         geom_hline(yintercept = 0) +
+        ylim(c(-1, 1)) + 
         theme_classic() +
         theme(
             panel.border = element_rect(color = "black", fill = NA, size = 0.5), 
             axis.text.x = element_text(angle = 90, hjust = 1),
             panel.spacing = unit(0, "lines")
         ) +
-        labs(y = "Pearson's Correlation Coefficient", fill = "Direction of\nAssociation"))
+        labs(y = "Pearson's Correlation Coefficient", fill = "Direction of\nAssociation", x = "Dataset"))
     dev.off()
 }
 

@@ -90,7 +90,7 @@ save(PC_res, CI_res,
 ###########################################################
 
 # Class A biomarkers: abs(PCC > 0.65) & FDR < 0.05 in 1 PSet
-ClassA <- PC_res[which((abs(PC_res$pc >= 0.65)) & PC_res$FDR < 0.05),]
+ClassA <- PC_res[which((abs(PC_res$pc) >= 0.5) & PC_res$FDR < 0.05),]
 ClassA <- ClassA[order(ClassA$pc, decreasing = T),]
 ClassA$rank <- factor(1:nrow(ClassA), levels = c(1:nrow(ClassA)))
 
@@ -99,19 +99,22 @@ ClassA$rank <- factor(1:nrow(ClassA), levels = c(1:nrow(ClassA)))
 # Check and remove discordant associations in other PSets
 ###########################################################
 
-##### BASED ON ALL CLASS A BIOMARKERS BEING (+)ve PCC
-
 # Class A associations across PSets
 toPlot <- PC_res[PC_res$pairs %in% ClassA$pairs,]
 keep <- names(table(toPlot$pair)[table(toPlot$pair)>1])
 toPlot <- toPlot[toPlot$pair %in% keep,]
 
 # plot discordant associations
-plot_ClassA_allAssociations(toPlot)
+plot_ClassA_allAssociations(toPlot, "ARCHE1", 8)
+plot_ClassA_allAssociations(toPlot, "ARCHE2", 18)
+plot_ClassA_allAssociations(toPlot, "ARCHE3", 20)
+plot_ClassA_allAssociations(toPlot, "ARCHE4", 17)
+plot_ClassA_allAssociations(toPlot, "ARCHE5", 22)
+plot_ClassA_allAssociations(toPlot, "ARCHE6", 17)
 
-# remove biomarkers with discordant associations
-ClassA <- ClassA[-which(ClassA$pair %in% toPlot$pairs[toPlot$pc < 0]),]
-toPlot <- toPlot[toPlot$pairs %in% ClassA$pairs,]
+# TODO: remove biomarkers with discordant associations
+#ClassA <- ClassA[-which(ClassA$pair %in% toPlot$pairs[toPlot$pc < 0]),]
+#toPlot <- toPlot[toPlot$pairs %in% ClassA$pairs,]
 
 # save Class A biomarkers
 write.csv(ClassA, file = "DrugResponse/results/data/ClassA_Biomarkers.csv", quote = F, row.names = F)
