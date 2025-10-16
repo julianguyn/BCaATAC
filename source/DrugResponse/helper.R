@@ -355,7 +355,7 @@ run_meta <- function(df) {
 
         if (abs(meta$TE.random) > 0.4) {
             # plot forest plot
-            fileName = paste0("DrugResponse/results/figures/ClassC/meta/",pair,".png")
+            fileName = paste0("DrugResponse/results/figures/ClassB/meta/",pair,".png")
             
             png(fileName, width = 10, height = 4, res = 600, units = "in")
             title <- pair
@@ -375,4 +375,32 @@ run_meta <- function(df) {
     estimates$FDR <- ave(estimates$pval, estimates$drug, FUN = function(p) p.adjust(p, method = "BH"))
     
     return(estimates)
+}
+
+#' Compile ClassB results for plotting
+#'
+#' Compiles the PCC and meta-estimates for ClassB biomarkers.
+#' @param PC_res dataframe. Dataframe from computePC()
+#' @param ClassB dataframe. Subsetted dataframe from run_meta() of ClassB pairs
+#' @return A dataframe of compiled results.
+#' 
+compileClassB <- function(PC_res, ClassB) {
+    
+    keep <- PC_res[which(PC_res$pairs %in% ClassB$pair),]
+    
+    # combine PC_res and meta results
+    toPlot <- data.frame(
+        signature = c(keep$signature, ClassB$signature),
+        drug = c(keep$drug, ClassB$drug),
+        pairs = c(keep$pairs, ClassB$pair),
+        estimate = c(keep$pc, ClassB$TE),
+        upper = c(keep$upper, ClassB$upper),
+        lower = c(keep$lower, ClassB$lower),
+        FDR = c(keep$FDR, ClassB$FDR),
+        pset = c(keep$pset, rep("Meta Estimate", nrow(ClassB)))
+    )
+    toPlot$meta <- factor(ifelse(toPlot$pset == "Meta Estimate", TRUE, FALSE), levels = c(TRUE, FALSE))
+    toPlot$pset <- factor(toPlot$pset, levels = c(unique(PC_res$pset), "Meta Estimate"))
+
+    return(toPlot)
 }

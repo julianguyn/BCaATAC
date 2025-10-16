@@ -97,7 +97,7 @@ plot_ClassA_allAssociations <- function(toPlot, ARCHE, width) {
     dev.off()
 }
 
-#' Plot Class A associations in >1 PSet as heatmap
+#' Plot Class A associations as heatmap
 #'
 #' @param type string. "Multi" for drugs in >1 PSet, "Single" for drugs in only 1 PSet
 #' Annotated by ARCHE and BCa relevant drug
@@ -201,13 +201,13 @@ plot_ClassA_biomarkersAssociations <- function(ClassA) {
     dev.off()
 }
 
-#' Plot Class C biomarker associations
+#' Plot Class B biomarker associations
 #' 
-plot_ClassC_biomarkersAssociations <- function(ClassC) {
-    png("DrugResponse/results/figures/ClassC/biomarkersAssociations.png", width = 6, height = 5, res = 600, units = "in")
-    print(ggplot(ClassC, aes(x = TE, y = rank)) +
+plot_ClassB_biomarkersAssociations <- function(ClassB) {
+    png("DrugResponse/results/figures/ClassB/biomarkersAssociations.png", width = 6, height = 5, res = 600, units = "in")
+    print(ggplot(ClassB, aes(x = TE, y = rank)) +
         geom_col(aes(fill = signature), color = "black") + 
-        scale_y_discrete(labels = ClassA$drug) +
+        scale_y_discrete(labels = ClassB$drug) +
         scale_fill_manual(values = ARCHE_pal) +
         xlim(c(-1, 1)) + 
         theme_classic() + geom_vline(xintercept = 0) + 
@@ -216,33 +216,13 @@ plot_ClassC_biomarkersAssociations <- function(ClassC) {
 
 }
 
-#' Forest-plot-like visualization for Class C
+#' Forest-plot-like visualization for Class B
 #'
-#' Plot individual PC and meta-estimate for Class C biomarkers
-#' @param df dataframe. Dataframe from computePC()
-#' @param ClassC dataframe. Subsetted dataframe from run_meta() of ClassC pairs
+#' Plot individual PC and meta-estimate for Class B biomarkers
 #' 
-plot_ClassC_forest <- function(PC_res, ClassC) {
+plot_ClassB_forest <- function(toPlot) {
 
-    # only plot classC
-    keep <- PC_res[which(PC_res$pairs %in% ClassC$pair),]
-    
-    # combine PC_res and meta results
-    toPlot <- data.frame(
-        signature = c(keep$signature, ClassC$signature),
-        drug = c(keep$drug, ClassC$drug),
-        pairs = c(keep$pairs, ClassC$pair),
-        estimate = c(keep$pc, ClassC$TE),
-        upper = c(keep$upper, ClassC$upper),
-        lower = c(keep$lower, ClassC$lower),
-        FDR = c(keep$FDR, ClassC$FDR),
-        pset = c(keep$pset, rep("Meta Estimate", nrow(ClassC)))
-    )
-    toPlot$meta <- factor(ifelse(toPlot$pset == "Meta Estimate", TRUE, FALSE), levels = c(TRUE, FALSE))
-    toPlot$pset <- factor(toPlot$pset, levels = c(unique(PC_res$pset), "Meta Estimate"))
-
-    # plot
-    png("DrugResponse/results/figures/ClassC/forest.png", width = 14, height = 6, res = 600, units = "in")
+    png("DrugResponse/results/figures/ClassB/forest.png", width = 14, height = 6, res = 600, units = "in")
     print(ggplot(toPlot, aes(x = estimate, y = pset)) + 
         geom_linerange(aes(xmin = lower, xmax = upper)) + 
         geom_vline(xintercept = 0) + 
@@ -255,5 +235,104 @@ plot_ClassC_forest <- function(PC_res, ClassC) {
         theme_classic() +
         theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
         labs(x = "Pearson's Correlation Coefficient | Meta Estimate", y = "PSet"))
+    dev.off()
+}
+
+#' Plot Class B associations as heatmap
+#'
+#' Annotated by ARCHE and BCa relevant drug
+#' 
+plot_ClassB_heatmap <- function(toPlot) {
+
+    # format plot
+    toPlot <- toPlot[order(toPlot$pairs),]
+    toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
+    toPlot$pairs <- factor(toPlot$pairs, levels = unique(toPlot$pairs))
+
+    # arche bounds 
+    n_pairs <- toPlot %>%
+        group_by(signature) %>%
+        summarise(n_pairs = n_distinct(pairs)) %>%
+        mutate(cumulative = cumsum(n_pairs))
+    bounds <- n_pairs$cumulative+0.5
+
+    # main heatmap (pset~pair) PCC
+    p1 <- ggplot(toPlot[toPlot$meta == FALSE,], aes(x = pairs, y = pset, fill = estimate)) + 
+        geom_tile(color = 'black') +
+        geom_text(data = subset(toPlot, FDR < 0.05),
+                aes(label = "*"), 
+                vjust = 0.75, size = 4) +
+        geom_vline(xintercept = bounds[1:4], color = "gray") +
+        scale_x_discrete(labels = function(pairs) gsub(".*_", "", pairs)) +
+        scale_fill_gradient2("Pearson's\nCorrelation\nCoefficient", 
+                            low = "#BC4749", 
+                            high = "#689CB0",
+                            mid = "#C2BBC9",
+                            limits = c(-1, 1)) +
+        theme_void() +
+        theme(
+            axis.text.y = element_text(size=9, hjust=1, vjust=0.5, margin = margin(r = 6)), 
+            axis.text.x = element_text(size=9, angle=90, hjust=1, vjust=0.5, margin = margin(t = 3)),
+            legend.title = element_text(size=9),
+            axis.ticks = element_line(color = "gray", linewidth = 0.3),
+            axis.ticks.length = unit(2, "pt")
+            )
+    
+    # Meta-Estimate
+    p2 <- ggplot(toPlot[toPlot$meta == TRUE,], aes(x = pairs, y = 1, fill = estimate)) + 
+        geom_tile(color = "black") +
+        theme_void() + 
+        geom_vline(xintercept = bounds[1:4], color = "gray") +
+        scale_fill_gradient2("Meta TE", 
+                            low = "#BC4749", 
+                            high = "#689CB0",
+                            mid = "#C2BBC9",
+                            limits = c(-1, 1)) +
+        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 5))) + 
+        labs(y = "Meta TE")
+
+    # BCa drug annotation
+    p3 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
+        geom_tile(color = "gray") +
+        theme_void() + 
+        geom_vline(xintercept = bounds[1:4], color = "gray") +
+        scale_fill_manual(values = c("#3E517A", "white")) +
+        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 2))) + 
+        labs(y = "BCaDrug")
+    
+    # ARCHE annotation
+    p4 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = signature)) + 
+        geom_tile(color = NA) +
+        theme_void() + 
+        geom_vline(xintercept = bounds[1:4], color = "gray") +
+        scale_fill_manual("ARCHE", values = ARCHE_pal) +
+        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 5))) + 
+        labs(y = "ARCHE ")
+
+    # extract legends (just need the TE one, get others from Class A lol)
+    l2 <- as_ggplot(get_legend(p2))
+    p1 <- p1+theme(legend.position = "none")
+    p2 <- p2+theme(legend.position = "none")
+    p3 <- p3+theme(legend.position = "none")
+    p4 <- p4+theme(legend.position = "none")
+
+    filename <- paste0("DrugResponse/results/figures/ClassB/heatmap.png")
+    png(filename, width = 7, height = 3.5, res = 600, units = "in")
+    print(
+        grid.arrange(p1, p2, p3, p4, l2, ncol = 10, nrow = 18,
+        layout_matrix = rbind(c(4,4,4,4,4,4,4,4,4,4,4,4,4,5,5),
+                              c(3,3,3,3,3,3,3,3,3,3,3,3,3,5,5),
+                              c(2,2,2,2,2,2,2,2,2,2,2,2,2,5,5), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,NA,NA), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,NA,NA)))
+    )
     dev.off()
 }

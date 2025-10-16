@@ -146,25 +146,29 @@ for (pair in ClassA$pair) {
 }
 
 ###########################################################
-# Identify Class C Biomarkers
+# Identify Class B Biomarkers
 ###########################################################
 
 # perform meta analysis and save results
 estimates <- run_meta(PC_res)
 write.csv(estimates, file = "DrugResponse/results/data/meta_estimates.csv", quote = F, row.names = F)
 
-#ClassC biomarkers: abs(TE > 0.4) & FDR < 0.05
-ClassC <- estimates[which(abs(estimates$TE) > 0.4 & estimates$FDR < 0.05),]
-ClassC <- ClassC[order(ClassC$TE, decreasing = T),]
-ClassC$rank <- factor(1:nrow(ClassC), levels = c(1:nrow(ClassC)))
+#ClassB biomarkers: abs(TE > 0.4) & FDR < 0.05
+ClassB <- estimates[which(abs(estimates$TE) > 0.4 & estimates$FDR < 0.05),]
+ClassB <- ClassB[order(ClassB$TE, decreasing = T),]
+ClassB$rank <- factor(1:nrow(ClassB), levels = c(1:nrow(ClassB)))
 
 
 ###########################################################
-# Plots for Class C biomarkers
+# Plots for Class B biomarkers
 ###########################################################
 
-# plot Class C biomarker associations
-plot_ClassC_biomarkersAssociations(ClassC)
+# plot Class B biomarker associations
+plot_ClassB_biomarkersAssociations(ClassB)
 
-# plot Class C biomarker associations as forest plot
-plot_ClassC_forest(PC_res, ClassC)
+# plot Class B biomarker associations as forest plot
+toPlot <- compileClassB(PC_res, ClassB)
+plot_ClassB_forest(toPlot)
+
+# plot Class B biomarker associations as heatmap
+plot_ClassB_heatmap(toPlot)
