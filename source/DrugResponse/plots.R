@@ -97,6 +97,90 @@ plot_ClassA_allAssociations <- function(toPlot, ARCHE, width) {
     dev.off()
 }
 
+#' Plot Class A associations in >1 PSet as heatmap
+#'
+#' Annotated by ARCHE and BCa relevant drug
+#' 
+plot_ClassA_heatmapMulti <- function(toPlot) {
+
+    # subset signature and format plot
+    toPlot <- toPlot[order(toPlot$pairs),]
+    toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
+    toPlot$pairs <- factor(toPlot$pairs, levels = rev(unique(toPlot$pairs)))
+
+    # arche bounds 
+    n_pairs <- toPlot %>%
+        group_by(signature) %>%
+        summarise(n_pairs = n_distinct(pairs)) %>%
+        mutate(cumulative = cumsum(n_pairs))
+    bounds <- n_pairs$cumulative+0.5
+
+    # main heatmap (pset~pair)
+    p1 <- ggplot(toPlot, aes(x = pairs, y = pset, fill = pc)) + 
+        geom_tile(color = 'black') +
+        geom_text(data = subset(toPlot, FDR < 0.05),
+                aes(label = "*"), 
+                vjust = 0.75, size = 4) +
+        geom_vline(xintercept = bounds[1:5], color = "gray") +
+        scale_x_discrete(labels = function(pairs) gsub(".*_", "", pairs)) +
+        scale_fill_gradient2("Pearson's\nCorrelation\nCoefficient", 
+                            low = binary_pal[2], 
+                            high = binary_pal[1],
+                            limits = c(-1, 1)) +
+        theme_void() +
+        theme(
+            axis.text.y = element_text(size=9, hjust=1, vjust=0.5, margin = margin(r = 6)), 
+            axis.text.x = element_text(size=9, angle=90, hjust=1, vjust=0.5, margin = margin(t = 3)),
+            legend.title = element_text(size=9),
+            axis.ticks = element_line(color = "gray", linewidth = 0.3),
+            axis.ticks.length = unit(2, "pt")
+            )
+
+    # ARCHE annotation
+    p2 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = signature)) + 
+        geom_tile(color = NA) +
+        theme_void() + 
+        geom_vline(xintercept = bounds[1:5], color = "gray") +
+        scale_fill_manual("ARCHE", values = ARCHE_pal) +
+        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 5))) + 
+        labs(y = "ARCHE ")
+
+    # BCa drug annotation
+    p3 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
+        geom_tile(color = NA) +
+        theme_void() + 
+        geom_vline(xintercept = bounds[1:5], color = "gray") +
+        scale_fill_manual(values = c("#3E517A", "white")) +
+        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 2))) + 
+        labs(y = "BCaDrug")
+
+    # extract legends
+    l1 <- as_ggplot(get_legend(p1))
+    l2 <- as_ggplot(get_legend(p2))
+    l3 <- as_ggplot(get_legend(p3))
+    p1 <- p1+theme(legend.position = "none")
+    p2 <- p2+theme(legend.position = "none")
+    p3 <- p3+theme(legend.position = "none")
+
+    png("DrugResponse/results/figures/ClassA/heatmapMulti.png", width = 18, height = 3.5, res = 600, units = "in")
+    print(
+        grid.arrange(p1, p2, p3, l2, l1, ncol = 10, nrow = 17,
+        layout_matrix = rbind(c(3,3,3,3,3,3,3,3,3,3,3,3,NA,NA),
+                              c(2,2,2,2,2,2,2,2,2,2,2,2,NA,5), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5),
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,4,5), 
+                              c(1,1,1,1,1,1,1,1,1,1,1,1,NA,NA)))
+    )
+    dev.off()
+}
+
 #' Plot Class A biomarker associations
 #' 
 plot_ClassA_biomarkersAssociations <- function(ClassA) {
