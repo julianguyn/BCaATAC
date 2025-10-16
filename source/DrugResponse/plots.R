@@ -259,7 +259,7 @@ plot_ClassB_heatmap <- function(toPlot) {
     # main heatmap (pset~pair) PCC
     p1 <- ggplot(toPlot[toPlot$meta == FALSE,], aes(x = pairs, y = pset, fill = estimate)) + 
         geom_tile(color = 'black') +
-        geom_text(data = subset(toPlot, FDR < 0.05),
+        geom_text(data = subset(toPlot[toPlot$meta == FALSE,], FDR < 0.05),
                 aes(label = "*"), 
                 vjust = 0.75, size = 4) +
         geom_vline(xintercept = bounds[1:4], color = "gray") +
