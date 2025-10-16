@@ -95,7 +95,7 @@ save(PC_res, CI_res,
 # Identify Class A Biomarkers
 ###########################################################
 
-# Class A biomarkers: abs(PCC > 0.65) & FDR < 0.05 in 1 PSet
+# Class A biomarkers: abs(PCC > 0.5) & FDR < 0.05 in 1 PSet
 ClassA <- PC_res[which((abs(PC_res$pc) >= 0.5) & PC_res$FDR < 0.05),]
 ClassA <- ClassA[order(ClassA$pc, decreasing = T),]
 ClassA$rank <- factor(1:nrow(ClassA), levels = c(1:nrow(ClassA)))
@@ -110,7 +110,7 @@ toPlot <- PC_res[PC_res$pairs %in% ClassA$pairs,]
 keep <- names(table(toPlot$pair)[table(toPlot$pair)>1])
 toPlot <- toPlot[toPlot$pair %in% keep,]
 
-# plot discordant associations
+# plot all associations per ARCHE
 plot_ClassA_allAssociations(toPlot, "ARCHE1", 8)
 plot_ClassA_allAssociations(toPlot, "ARCHE2", 18)
 plot_ClassA_allAssociations(toPlot, "ARCHE3", 20)
@@ -128,16 +128,17 @@ write.csv(toPlot, file = "DrugResponse/results/data/ClassA_allAssociations.csv",
 # Plots for Class A biomarkers
 ###########################################################
 
-# plot Class A heatmap
-plot_ClassA_heatmapMulti(toPlot)
+# plot Class A heatmap (drug in >1 PSet)
+plot_ClassA_heatmap(toPlot, "Multi")
 
-#### do we want to keep the rest below
+# plot Class A associations in 1 PSet
+toPlot <- ClassA[-which(ClassA$pairs %in% toPlot$pairs),]
+toPlot <- map_drugs(toPlot)         # deal w drug names
+plot_ClassA_heatmap(toPlot, "Single")
 
 # plot Class A biomarker associations
+ClassA <- map_drugs(ClassA)
 plot_ClassA_biomarkersAssociations(ClassA)
-
-# plot Class A biomarker associations across PSets
-plot_ClassA_associationsAcrossPSets(toPlot)
 
 # plot indiv scatter plots for Class A biomarker associations across PSets
 for (pair in ClassA$pair) {

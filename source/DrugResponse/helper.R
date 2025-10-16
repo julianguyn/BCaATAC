@@ -264,6 +264,41 @@ computePC <- function(signature_scores, sensitivity_data, label) {
     return(combinations)
 }
 
+#' Shorten drug names for plotting
+#'
+#' Reference defined mapping.
+#' @param toPlot dataframe. Output from computePC()
+#' @return toPlot dataframe with re-mapped drug names.
+#' 
+
+# define mappings
+mapping_drugs2 <- c(
+    "doxorubicin:navitoclax (2:1 mol/mol)" = "Doxorubicin:Navitoclax", 
+    "carboplatin:UNC0638 (2:1 mol/mol)" = "Carboplatin:UNC0638", 
+    "tanespimycin:gemcitabine (1:1 mol/mol)" = "Tanespimycin:Gemcitabine", 
+    "carboplatin:etoposide (40:17 mol/mol)" = "Carboplatin:Etoposide", 
+    "serdemetan:SCH-529074 (1:1 mol/mol)" = "Serdemetan:SCH-529074", 
+    "navitoclax:pluripotin (1:1 mol/mol)" = "Navitoclax:Pluripotin", 
+    "Carbamic acid, N,N'-(1,2,3,4-tetrahydro-6,7,8-trimethoxy-4-oxo-2-quinazolinylidene)bis-, dimethyl ester" = "Carbamic acid", 
+    "navitoclax:gemcitabine (1:1 mol/mol)" = "Navitoclax:Gemcitabine",
+    "docetaxel:tanespimycin (2:1 mol/mol)" = "Docetaxel:Tanespimycin",
+    "navitoclax:MST-312 (1:1 mol/mol)" = "Navitoclax:MST-312",
+    "decitabine:carboplatin (1:1 mol/mol)" = "Decitabine:Carboplatin"
+)
+
+# function to standardize mapping of sensitivity dataframe
+map_drugs <- function(toPlot) {
+
+    for (i in 1:nrow(toPlot)) {
+        drug = toPlot$drug[i]
+        if (drug %in% names(mapping_drugs2)) {toPlot$drug[i] <- unname(mapping_drugs2[drug])}
+    }
+
+    # redo pairs
+    toPlot$pairs <- paste(toPlot$signature, toPlot$drug, sep = "_")
+    return(toPlot)
+}
+
 #' Extract AAC for drug of interest
 #'
 #' Helper function for plot_CCLs().

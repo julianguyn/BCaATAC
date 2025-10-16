@@ -82,8 +82,8 @@ plot_ClassA_allAssociations <- function(toPlot, ARCHE, width) {
             vjust = 0, size = 6) +
         facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
         scale_fill_manual(values = binary_pal, breaks = c("Positive", "Negative"),
-            labels = c("Positive\n(Concordant)\nAssociation",
-                    "Negative\n(Discordant)\nAssociation")) +
+            labels = c("Positive\nAssociation",
+                    "Negative\nAssociation")) +
         geom_hline(yintercept = c(-0.5, 0.5), linetype = "dotted") +
         geom_hline(yintercept = 0) +
         ylim(c(-1, 1)) + 
@@ -99,14 +99,15 @@ plot_ClassA_allAssociations <- function(toPlot, ARCHE, width) {
 
 #' Plot Class A associations in >1 PSet as heatmap
 #'
+#' @param type string. "Multi" for drugs in >1 PSet, "Single" for drugs in only 1 PSet
 #' Annotated by ARCHE and BCa relevant drug
 #' 
-plot_ClassA_heatmapMulti <- function(toPlot) {
+plot_ClassA_heatmap <- function(toPlot, type) {
 
-    # subset signature and format plot
+    # format plot
     toPlot <- toPlot[order(toPlot$pairs),]
     toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
-    toPlot$pairs <- factor(toPlot$pairs, levels = rev(unique(toPlot$pairs)))
+    toPlot$pairs <- factor(toPlot$pairs, levels = unique(toPlot$pairs))
 
     # arche bounds 
     n_pairs <- toPlot %>%
@@ -124,8 +125,9 @@ plot_ClassA_heatmapMulti <- function(toPlot) {
         geom_vline(xintercept = bounds[1:5], color = "gray") +
         scale_x_discrete(labels = function(pairs) gsub(".*_", "", pairs)) +
         scale_fill_gradient2("Pearson's\nCorrelation\nCoefficient", 
-                            low = binary_pal[2], 
-                            high = binary_pal[1],
+                            low = "#BC4749", 
+                            high = "#689CB0",
+                            mid = "#C2BBC9",
                             limits = c(-1, 1)) +
         theme_void() +
         theme(
@@ -136,23 +138,23 @@ plot_ClassA_heatmapMulti <- function(toPlot) {
             axis.ticks.length = unit(2, "pt")
             )
 
+    # BCa drug annotation
+    p2 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
+        geom_tile(color = "gray") +
+        theme_void() + 
+        geom_vline(xintercept = bounds[1:5], color = "gray") +
+        scale_fill_manual(values = c("#3E517A", "white")) +
+        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 2))) + 
+        labs(y = "BCaDrug")
+    
     # ARCHE annotation
-    p2 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = signature)) + 
+    p3 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = signature)) + 
         geom_tile(color = NA) +
         theme_void() + 
         geom_vline(xintercept = bounds[1:5], color = "gray") +
         scale_fill_manual("ARCHE", values = ARCHE_pal) +
         theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 5))) + 
         labs(y = "ARCHE ")
-
-    # BCa drug annotation
-    p3 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
-        geom_tile(color = NA) +
-        theme_void() + 
-        geom_vline(xintercept = bounds[1:5], color = "gray") +
-        scale_fill_manual(values = c("#3E517A", "white")) +
-        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 2))) + 
-        labs(y = "BCaDrug")
 
     # extract legends
     l1 <- as_ggplot(get_legend(p1))
@@ -162,9 +164,13 @@ plot_ClassA_heatmapMulti <- function(toPlot) {
     p2 <- p2+theme(legend.position = "none")
     p3 <- p3+theme(legend.position = "none")
 
-    png("DrugResponse/results/figures/ClassA/heatmapMulti.png", width = 18, height = 3.5, res = 600, units = "in")
+    # figure widths
+    w <- ifelse(type == "Multi", 18, 21)
+
+    filename <- paste0("DrugResponse/results/figures/ClassA/heatmap", type, ".png")
+    png(filename, width = w, height = 3.5, res = 600, units = "in")
     print(
-        grid.arrange(p1, p2, p3, l2, l1, ncol = 10, nrow = 17,
+        grid.arrange(p1, p2, p3, l3, l1, ncol = 10, nrow = 17,
         layout_matrix = rbind(c(3,3,3,3,3,3,3,3,3,3,3,3,NA,NA),
                               c(2,2,2,2,2,2,2,2,2,2,2,2,NA,5), 
                               c(1,1,1,1,1,1,1,1,1,1,1,1,4,5),
@@ -184,43 +190,14 @@ plot_ClassA_heatmapMulti <- function(toPlot) {
 #' Plot Class A biomarker associations
 #' 
 plot_ClassA_biomarkersAssociations <- function(ClassA) {
-    png("DrugResponse/results/figures/ClassA/biomarkersAssociations.png", width = 6, height = 5, res = 600, units = "in")
+    png("DrugResponse/results/figures/ClassA/biomarkersAssociations.png", width = 6, height = 25, res = 600, units = "in")
     print(ggplot(ClassA, aes(x = pc, y = rank)) +
         geom_col(aes(fill = signature), color = "black") + 
         scale_y_discrete(labels = ClassA$drug) +
         scale_fill_manual(values = ARCHE_pal) +
-        xlim(c(0, 1)) + 
+        xlim(c(-1, 1)) + 
         theme_classic() + geom_vline(xintercept = 0) + 
         labs(y = "Drug", title = "", x = "Pearson's Correlation Coefficient", fill = "ARCHE")) 
-    dev.off()
-
-}
-
-#' Plot Class A associations across PSets
-#'
-#' Colour by if == ClassA biomarker
-#' 
-plot_ClassA_associationsAcrossPSets <- function(toPlot) {
-
-    png("DrugResponse/results/figures/ClassA/associationsAcrossPSets.png", width = 17, height = 5, res = 600, units = "in")
-    print(ggplot(toPlot, aes(x = pset, y = pc, fill = ifelse((FDR<0.05 & abs(pc) > 0.6), "Y", "N"))) +
-        geom_bar(stat="identity", color = "black") +
-        geom_text(data = subset(toPlot, FDR < 0.05),
-            aes(label = "*", y = pc), 
-            vjust = 0, size = 6) +
-        facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
-        scale_fill_manual(values = c("#8BA6A9", "#6F5E5C"), breaks = c("Y", "N"),
-            labels = c("ClassA:\nabs(PCC>=0.65)\n& FDR<0.05",
-                    "Not ClassA:\nabs(PCC<0.65)\nor FDR>0.05")) +
-        geom_hline(yintercept = c(0.6), linetype = "dotted") +
-        ylim(c(0,1)) +
-        theme_classic() +
-        theme(
-            panel.border = element_rect(color = "black", fill = NA, size = 0.5), 
-            axis.text.x = element_text(angle = 90, hjust = 1),
-            panel.spacing = unit(0, "lines")
-        ) +
-        labs(y = "Pearson's Correlation Coefficient", fill = "Biomarker\nAssociation"))
     dev.off()
 }
 
