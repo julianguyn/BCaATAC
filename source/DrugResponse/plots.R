@@ -201,59 +201,6 @@ plot_ClassA_biomarkersAssociations <- function(ClassA) {
     dev.off()
 }
 
-#' Plot Class B biomarker associations
-#' 
-plot_ClassB_biomarkersAssociations <- function(ClassB) {
-
-    toPlot <- ClassB[which(ClassB$FDR < 0.05 & abs(ClassB$pc) > 0.4),]
-
-    png("DrugResponse/results/figures/ClassB/biomarkersAssociations.png", width = 17, height = 5, res = 600, units = "in")
-    print(ggplot(toPlot, aes(x = pset, y = pc, fill = signature)) +
-        geom_bar(stat="identity", color = "black") +
-        facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
-        scale_fill_manual(values = ARCHE_pal) +
-        geom_hline(yintercept = c(0.4, -0.4), linetype = "dotted") +
-        ylim(c(0,1)) +
-        theme_classic() +
-        theme(
-            panel.border = element_rect(color = "black", fill = NA, size = 0.5), 
-            axis.text.x = element_text(angle = 90, hjust = 1),
-            panel.spacing = unit(0, "lines")
-        ) +
-        labs(y = "Pearson's Correlation Coefficient", fill = "Biomarker\nAssociation"))
-    dev.off()
-}
-
-
-#' Plot Class B associations across PSets
-#'
-#' Colour by if == ClassB biomarker
-#' 
-plot_ClassB_associationsAcrossPSets <- function(toPlot) {
-
-    png("DrugResponse/results/figures/ClassB/associationsAcrossPSets.png", width = 17, height = 5, res = 600, units = "in")
-    print(ggplot(ClassB, aes(x = pset, y = pc, fill = ifelse((FDR<0.05 & abs(pc) > 0.4), "Y", "N"))) +
-        geom_bar(stat="identity", color = "black") +
-        geom_text(data = subset(ClassB, FDR < 0.05),
-            aes(label = "*", y = pc), 
-            vjust = 0, size = 6) +
-        facet_nested(~ factor(signature) + factor(drug), scales = "free_x") +
-        scale_fill_manual(values = c("#8BA6A9", "#6F5E5C"), breaks = c("Y", "N"),
-            labels = c("ClassB:\nabs(PCC>=0.4)\n& FDR<0.05",
-                    "Not ClassB:\nabs(PCC<0.4)\nor FDR>0.05")) +
-        geom_hline(yintercept = c(0.4, -0.4), linetype = "dotted") +
-        geom_hline(yintercept = 0) +
-        ylim(c(-0.5,1)) +
-        theme_classic() +
-        theme(
-            panel.border = element_rect(color = "black", fill = NA, size = 0.5), 
-            axis.text.x = element_text(angle = 90, hjust = 1),
-            panel.spacing = unit(0, "lines")
-        ) +
-        labs(y = "Pearson's Correlation Coefficient", fill = "Biomarker\nAssociation"))
-    dev.off()
-}
-
 #' Plot Class C biomarker associations
 #' 
 plot_ClassC_biomarkersAssociations <- function(ClassC) {

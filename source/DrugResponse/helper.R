@@ -320,27 +320,6 @@ get_doiAAC <- function(pset, drug, df, label) {
     } else {return(df)}
 }
 
-#' Save significant concordance index results
-#'
-#' Append columns to treatment response matrices with PDX ARCHE signature scores.
-#' @param df string. Vector of PDX model names standardize against mapping.
-#' @return A vector of (string) standardized PDX model names.
-#' 
-saveSig <- function(sig_com, combinations, label) {
-
-    # save signatures associated with drug sensitivity:
-    sen <- combinations[which(combinations$ci > 0.6 & combinations$FDR < 0.05),]
-    sig_com <- rbind(sig_com, data.frame(pset = c(rep(label, nrow(sen))), signature = sen$signature, drug = sen$drug, ci = sen$ci, pvalue = sen$pvalue, FDR = sen$FDR))
-    #write.csv(sen[order(sen$FDR, -sen$ci),], file = paste0("DrugResponse/results/tables/indiv_PSet_CI/", label, "_sen.csv"), row.names = F)
-
-    # save signatures associated with drug resistance:
-    res <- combinations[which(combinations$ci < 0.4 & combinations$FDR < 0.05),]
-    sig_com <- rbind(sig_com, data.frame(pset = c(rep(label, nrow(res))), signature = res$signature, drug = res$drug, ci = res$ci, pvalue = res$pvalue, FDR = res$FDR))
-    #write.csv(res[order(res$FDR, res$ci),], file = paste0("DrugResponse/results/tables/indiv_PSet_CI/", label, "_res.csv"), row.names = F)
-
-    return(sig_com)
-}
-
 #' Perform meta analysis
 #'
 #' Compute meta estimates for signature drug response associations in >=3 PSets.

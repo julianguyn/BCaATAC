@@ -146,34 +146,6 @@ for (pair in ClassA$pair) {
 }
 
 ###########################################################
-# Identify Class B Biomarkers
-###########################################################
-
-#ClassB biomarkers: abs(PCC > 0.4) & FDR < 0.05 in >1 PSet
-to_keep <- PC_res[which((abs(PC_res$pc >= 0.4)) & PC_res$FDR < 0.05),]
-to_keep <- names(table(to_keep$pairs)[table(to_keep$pairs)>1])
-
-ClassB <- PC_res[which(PC_res$pairs %in% to_keep),]
-ClassB <- ClassB[order(ClassB$pc, decreasing = T),]
-ClassB$rank <- factor(1:nrow(ClassB), levels = c(1:nrow(ClassB)))
-
-
-###########################################################
-# Plots for Class B biomarkers
-###########################################################
-
-# plot Class B biomarker associations
-plot_ClassB_biomarkersAssociations(ClassB)
-
-# plot Class B biomarker associations across PSets
-plot_ClassB_associationsAcrossPSets(ClassB)
-
-# plot indiv scatter plots for Class A biomarker associations across PSets
-for (pair in ClassB$pair) {
-    plot_indivPlot(pair, "ClassB")
-}
-
-###########################################################
 # Identify Class C Biomarkers
 ###########################################################
 
