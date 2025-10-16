@@ -9,6 +9,10 @@ suppressPackageStartupMessages({
     library(ggh4x)
     library(reshape2)
     library(meta)
+    library(ggh4x)
+    library(ggpubr)
+    library(grid)
+    library(gridExtra)
 })
 
 source("source/DrugResponse/helper.R")
@@ -112,9 +116,7 @@ plot_ClassA_allAssociations(toPlot, "ARCHE4", 17)
 plot_ClassA_allAssociations(toPlot, "ARCHE5", 22)
 plot_ClassA_allAssociations(toPlot, "ARCHE6", 17)
 
-# TODO: remove biomarkers with discordant associations
-#ClassA <- ClassA[-which(ClassA$pair %in% toPlot$pairs[toPlot$pc < 0]),]
-#toPlot <- toPlot[toPlot$pairs %in% ClassA$pairs,]
+# TODO: remove biomarkers with discordant associations?
 
 # save Class A biomarkers
 write.csv(ClassA, file = "DrugResponse/results/data/ClassA_Biomarkers.csv", quote = F, row.names = F)
@@ -123,6 +125,100 @@ write.csv(toPlot, file = "DrugResponse/results/data/ClassA_allAssociations.csv",
 ###########################################################
 # Plots for Class A biomarkers
 ###########################################################
+
+# make heatmap
+
+
+plot_ClassA_heatmaps <- function(toPlot) {
+
+    # subset signature and format plot
+    toPlot <- toPlot[order(toPlot$pairs),]
+    toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
+    toPlot$pairs <- factor(toPlot$pairs, levels = rev(unique(toPlot$pairs)))
+
+    # main heatmap (pset~pair)
+    p1 <- ggplot(toPlot, aes(x = pset, y = pairs, fill = pc)) + 
+        geom_tile(color = 'black') +
+        geom_text(data = subset(toPlot, FDR < 0.05),
+                aes(label = "*"), 
+                vjust = 0.75, size = 4) +
+        scale_fill_gradient2("Pearson's\nCorrelation\nCoefficient", 
+                            low = binary_pal[2], 
+                            high = binary_pal[1],
+                            limits = c(-1, 1)) +
+        scale_x_discrete(position = "top") +
+        theme_void() +
+        theme(
+            axis.text.y = element_text(size=9, hjust=1, margin = margin(r = 3)), 
+            axis.text.x = element_text(size = 9, margin = margin(b = 3)),
+            legend.title = element_text(size = 9),
+            axis.ticks = element_line(color = "gray", linewidth = 0.3),
+            axis.ticks.length = unit(2, "pt")
+            )
+
+    # ARCHE annotation
+    p2 <- ggplot(toPlot, aes(x = 1, y = pairs, fill = signature)) + 
+        geom_tile(color = NA) +
+        theme_void() + 
+        scale_fill_manual("ARCHE", values = ARCHE_pal) +
+        theme(axis.text.x = element_text(size = 9, margin = margin(b = 3))) + 
+        labs(x = "")
+
+    # extract legends
+    l1 <- as_ggplot(get_legend(p1))
+    l2 <- as_ggplot(get_legend(p2))
+    p1 <- p1+theme(legend.position = "none")
+    p2 <- p2+theme(legend.position = "none")
+
+    png("DrugResponse/results/figures/ClassA/heatmap.png", width = 8, height = 18, res = 600, units = "in")
+    print(
+        grid.arrange(p1, p2, l1, l2, ncol = 9, nrow = 2,
+        layout_matrix = rbind(c(1,1,1,1,1,1,1,2,3), 
+                              c(1,1,1,1,1,1,1,2,4)))
+    )
+    dev.off()
+}
+
+plot_ClassA_heatmaps(toPlot)
+
+
+plot_ClassA_heatmaps <- function(toPlot, ARCHE, height) {
+
+    # subset signature and format plot
+    toPlot <- toPlot[toPlot$signature == ARCHE,]
+    toPlot <- toPlot[order(toPlot$drug, decreasing = T),]
+    toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
+    toPlot$drug <- factor(toPlot$drug, levels = unique(toPlot$drug))
+    filename <- paste0("DrugResponse/results/figures/ClassA/heatmap_", ARCHE, ".png")
+
+    png(filename, width = 6, height = height, res = 600, units = "in")
+    print(ggplot(toPlot, aes(x = pset, y = drug, fill = pc)) + 
+    geom_tile(color = 'black') +
+    geom_text(data = subset(toPlot, FDR < 0.05),
+            aes(label = "*"), 
+            vjust = 0.75, size = 4) +
+    scale_fill_gradient2("Pearson's\nCorrelation\nCoefficient", 
+                         low = binary_pal[2], 
+                         high = binary_pal[1],
+                         limits = c(-1, 1)) +
+    scale_x_discrete(position = "top") +
+    theme_void() +
+    theme(
+        axis.text.y = element_text(size=9, hjust=1, margin = margin(r = 3)), 
+        axis.text.x = element_text(size = 9, margin = margin(b = 3)),
+        legend.title = element_text(size = 9),
+        axis.ticks = element_line(color = "gray", linewidth = 0.3),
+        axis.ticks.length = unit(2, "pt")))
+    dev.off()
+}
+
+# plot heatmap
+plot_ClassA_heatmaps(toPlot, "ARCHE1", 2)
+plot_ClassA_heatmaps(toPlot, "ARCHE2", 5)
+plot_ClassA_heatmaps(toPlot, "ARCHE3", 20)
+plot_ClassA_heatmaps(toPlot, "ARCHE4", 17)
+plot_ClassA_heatmaps(toPlot, "ARCHE5", 22)
+plot_ClassA_heatmaps(toPlot, "ARCHE6", 17)
 
 # plot Class A biomarker associations
 plot_ClassA_biomarkersAssociations(ClassA)
