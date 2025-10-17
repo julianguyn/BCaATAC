@@ -49,3 +49,18 @@ plot_ARCHE_heatmap <- function(mat) {
     )
     dev.off()
 }
+
+#' ARCHE Upset plot
+#' 
+#' Plot Upset plot of overlapping peaks in ARCHEs
+#' 
+plot_ATAC_Upset <- function(m) {
+
+    png("Signatures/results/figures/ATAC_Upset.png", width = 11, height = 5, res = 600, units = "in")
+    print(
+        UpSet(m, set_order = c(paste0("ARCHE", 1:6)), comb_order = order(-comb_size(m)),
+        bg_col = "gray", comb_col = random_blue, 
+        right_annotation = upset_right_annotation(m, gp = gpar(fill = random_blue)))
+    )
+    dev.off()
+}

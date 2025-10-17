@@ -44,3 +44,6 @@ cohort_pal2 <- c(
     "Progression" = "#A64253",
     "On treatment control" = "#B89085"
 )
+
+random_blue <- "#3E517A"
+random_lightblue <- "#88A0A8"
