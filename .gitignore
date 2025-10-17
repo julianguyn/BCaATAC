@@ -32,3 +32,5 @@ MetaData
 Misc
 temp
 *.DS_Store
+Signatures/scripts/NMFcode/utils/__pycache__
+log.txt
