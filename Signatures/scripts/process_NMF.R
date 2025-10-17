@@ -3,6 +3,8 @@ setwd("C:/Users/julia/Documents/BCaATAC")
 # load libraries
 suppressPackageStartupMessages({
   library(data.table)
+  library(ggplot2)
+  library(dplyr)
 })
 
 #python stuff
@@ -42,7 +44,26 @@ write.table(background_BED, file = "Signatures/results/data/beds/background.bed"
 # Rank peaks per ARCHE
 ###########################################################
 
-# todo
+# order ARCHE peaks by weight and subset
+n <- 20000
+
+a1 <- top_peaks(mixture, "ARCHE1", n)
+a2 <- top_peaks(mixture, "ARCHE2", n)
+a3 <- top_peaks(mixture, "ARCHE3", n)
+a4 <- top_peaks(mixture, "ARCHE4", n)
+a5 <- top_peaks(mixture, "ARCHE5", n)
+a6 <- top_peaks(mixture, "ARCHE6", n)
+
+# plot changes in peak weights
+plot_peakWeights("ARCHE1", n)
+plot_peakWeights("ARCHE2", n)
+plot_peakWeights("ARCHE3", n)
+plot_peakWeights("ARCHE4", n)
+plot_peakWeights("ARCHE5", n)
+plot_peakWeights("ARCHE6", n)
+
+# ARCHE weight drops
+arche1 <- c(947, 14241, 14351, 15991, 16493, 17459)
 
 ###########################################################
 # Create BED file for each ARCHE

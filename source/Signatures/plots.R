@@ -1,3 +1,30 @@
+#' ARCHE peak weight thresholds
+#' 
+#' Plot changes in peak weights from NMF for top n windows
+#' @param arche string. ARCHE name
+#' @param num_windows int. Number of windows kept
+#' 
+plot_peakWeights <- function(arche, num_windows) {
+
+    n <- paste0(as.character(num_windows/1000), k)
+
+    # get start positions of plateaus
+    diff <- find_delta0(toPlot)
+
+    filename <- paste0("Signatures/results/figures/peakWeights/",arche,"_", n, ".png")
+    png(filename, width = 5, height = 5, res = 600, units = "in")
+    print(
+        ggplot(toPlot, aes(x = rank, y = .data[[arche]])) +
+        geom_line() +
+        geom_point() +
+        geom_vline(xintercept = diff$rank, linetype = "dashed") +
+        geom_vline(xintercept = 10000) +
+        theme_classic() +
+        labs(x = "Peak Window Ranked by Weight", y = paste("Peak Window Weight for", arche))
+    )
+    dev.off()
+}
+
 #' ARCHE heatmap
 #' 
 #' Plot heatmap of ARCHE scores in TCGA BCa tumours
