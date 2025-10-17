@@ -19,7 +19,16 @@ PSet_pal <- c(
     "CTRP" = "#A53860"
 )
 
-binary_pal = c(
+subtype_pal <- c(
+    "Basal" = "#AF4C5B",
+    "Her2" = "#EED4D3", 
+    "LumA" = "#B3B4D0", 
+    "LumB" = "#363E62", 
+    "Normal" = "#6365AF", 
+    "Not Available" = "#eFeBF7"
+)
+
+binary_pal <- c(
     "#899DA4", 
     "#BC4749"
 )
