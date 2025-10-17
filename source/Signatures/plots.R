@@ -64,3 +64,19 @@ plot_ATAC_Upset <- function(m) {
     )
     dev.off()
 }
+
+#' Plot annotatePeak results
+#' 
+plot_annotatePeak <- function(toPlot, label) {
+
+    filename <- paste0("Signatures/results/figures/annotatePeak_", label, ".png")
+    png(filename, width = 7, height = 5, res = 600, units = "in")
+    print(
+        ggplot(toPlot, aes(fill=Feature, y=Frequency, x=ARCHE)) + 
+            geom_bar(position="fill", stat="identity", color = "black", size = 0.3) +
+            scale_fill_manual(values = brewer.pal(11, name = "Paired")) +
+            theme_minimal() + 
+            labs(y = "Percentage (%)")
+        )
+    dev.off()
+}

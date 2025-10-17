@@ -15,7 +15,6 @@ suppressPackageStartupMessages({
     library(TxDb.Hsapiens.UCSC.hg19.knownGene)
     library(ComplexHeatmap)
     library(GenomicRanges)
-    library(wesanderson)
     library(rGREAT)
     library(RColorBrewer)
 })
@@ -122,26 +121,24 @@ plot_ATAC_Upset(m)
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 # annotate peaks
-anno1 <- annotatePeak(gr1, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
-anno2 <- annotatePeak(gr2, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
-anno3 <- annotatePeak(gr3, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
-anno4 <- annotatePeak(gr4, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
-anno5 <- annotatePeak(gr5, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
-anno6 <- annotatePeak(gr6, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
+anno1 <- annotateARCHE(gr1, "ARCHE1")
+anno2 <- annotateARCHE(gr2, "ARCHE2")
+anno3 <- annotateARCHE(gr3, "ARCHE3")
+anno4 <- annotateARCHE(gr4, "ARCHE4")
+anno5 <- annotateARCHE(gr5, "ARCHE5")
+anno6 <- annotateARCHE(gr6, "ARCHE6")
 
-# add ARCHE labels
-anno1$ARCHE <- "ARCHE1"
-anno2$ARCHE <- "ARCHE2"
-anno3$ARCHE <- "ARCHE3"
-anno4$ARCHE <- "ARCHE4"
-anno5$ARCHE <- "ARCHE5"
-anno6$ARCHE <- "ARCHE6"
+# plot peakAnno results
+toPlot <- rbind(anno1, anno2, anno3, anno4, anno5, anno6)
+plot_annotatePeak(toPlot, "allPeaks")
+
+# repeat for top 10,000 sites
+anno1 <- annotateARCHE(gr1[1:10000], "ARCHE1")
+anno2 <- annotateARCHE(gr2[1:10000], "ARCHE2")
+anno3 <- annotateARCHE(gr3[1:10000], "ARCHE3")
+anno4 <- annotateARCHE(gr4[1:10000], "ARCHE4")
+anno5 <- annotateARCHE(gr5[1:10000], "ARCHE5")
+anno6 <- annotateARCHE(gr6[1:10000], "ARCHE6")
 
 toPlot <- rbind(anno1, anno2, anno3, anno4, anno5, anno6)
-
-png("Signatures/results/figures/peakAnno.png", width = 7, height = 5, res = 600, units = "in")
-ggplot(toPlot, aes(fill=Feature, y=Frequency, x=Signature)) + 
-    geom_bar(position="fill", stat="identity", color = "black", size = 0.3) +
-    scale_fill_manual(values = brewer.pal(11, name = "Paired")) +
-    theme_minimal() + labs(y = "Percentage (%)")
-dev.off()
+plot_annotatePeak(toPlot, "top10kPeaks")
