@@ -12,9 +12,14 @@ import OONMF
 rank=sys.argv[1]
 print("working for rank",int(rank))
 
-A= pd.read_table('filtered_tcga_morethan2peaks.matrix', header=0,index_col=0).T
-#A = pd.read_table('../tcga.nonpromoter.binary.matrix2', header=0,index_col=0).T
-#A = pd.read_table('../noheader.tcga.nonpromoter.binary.matrix', header=None).T
+A= pd.read_table('../../data/BCa_binary.2.matrix', header=0,index_col=0).T
+
+# rename columns and remove genomic locations
+for col in range(len(A.columns)):
+    label = f"{A.columns[col]}:{A.iloc[0,col]}|{A.iloc[1,col]}"
+    A.columns.values[col] = label
+A = A.iloc[2:]
+
 print(A.shape)
 Nc = int(rank)
 seed = 20 # (not very important for NNDSVD)
