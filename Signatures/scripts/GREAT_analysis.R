@@ -1,62 +1,18 @@
-### code ran on server
-
-### PYTHON
-#import numpy as np
-#data = np.load('6Rank_NNDSVD_Mixture.npy')
-#np.savetxt('rank6Mixture.csv', data, delimiter=',')
-
-
-library(data.table)
-
-# load in mixture from NMF
-mixture <- as.data.frame(fread("/home/bioinf/bhklab/julia/projects/ATACseq/Signatures/results/ATAC_NMF_output/rank6Mixture.csv"))
-rownames(mixture) <- paste0("Signature", 1:6)
-
-# load in peak annotations
-anno <- fread("peak_annotation.txt", header = F)$V1
-colnames(mixture) <- anno
-
-# create background regions BED file
-split_strings <- strsplit(anno, ":")
-background_BED <- as.data.frame(t(sapply(split_strings, function(x) unlist(x))))
-colnames(background_BED) <- c("chrom", "chromStart", "chromEnd")
-background_BED$chrom <- gsub("chr", "", background_BED$chrom)
-write.table(background_BED, file = "beds/background.bed", quote = F, sep = "\t", col.names = T, row.names = F)
-
-# create BED files for each signature
-for (i in 1:nrow(mixture)) {
-    tmp <- mixture[i,]
-
-    # save signature name
-    signature <- rownames(tmp)
-
-    # keep only peaks with value
-    tmp <- tmp[,-which(tmp==0)]
-
-    # save peaks
-    peaks <- colnames(tmp)
-
-    # crate BED file
-    split_strings <- strsplit(peaks, ":")
-    BED <- as.data.frame(t(sapply(split_strings, function(x) unlist(x))))
-    colnames(BED) <- c("chrom", "chromStart", "chromEnd")
-    BED$chrom <- gsub("chr", "", BED$chrom)
-
-    # save file
-    filename <- paste0("beds/", signature, ".bed")
-    write.table(BED, file = filename, quote = F, sep = "\t", col.names = T, row.names = F)
-}
-
-###
-
 setwd("C:/Users/julia/Documents/BCaATAC")
 
-suppressMessages(library(rGREAT))
-library(data.table)
-library(wesanderson)
-library(ggplot2)
+# load libraries
+suppressPackageStartupMessages({
+    library(data.table)
+    library(rGREAT)
+    library(wesanderson)
+    library(ggplot2)
+})
 
 set.seed(123)
+
+###########################################################
+# Load in data
+###########################################################
 
 # read in background
 bg <- as.data.frame(fread("Signatures/results/data/beds/background.bed"))
