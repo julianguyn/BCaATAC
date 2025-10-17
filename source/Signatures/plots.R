@@ -50,6 +50,22 @@ plot_ARCHE_heatmap <- function(mat) {
     dev.off()
 }
 
+#' Plot ARCHE window number
+#' 
+plot_ARCHE_peakInfo <- function(df) {
+
+    df$ARCHE <- factor(df$ARCHE, levels = paste0("ARCHE", 6:1))
+    png("Signatures/results/figures/ARCHE_peakInfo.png", width = 5, height = 5, res = 600, units = "in")
+    print(
+        ggplot(df, aes(x = num_windows, y = ARCHE)) +
+            geom_bar(stat = "identity", fill = random_lightblue) +
+            geom_text(data = df, aes(label = paste0(num_windows, " (", sum_peaks, "bp)"), x = 1.25e05)) +
+            theme_classic() +
+            labs(x = "Number of 500bp Windows")
+    )
+    dev.off()
+}
+
 #' ARCHE Upset plot
 #' 
 #' Plot Upset plot of overlapping peaks in ARCHEs

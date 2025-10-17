@@ -84,7 +84,7 @@ sig6$diff <- sig6$chromEnd - sig6$chromStart
 num_windows <- c(nrow(sig1), nrow(sig2), nrow(sig3), nrow(sig4), nrow(sig5), nrow(sig6))
 sum_peaks <- c(sum(sig1$diff), sum(sig2$diff), sum(sig3$diff), sum(sig4$diff), sum(sig5$diff), sum(sig6$diff))
 
-df <- data.frame(Signature = paste0("Signature", 1:6),
+df <- data.frame(ARCHE = paste0("ARCHE", 1:6),
                 num_windows = num_windows, sum_peaks = sum_peaks)
 
 ###########################################################
