@@ -24,6 +24,11 @@ source("source/palettes.R")
 
 set.seed(123)
 
+# ******************************
+# specify which BED files to use
+# ******************************
+analysis = c("20k", "all") 
+
 ###########################################################
 # Load in data
 ###########################################################
@@ -58,15 +63,15 @@ for (sample in mat$variable) {
 plot_ARCHE_heatmap(mat)
 
 ###########################################################
-# Load in ARCHE BEDs
+# Load in BEDs
 ###########################################################
 
-sig1 <- fread("Signatures/results/data/beds/Signature1.bed")
-sig2 <- fread("Signatures/results/data/beds/Signature2.bed")
-sig3 <- fread("Signatures/results/data/beds/Signature3.bed")
-sig4 <- fread("Signatures/results/data/beds/Signature4.bed")
-sig5 <- fread("Signatures/results/data/beds/Signature5.bed")
-sig6 <- fread("Signatures/results/data/beds/Signature6.bed")
+sig1 <- fread(paste0("Signatures/results/data/beds/ARCHE1_", analysis, ".bed"))
+sig2 <- fread(paste0("Signatures/results/data/beds/ARCHE2_", analysis, ".bed"))
+sig3 <- fread(paste0("Signatures/results/data/beds/ARCHE3_", analysis, ".bed"))
+sig4 <- fread(paste0("Signatures/results/data/beds/ARCHE4_", analysis, ".bed"))
+sig5 <- fread(paste0("Signatures/results/data/beds/ARCHE5_", analysis, ".bed"))
+sig6 <- fread(paste0("Signatures/results/data/beds/ARCHE6_", analysis, ".bed"))
 
 ###########################################################
 # Compute number and size of peak regions
@@ -84,8 +89,10 @@ sig6$diff <- sig6$chromEnd - sig6$chromStart
 num_windows <- c(nrow(sig1), nrow(sig2), nrow(sig3), nrow(sig4), nrow(sig5), nrow(sig6))
 sum_peaks <- c(sum(sig1$diff), sum(sig2$diff), sum(sig3$diff), sum(sig4$diff), sum(sig5$diff), sum(sig6$diff))
 
+# plot peak info
 df <- data.frame(ARCHE = paste0("ARCHE", 1:6),
                 num_windows = num_windows, sum_peaks = sum_peaks)
+plot_ARCHE_peakInfo(df, analysis)
 
 ###########################################################
 # Compute number of overlapping regions
@@ -112,7 +119,7 @@ peak_list <- list(
 # plot UPSET plot of overlapping peaks
 m = make_comb_mat(peak_list)
 m = m[comb_size(m) > 2000000]
-plot_ATAC_Upset(m)
+plot_ATAC_Upset(m, analysis)
 
 ###########################################################
 # Annotate ARCHE peak sets
@@ -130,15 +137,18 @@ anno6 <- annotateARCHE(gr6, "ARCHE6")
 
 # plot peakAnno results
 toPlot <- rbind(anno1, anno2, anno3, anno4, anno5, anno6)
-plot_annotatePeak(toPlot, "allPeaks")
+plot_annotatePeak(toPlot, analysis)
 
-# repeat for top 10,000 sites
-anno1 <- annotateARCHE(gr1[1:10000], "ARCHE1")
-anno2 <- annotateARCHE(gr2[1:10000], "ARCHE2")
-anno3 <- annotateARCHE(gr3[1:10000], "ARCHE3")
-anno4 <- annotateARCHE(gr4[1:10000], "ARCHE4")
-anno5 <- annotateARCHE(gr5[1:10000], "ARCHE5")
-anno6 <- annotateARCHE(gr6[1:10000], "ARCHE6")
+###########################################################
+# GREAT analysis
+###########################################################
 
-toPlot <- rbind(anno1, anno2, anno3, anno4, anno5, anno6)
-plot_annotatePeak(toPlot, "top10kPeaks")
+# run GREAT
+runGREAT(gr1, "ARCHE1", analysis)
+runGREAT(gr2, "ARCHE2", analysis)
+runGREAT(gr3, "ARCHE3", analysis)
+runGREAT(gr4, "ARCHE4", analysis)
+runGREAT(gr5, "ARCHE5", analysis)
+runGREAT(gr6, "ARCHE6", analysis)
+
+# plot results

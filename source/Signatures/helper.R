@@ -43,6 +43,52 @@ find_delta0 <- function(df) {
   return(df)
 }
 
+#' Create BED file 
+#' 
+#' @param peaks string. Vector of coordinates chr:start:end
+#' @param filename string. Filename for BED
+#' 
+createBED <- function(peaks, filename, all = FALSE) {
+
+  # if all == TRUE
+  if (all == TRUE) {
+    arche <- gsub("_all", "", filename)
+    peaks <- peaks[rownames(peaks) == arche,]
+    peaks <- peaks[,-which(peaks==0)]
+    peaks <- colnames(peaks)
+  }
+
+  # create BED
+  split_strings <- strsplit(peaks, ":")
+  BED <- as.data.frame(t(sapply(split_strings, function(x) unlist(x))))
+  colnames(BED) <- c("chrom", "chromStart", "chromEnd")
+  BED$chrom <- gsub("chr", "", BED$chrom)
+
+  # save file
+  filename <- paste0("Signatures/results/data/beds/", filename, ".bed")
+  write.table(BED, file = filename, quote = F, sep = "\t", col.names = T, row.names = F)
+}
+
+#' Create HOMER peak file 
+#' 
+#' @param filename string. Same was used in createBED()
+#' 
+createBEDforHOMER <- function(filename) {
+
+  bed <- fread(paste0("Signatures/results/data/beds/", filename, ".bed"), data.table=F)
+  peak <- data.frame(
+    Chr = paste0("chr", bed$chrom),
+    Start = bed$chromStart,
+    End = bed$chromEnd,
+    PeakID = paste(bed$chrom, bed$chromStart, bed$chromEnd, sep = ":"),
+    Skip = "pleasework",
+    Strand = "."
+  )
+  # save file
+  filename <- paste0("Signatures/results/data/HOMERbeds/", filename, ".bed")
+  write.table(peak, file = filename, quote = F, sep = "\t", col.names = T, row.names = F)
+}
+
 #' Annotate peaks in ARCHE
 #' 
 #' @param gr GRanges object. GRanges of ARCHE peaks
@@ -54,4 +100,38 @@ annotateARCHE <- function(gr, arche) {
     anno <- annotatePeak(gr, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
     anno$ARCHE <- arche
     return(anno)
+}
+
+#' Run GREAT on ARCHE regions
+#' 
+#' @param gr GRanges object. GRanges of ARCHE peaks
+#' @param arche string. ARCHE label
+#' @param analysis string. 10k or all for label
+#' 
+runGREAT <- function(gr, arche, analysis) {
+    
+    job = submitGreatJob(gr, bg, species = "hg38")
+    tbl = getEnrichmentTables(job)
+
+    # save results
+    mf <- as.data.frame(tbl[1])[,c(1:2, 11:13)]
+    mf$lab <- "Molecular Feature"
+    bp <- as.data.frame(tbl[2])[,c(1:2, 11:13)]
+    bp$lab <- "Biological Process"
+    cc <- as.data.frame(tbl[3])[,c(1:2, 11:13)]
+    cc$lab <- "Cellular Component"
+
+    # add column names
+    cols <- c("GO.ID", "GO.Name", "Total_Genes_Annotated", "Raw_PValue", "Adjp_BH", "Label")
+
+    colnames(mf) <- cols
+    colnames(bp) <- cols
+    colnames(cc) <- cols
+
+    # combine results and filter
+    res <- rbind(bp, mf, cc)
+    res <- res[res$Adjp_BH < 0.05,]
+    res <- res[order(res$Adjp_BH),]
+
+    write.table(res, file = paste0("Signature/results/data/GREAT/", arche, "_", analysis, ".tsv"), quote = F, sep = "\t", col.names = T, row.names = F)
 }

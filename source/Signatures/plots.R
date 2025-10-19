@@ -1,20 +1,21 @@
 #' ARCHE peak weight thresholds
 #' 
 #' Plot changes in peak weights from NMF for top n windows
+#' @param peaks dataframe. Output of top_peaks()
 #' @param arche string. ARCHE name
 #' @param num_windows int. Number of windows kept
 #' 
-plot_peakWeights <- function(arche, num_windows) {
+plot_peakWeights <- function(peaks, arche, num_windows) {
 
-    n <- paste0(as.character(num_windows/1000), k)
+    n <- paste0(as.character(num_windows/1000), "k")
 
     # get start positions of plateaus
-    diff <- find_delta0(toPlot)
+    diff <- find_delta0(peaks)
 
     filename <- paste0("Signatures/results/figures/peakWeights/",arche,"_", n, ".png")
     png(filename, width = 5, height = 5, res = 600, units = "in")
     print(
-        ggplot(toPlot, aes(x = rank, y = .data[[arche]])) +
+        ggplot(peaks, aes(x = rank, y = .data[[arche]])) +
         geom_line() +
         geom_point() +
         geom_vline(xintercept = diff$rank, linetype = "dashed") +
@@ -79,10 +80,11 @@ plot_ARCHE_heatmap <- function(mat) {
 
 #' Plot ARCHE window number
 #' 
-plot_ARCHE_peakInfo <- function(df) {
+plot_ARCHE_peakInfo <- function(df, label) {
 
     df$ARCHE <- factor(df$ARCHE, levels = paste0("ARCHE", 6:1))
-    png("Signatures/results/figures/ARCHE_peakInfo.png", width = 5, height = 5, res = 600, units = "in")
+    filename <- paste0("Signatures/results/figures/ARCHE_peakInfo_", label, ".png")
+    png(filename, width = 5, height = 5, res = 600, units = "in")
     print(
         ggplot(df, aes(x = num_windows, y = ARCHE)) +
             geom_bar(stat = "identity", fill = random_lightblue) +
@@ -97,9 +99,10 @@ plot_ARCHE_peakInfo <- function(df) {
 #' 
 #' Plot Upset plot of overlapping peaks in ARCHEs
 #' 
-plot_ATAC_Upset <- function(m) {
+plot_ATAC_Upset <- function(m, label) {
 
-    png("Signatures/results/figures/ATAC_Upset.png", width = 11, height = 5, res = 600, units = "in")
+    filename <- paste0("Signatures/results/figures/ATAC_Upset_", label, ".png")
+    png(filename, width = 11, height = 5, res = 600, units = "in")
     print(
         UpSet(m, set_order = c(paste0("ARCHE", 1:6)), comb_order = order(-comb_size(m)),
         bg_col = "gray", comb_col = random_blue, 
