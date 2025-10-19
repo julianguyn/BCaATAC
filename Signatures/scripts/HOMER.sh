@@ -12,8 +12,8 @@
 # Specify genome and annotation file
 ###########################################################
 
-GENOME="references/GENCODE/GRCh38_v45/genome.fa"
-GTF="references/GENCODE/GRCh38_v45/annotation.gtf"
+GENOME="../references/GENCODE/GRCh38_v45/genome.fa"
+GTF="../references/GENCODE/GRCh38_v45/annotation.gtf"
 
 ###########################################################
 # Annotate ARCHE peak sets
@@ -30,31 +30,9 @@ annotatePeaks.pl ../data/ARCHE6_20k.bed $GENOME -gtf $GTF -size given > ../resul
 # Motif enrichment
 ###########################################################
 
-findMotifsGenome.pl ../data/ARCHE1_20k.bed $GENOME -gtf $GTF ../results/findMotifsGenome/ARCHE1 -bg ../data/Background.bed -size given
-findMotifsGenome.pl ../data/ARCHE2_20k.bed $GENOME -gtf $GTF ../results/findMotifsGenome/ARCHE2 -bg ../data/Background.bed -size given
-findMotifsGenome.pl ../data/ARCHE3_20k.bed $GENOME -gtf $GTF ../results/findMotifsGenome/ARCHE3 -bg ../data/Background.bed -size given
-findMotifsGenome.pl ../data/ARCHE4_20k.bed $GENOME -gtf $GTF ../results/findMotifsGenome/ARCHE4 -bg ../data/Background.bed -size given
-findMotifsGenome.pl ../data/ARCHE5_20k.bed $GENOME -gtf $GTF ../results/findMotifsGenome/ARCHE5 -bg ../data/Background.bed -size given
-findMotifsGenome.pl ../data/ARCHE6_20k.bed $GENOME -gtf $GTF ../results/findMotifsGenome/ARCHE6 -bg ../data/Background.bed -size given
-
-
-
-
-
-# modifications to scripts to above two and preparseGenome.pl and assignGeneWeights.pl and compareMotifs.pl
-use lib "/cluster/projects/bhklab/projects/BCaATAC/HOMER/.//bin";
-my $homeDir = "/cluster/projects/bhklab/projects/BCaATAC/HOMER/./";
-
-my $genomeDir = "/cluster/projects/bhklab/projects/BCaATAC/HOMER/data/genomes/hg38";
-my $preparsedDir = "/cluster/projects/bhklab/projects/BCaATAC/HOMER/data/genomes/hg38/preparsed/";
-my $genomeParseDir = "/cluster/projects/bhklab/projects/BCaATAC/HOMER/data/genomes/hg38/preparsed/";
-my $preparsedDirFromConfig = "/cluster/projects/bhklab/projects/BCaATAC/HOMER/data/genomes/hg38/preparsed/";
-my $defFile = "/cluster/projects/bhklab/projects/BCaATAC/HOMER/data/genomes/hg38/hg38.tss";
-
-check:
-findKnownMotifs.pl
-compareMotifs.pl
-makeBinaryFile.pl
-adjustRedunGroupFile.pl
-randRemoveBackground.pl
-
+findMotifsGenome.pl ../data/ARCHE1_20k.bed $GENOME ../results/findMotifsGenome/ARCHE1 -bg ../data/Background.bed -size given
+findMotifsGenome.pl ../data/ARCHE2_20k.bed $GENOME ../results/findMotifsGenome/ARCHE2 -bg ../data/Background.bed -size given
+findMotifsGenome.pl ../data/ARCHE3_20k.bed $GENOME ../results/findMotifsGenome/ARCHE3 -bg ../data/Background.bed -size given
+findMotifsGenome.pl ../data/ARCHE4_20k.bed $GENOME ../results/findMotifsGenome/ARCHE4 -bg ../data/Background.bed -size given
+findMotifsGenome.pl ../data/ARCHE5_20k.bed $GENOME ../results/findMotifsGenome/ARCHE5 -bg ../data/Background.bed -size given
+findMotifsGenome.pl ../data/ARCHE6_20k.bed $GENOME ../results/findMotifsGenome/ARCHE6 -bg ../data/Background.bed -size given
