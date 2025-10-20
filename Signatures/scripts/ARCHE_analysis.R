@@ -20,6 +20,7 @@ suppressPackageStartupMessages({
 })
 
 source("source/Signatures/plots.R")
+source("source/Signatures/helper.R")
 source("source/palettes.R")
 
 set.seed(123)
@@ -66,6 +67,8 @@ plot_ARCHE_heatmap(mat)
 # Load in BEDs
 ###########################################################
 
+bg <- fread(paste0("Signatures/results/data/beds/Background.bed"))
+
 sig1 <- fread(paste0("Signatures/results/data/beds/ARCHE1_", analysis, ".bed"))
 sig2 <- fread(paste0("Signatures/results/data/beds/ARCHE2_", analysis, ".bed"))
 sig3 <- fread(paste0("Signatures/results/data/beds/ARCHE3_", analysis, ".bed"))
@@ -92,13 +95,15 @@ sum_peaks <- c(sum(sig1$diff), sum(sig2$diff), sum(sig3$diff), sum(sig4$diff), s
 # plot peak info
 df <- data.frame(ARCHE = paste0("ARCHE", 1:6),
                 num_windows = num_windows, sum_peaks = sum_peaks)
-plot_ARCHE_peakInfo(df, analysis)
+plot_ARCHE_peakInfo(df)
 
 ###########################################################
 # Compute number of overlapping regions
 ###########################################################
 
 # create GRanges
+grb <- GRanges(seqnames = paste0("chr", bg$chrom), ranges = IRanges(bg$chromStart, bg$chromEnd))
+
 gr1 <- GRanges(seqnames = paste0("chr", sig1$chrom), ranges = IRanges(sig1$chromStart, sig1$chromEnd))
 gr2 <- GRanges(seqnames = paste0("chr", sig2$chrom), ranges = IRanges(sig2$chromStart, sig2$chromEnd))
 gr3 <- GRanges(seqnames = paste0("chr", sig3$chrom), ranges = IRanges(sig3$chromStart, sig3$chromEnd))
@@ -118,7 +123,6 @@ peak_list <- list(
 
 # plot UPSET plot of overlapping peaks
 m = make_comb_mat(peak_list)
-m = m[comb_size(m) > 2000000]
 plot_ATAC_Upset(m, analysis)
 
 ###########################################################
@@ -134,9 +138,10 @@ anno3 <- annotateARCHE(gr3, "ARCHE3")
 anno4 <- annotateARCHE(gr4, "ARCHE4")
 anno5 <- annotateARCHE(gr5, "ARCHE5")
 anno6 <- annotateARCHE(gr6, "ARCHE6")
+annob <- annotateARCHE(grb, "Background")
 
 # plot peakAnno results
-toPlot <- rbind(anno1, anno2, anno3, anno4, anno5, anno6)
+toPlot <- rbind(anno1, anno2, anno3, anno4, anno5, anno6, annob)
 plot_annotatePeak(toPlot, analysis)
 
 ###########################################################
@@ -144,11 +149,32 @@ plot_annotatePeak(toPlot, analysis)
 ###########################################################
 
 # run GREAT
-runGREAT(gr1, "ARCHE1", analysis)
-runGREAT(gr2, "ARCHE2", analysis)
-runGREAT(gr3, "ARCHE3", analysis)
-runGREAT(gr4, "ARCHE4", analysis)
-runGREAT(gr5, "ARCHE5", analysis)
-runGREAT(gr6, "ARCHE6", analysis)
+great1 <- runGREAT(gr1, "ARCHE1", analysis)
+great2 <- runGREAT(gr2, "ARCHE2", analysis)
+great3 <- runGREAT(gr3, "ARCHE3", analysis)
+great4 <- runGREAT(gr4, "ARCHE4", analysis)
+great5 <- runGREAT(gr5, "ARCHE5", analysis)
+great6 <- runGREAT(gr6, "ARCHE6", analysis)
+
 
 # plot results
+plot_GREAT <- function(great) {
+
+    # keep only top 30
+    toPlot <- df[1:30,]
+    toPlot <- toPlot[order(toPlot$Adjp_BH, decreasing = TRUE),]
+    toPlot$GO.Name <- factor(toPlot$GO.Name, levels=unique(toPlot$GO.Name))
+
+    p <- ggplot(toPlot, aes(x = GO.Name, y = -log(Adjp_BH), size = Total_Genes_Annotated, color = Label), shape = 19) +
+        geom_point() + #scale_size(range = c(0.1, 3)) +
+        coord_cartesian(clip = "off") + coord_flip()  +
+        guides(shape = guide_legend(ncol = 1), color = guide_legend(override.aes=list(shape=19, size = 4))) +
+        #guides(shape = guide_legend(override.aes = list(size = 1)), color = guide_legend(override.aes = list(shape = 19, size = 1))) +
+        scale_color_manual(values = c("#574B60", "#CBC9AD", "#5B96AF"), labels = c("BP", "CC", "MF")) +
+        theme_classic() + 
+        theme(legend.key.size = unit(0.5, 'cm'), text = element_text(size = 10),
+            legend.position = c(0.76, 0.2), #plot.margin=unit(c(0.6,0,0,1),"cm"),
+            panel.border = element_rect(color = "black", fill = NA, size = 0.5)) + 
+        labs(x = "GO Term", y = "-log(FDR)", size = "N", color = "Ontology")
+    return(p)
+}

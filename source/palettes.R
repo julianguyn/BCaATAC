@@ -45,5 +45,17 @@ cohort_pal2 <- c(
     "On treatment control" = "#B89085"
 )
 
+genfeat_pal <- c(
+    "Promoter" = "#CAB2D6",
+    "5' UTR" = "#E31A1C",
+    "3' UTR" = "#FB9A99",
+    "1st Exon" = "#1F78B4",
+    "Other Exon" = "#A6CEE3",
+    "1st Intron" = "#FF7F00",
+    "Other Intron" = "#FDBF6F",
+    "Downstream (<=300)" = "#B15928",
+    "Distal Intergenic" = "#FFFF99"
+)
+
 random_blue <- "#3E517A"
 random_lightblue <- "#88A0A8"

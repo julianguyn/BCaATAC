@@ -97,7 +97,7 @@ createBEDforHOMER <- function(filename) {
 #' 
 annotateARCHE <- function(gr, arche) {
 
-    anno <- annotatePeak(gr, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
+    anno <- annotatePeak(gr, tssRegion=c(-250, 250), TxDb=txdb, annoDb="org.Hs.eg.db")@annoStat
     anno$ARCHE <- arche
     return(anno)
 }
@@ -106,32 +106,33 @@ annotateARCHE <- function(gr, arche) {
 #' 
 #' @param gr GRanges object. GRanges of ARCHE peaks
 #' @param arche string. ARCHE label
-#' @param analysis string. 10k or all for label
+#' @param analysis string. 20k or all for label
 #' 
 runGREAT <- function(gr, arche, analysis) {
     
-    job = submitGreatJob(gr, bg, species = "hg38")
+    message("****Job submitted")
+    job = submitGreatJob(gr, bg, species = "hg38", genome = "hg38", help = FALSE)
+    message("****Job completed")
     tbl = getEnrichmentTables(job)
 
     # save results
-    mf <- as.data.frame(tbl[1])[,c(1:2, 11:13)]
-    mf$lab <- "Molecular Feature"
-    bp <- as.data.frame(tbl[2])[,c(1:2, 11:13)]
-    bp$lab <- "Biological Process"
-    cc <- as.data.frame(tbl[3])[,c(1:2, 11:13)]
-    cc$lab <- "Cellular Component"
+    mf <- as.data.frame(tbl[1])
+    bp <- as.data.frame(tbl[2])
+    cc <- as.data.frame(tbl[3])
 
-    # add column names
-    cols <- c("GO.ID", "GO.Name", "Total_Genes_Annotated", "Raw_PValue", "Adjp_BH", "Label")
+    # save column names
+    cols <- gsub("GO.Molecular.Function.", "", colnames(mf))
+    colnames(mf) <- colnames(bp) <- colnames(cc) <- cols
 
-    colnames(mf) <- cols
-    colnames(bp) <- cols
-    colnames(cc) <- cols
+    mf$Label <- "Molecular Feature"
+    bp$Label <- "Biological Process"
+    cc$Label <- "Cellular Component"
 
     # combine results and filter
     res <- rbind(bp, mf, cc)
     res <- res[res$Adjp_BH < 0.05,]
     res <- res[order(res$Adjp_BH),]
 
-    write.table(res, file = paste0("Signature/results/data/GREAT/", arche, "_", analysis, ".tsv"), quote = F, sep = "\t", col.names = T, row.names = F)
+    write.table(res, file = paste0("Signatures/results/data/GREAT/", arche, "_", analysis, ".tsv"), quote = F, sep = "\t", col.names = T, row.names = F)
+    return(res)
 }

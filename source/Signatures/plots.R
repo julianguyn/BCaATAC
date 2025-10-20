@@ -80,10 +80,10 @@ plot_ARCHE_heatmap <- function(mat) {
 
 #' Plot ARCHE window number
 #' 
-plot_ARCHE_peakInfo <- function(df, label) {
+plot_ARCHE_peakInfo <- function(df) {
 
     df$ARCHE <- factor(df$ARCHE, levels = paste0("ARCHE", 6:1))
-    filename <- paste0("Signatures/results/figures/ARCHE_peakInfo_", label, ".png")
+    filename <- "Signatures/results/figures/ARCHE_peakInfo.png"
     png(filename, width = 5, height = 5, res = 600, units = "in")
     print(
         ggplot(df, aes(x = num_windows, y = ARCHE)) +
@@ -100,6 +100,10 @@ plot_ARCHE_peakInfo <- function(df, label) {
 #' Plot Upset plot of overlapping peaks in ARCHEs
 #' 
 plot_ATAC_Upset <- function(m, label) {
+
+    # set filter
+    filter <- ifelse(label == "all", 2000000, 100000)
+    m = m[comb_size(m) > filter]
 
     filename <- paste0("Signatures/results/figures/ATAC_Upset_", label, ".png")
     png(filename, width = 11, height = 5, res = 600, units = "in")
@@ -120,7 +124,7 @@ plot_annotatePeak <- function(toPlot, label) {
     print(
         ggplot(toPlot, aes(fill=Feature, y=Frequency, x=ARCHE)) + 
             geom_bar(position="fill", stat="identity", color = "black", size = 0.3) +
-            scale_fill_manual(values = brewer.pal(11, name = "Paired")) +
+            scale_fill_manual(values = genfeat_pal) +
             theme_minimal() + 
             labs(y = "Percentage (%)")
         )
