@@ -130,8 +130,8 @@ runGREAT <- function(gr, arche, analysis) {
 
     # combine results and filter
     res <- rbind(bp, mf, cc)
-    res <- res[res$Adjp_BH < 0.05,]
-    res <- res[order(res$Adjp_BH),]
+    res <- res[res$Hyper_Adjp_BH < 0.05,]
+    res <- res[order(res$Hyper_Adjp_BH),]
 
     write.table(res, file = paste0("Signatures/results/data/GREAT/", arche, "_", analysis, ".tsv"), quote = F, sep = "\t", col.names = T, row.names = F)
     return(res)
