@@ -2,222 +2,108 @@ setwd("Documents/BCaATAC")
 
 # load libraries
 suppressPackageStartupMessages({
-  library(limma)
   library(data.table)
-  library(edgeR)
-  library(openxlsx)
+  library(DESeq2)
   library(ggplot2)
   library(ggrepel)
 })
 
+source("source/MolecularSigAnalysis/helper.R")
+source("source/MolecularSigAnalysis/plots.R")
+source("source/palettes.R")
 
 ###########################################################
 # Load in data
 ###########################################################
 
 # load in counts matrix
-counts <- fread("Signatures/data/TCGA_BRCA_gene_counts.matrix")
+counts <- t(fread("Signatures/data/TCGA_BRCA_gene_counts.matrix")) |> as.data.frame()
+colnames(counts) <- counts[1,]
+counts <- counts[-c(1),]
+genes <- rownames(counts)
+counts <- sapply(counts, as.double)
+rownames(counts) <- genes
 
-# load in metadata
+# load in metadata file
 meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
+meta <- meta[match(colnames(counts), meta$Sample.Name),]
 
 ###########################################################
-# Format counts matrix
+# Un-log2 counts
 ###########################################################
 
-samples <- counts$V1
-counts$V1 <- NULL
-counts <- t(counts)
-colnames(counts) <- samples
-
+# counts matrix was log2 normalized, undo that
+counts <- round(2^counts - 1)
 
 ###########################################################
-# Designate groups
+# Run DEG of each ARCHE vs all
 ###########################################################
 
-group <- meta$Signature[match(colnames(counts), meta$Sample.Name)]
-group <- factor(group, levels = paste0("Signature", 1:6))
-
-
-###########################################################
-# Normalization and filtering
-###########################################################
-
-# create DGEList object
-dge <- DGEList(counts=counts, group = group)
-
-# filter genes with low counts
-keep <- filterByExpr(dge, group = group)
-dge <- dge[keep,,keep.lib.sizes=FALSE]
-
-# TMM normalization
-dge <- calcNormFactors(dge)
-
+a1 <- run_DEG(counts, meta, arche = "ARCHE1")
+a2 <- run_DEG(counts, meta, arche = "ARCHE2")
+a3 <- run_DEG(counts, meta, arche = "ARCHE3")
+a4 <- run_DEG(counts, meta, arche = "ARCHE4")
+a5 <- run_DEG(counts, meta, arche = "ARCHE5")
+a6 <- run_DEG(counts, meta, arche = "ARCHE6")
 
 ###########################################################
-# Differential expression
+# Run DEG of each Subtype vs all
 ###########################################################
 
-# function to perform DEG analysis per signature
-DEG_sig <- function(signature) {
-  
-  # establish grouping of signatures
-  if (signature > 1) {
-    levels = paste0("Signature", c(signature:6, 1:(signature-1)) )
-    sig_group = factor(group, levels = levels)
-  } else {
-    sig_group = group
-  }
-  design <- model.matrix(~sig_group)
-  
-  # DEG
-  logCPM <- cpm(dge, log=TRUE, prior.count=3)
-  fit <- lmFit(logCPM, design)
-  fit <- eBayes(fit, trend=TRUE)
-  res <- topTable(fit, n=Inf, coef=ncol(design))
-  
-  # FDR 
-  res$FDR <- p.adjust(res$P.Value, method = "BH", n = length(res$P.Value))
-  
-  return(res)
-}
-
-sig1 <- DEG_sig(1)
-sig2 <- DEG_sig(2)
-sig3 <- DEG_sig(3)
-sig4 <- DEG_sig(4)
-sig5 <- DEG_sig(5)
-sig6 <- DEG_sig(6)
-
-
-
-###########################################################
-# Save top 15 genes
-###########################################################
-
-# function to extract top 15 genes
-top15 <- function(sig_df) {
-  top_genes <- sig_df[sig_df$FDR < 0.05,]
-  top_genes <- top_genes[order(abs(top_genes$logFC), decreasing = T),]
-  top_genes <- top_genes[1:15,]
-  return(top_genes)
-}
-
-topSig1 <- top15(sig1)
-topSig2 <- top15(sig2)
-topSig3 <- top15(sig3)
-topSig4 <- top15(sig4)
-topSig5 <- top15(sig5)
-topSig6 <- top15(sig6)
-
-###########################################################
-# Write dataframe results
-###########################################################
-
-path = "MolecularSigAnalysis/results/data/deg_"
-
-write.xlsx(sig1, file = paste0(path, "signature1", ".xlsx"))
-write.xlsx(sig2, file = paste0(path, "signature2", ".xlsx"))
-write.xlsx(sig3, file = paste0(path, "signature3", ".xlsx"))
-write.xlsx(sig4, file = paste0(path, "signature4", ".xlsx"))
-write.xlsx(sig5, file = paste0(path, "signature5", ".xlsx"))
-write.xlsx(sig6, file = paste0(path, "signature6", ".xlsx"))
-
-write.csv(topSig1, file = paste0(path, "top_signature1", ".csv"))
-write.csv(topSig2, file = paste0(path, "top_signature2", ".csv"))
-write.csv(topSig3, file = paste0(path, "top_signature3", ".csv"))
-write.csv(topSig4, file = paste0(path, "top_signature4", ".csv"))
-write.csv(topSig5, file = paste0(path, "top_signature5", ".csv"))
-write.csv(topSig6, file = paste0(path, "top_signature6", ".csv"))
+sb <- run_DEG(counts, meta, subtype = "Basal")
+sh <- run_DEG(counts, meta, subtype = "Her2")
+sla <- run_DEG(counts, meta, subtype = "LumA")
+slb <- run_DEG(counts, meta, subtype = "LumB")
+sn <- run_DEG(counts, meta, subtype = "Normal")
 
 ###########################################################
 # Volcano plots
 ###########################################################
 
-# set palette for plotting
-pal = c("Upregulated" = "#93E1D8", "Downregulated" = "#AA4465")
+plot_volcano(a1, "ARCHE1")
+plot_volcano(a2, "ARCHE2")
+plot_volcano(a3, "ARCHE3")
+plot_volcano(a4, "ARCHE4")
+plot_volcano(a5, "ARCHE5")
+plot_volcano(a6, "ARCHE6")
 
-# function to plot DEG and label top 15 genes
-volcano <- function(sig_df, label, top_genes) {
-  
-  top_genes$dir <- ifelse(top_genes$logFC > 0, "Upregulated", "Downregulated")
-  top_genes$dir <- factor(top_genes$dir, levels = c("Upregulated", "Downregulated"))
-  
-  ggplot() + 
-    geom_point(data = sig_df, aes(x = logFC, y = FDR), color = "gray") +
-    geom_point(data = top_genes, aes(x = logFC, y = FDR, color = dir)) +
-    geom_text_repel(data = top_genes, max.overlaps = 100, size = 2.5,
-                    aes(x = logFC, y = FDR, label = rownames(top_genes))) +
-    scale_color_manual("", values = pal) +
-    ylim(1:-0.15) + xlim(-1.55,1.55) + 
-    theme_classic() + theme(plot.title = element_text(hjust = 0.5)) +
-    ggtitle(label)
-}
-
-png("MolecularSigAnalysis/results/figures/volcano_sig1.png", width = 8, height = 6, res = 600, units = "in")
-volcano(sig1, "Signature1", topSig1)
-dev.off()
-
-png("MolecularSigAnalysis/results/figures/volcano_sig2.png", width = 8, height = 6, res = 600, units = "in")
-volcano(sig2, "Signature2", topSig2)
-dev.off()
-
-png("MolecularSigAnalysis/results/figures/volcano_sig3.png", width = 8, height = 6, res = 600, units = "in")
-volcano(sig3, "Signature3", topSig3)
-dev.off()
-
-png("MolecularSigAnalysis/results/figures/volcano_sig4.png", width = 8, height = 6, res = 600, units = "in")
-volcano(sig4, "Signature4", topSig4)
-dev.off()
-
-png("MolecularSigAnalysis/results/figures/volcano_sig5.png", width = 8, height = 6, res = 600, units = "in")
-volcano(sig5, "Signature5", topSig5)
-dev.off()
-
-png("MolecularSigAnalysis/results/figures/volcano_sig6.png", width = 8, height = 6, res = 600, units = "in")
-volcano(sig6, "Signature6", topSig6)
-dev.off()
-
+plot_volcano(sb, "Basal")
+plot_volcano(sh, "Her2")
+plot_volcano(sla, "LumA")
+plot_volcano(slb, "LumB")
+#plot_volcano(sn, "Normal") # only 4 sig genes, too small sample size
 
 ###########################################################
-# Plot top 15 genes
+# Plot MYC volcano plots
 ###########################################################
 
-# function to plot top 15 genes
-plot_top15 <- function(top15, label) {
-  
-  top15 <- top15[order(top15$logFC, decreasing = F),]
-  top15$rank <- 1:15
-  top15$Gene <- rownames(top15)
-  top15$Gene <- factor(top15$Gene, levels = top15$Gene)
-  
-  p <- ggplot(top15) + geom_tile(aes(x = 1, y = Gene, fill = logFC), color = "gray") +
-    scale_fill_gradient2(high = "#93E1D8", low = "#AA4465", mid = "white", midpoint = 0) +
-    geom_text(aes(x = 1, y = Gene, label = Gene), color = "black", size = 3) +
-    theme_void() + 
-    theme(axis.title.x = element_text(size=12),
-          axis.title.y = element_text(size=12, angle = 90, vjust = 0.5)) + 
-    labs(x = "", y = "Gene") + theme(plot.title = element_text(hjust = 0.5)) +
-    ggtitle(label)
-  return(p)
-}
+plot_volcano_MYC(a2, "ARCHE2")
+plot_volcano_MYC(a5, "ARCHE5")
+plot_volcano_MYC(sb, "Basal")
 
-png("MolecularSigAnalysis/results/figures/topSig2.png", width = 2, height = 4, res = 600, units = "in")
-plot_top15(topSig2, "Signature2")
-dev.off()
+###########################################################
+# MYC expression analysis across all tumours
+###########################################################
 
-png("MolecularSigAnalysis/results/figures/topSig3.png", width = 2, height = 4, res = 600, units = "in")
-plot_top15(topSig3, "Signature3")
-dev.off()
+myc <- as.data.frame(counts[rownames(counts) == "MYC",]) 
+myc$Signature <- meta$Signature[match(rownames(myc), meta$Sample.Name)]
+myc$Subtype <- meta$Subtype[match(rownames(myc), meta$Sample.Name)]
+myc$Sample.Name <- rownames(myc)
+colnames(myc)[1] <- "MYC"
 
-png("MolecularSigAnalysis/results/figures/topSig4.png", width = 2, height = 4, res = 600, units = "in")
-plot_top15(topSig4, "Signature4")
-dev.off()
+# plot MYC expression
+plot_MYCexp(myc, "Signature", "all")
+plot_MYCexp(myc, "Subtype", "all")
 
-png("MolecularSigAnalysis/results/figures/topSig5.png", width = 2, height = 4, res = 600, units = "in")
-plot_top15(topSig5, "Signature5")
-dev.off()
+###########################################################
+# ARCHE 2 vs ARCHE 5 MYC expression
+###########################################################
 
-png("MolecularSigAnalysis/results/figures/topSig6.png", width = 2, height = 4, res = 600, units = "in")
-plot_top15(topSig6, "Signature6")
-dev.off()
+# myc expression 
+myc <- myc[which(myc$Subtype == "Basal" & myc$Signature != "ARCHE3"),]
+plot_MYCexp(myc, "Signature", "basal")
+
+# DEG
+myc_counts <- counts[,match(rownames(myc), colnames(counts))]
+a25 <- run_DEG(myc_counts, myc, arche = "ARCHE2")
+plot_volcano_MYC(a25, "Basal ARCHE2")
