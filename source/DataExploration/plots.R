@@ -123,3 +123,46 @@ plot_allDrugCorr <- function(ubr1_sen, ubr2_sen, gray_sen, gcsi_sen, gdsc_sen, c
     # return the correlations
     return(corr_res)
 }
+
+#' Plot correlation results from RNA-Seq pset analysis
+#' 
+plot_rna_corr <- function(p1, p2, p3, p4, p5, p6) {
+    # initialize correlation matrix
+    psets <- c("UBR2", "GRAY", "gCSI", "CCLE")
+    mat <- matrix(NA, nrow = 4, ncol = 4, dimnames = list(psets, psets))
+
+    # fill in matrix values
+    mat[1,2] <- mat[2,1] <- p1
+    mat[1,3] <- mat[3,1] <- p2
+    mat[1,4] <- mat[4,1] <- p3
+    mat[2,3] <- mat[3,2] <- p4
+    mat[2,4] <- mat[4,2] <- p5
+    mat[3,4] <- mat[4,3] <- p6
+
+    # set diagonal as 1
+    diag(mat) <- 1
+
+    # set palette for plotting
+    col_fun <- colorRamp2(c(-1, 0, 1), c(binary_pal[2], "white", binary_pal[1]))
+
+    # function to create heatmap
+    plot_heatmap <- function(mat, legend_label) {
+        plot <- Heatmap(mat,
+            col = col_fun,
+            cluster_rows = TRUE,
+            cluster_columns = TRUE,
+            heatmap_legend_param = list(
+                title = legend_label,
+                color_bar = "continuous"
+            ),
+            cell_fun = function(j, i, x, y, width, height, fill) {
+                grid.text(round(mat[i, j], 2), x, y, gp = gpar(fontsize = 8))
+            }
+        )
+        return(plot)
+    }
+
+    png("DataExploration/results/figures/rna_corr.png", width=125, height=100, units='mm', res = 600, pointsize=80)
+    print(plot_heatmap(mat, "Spearman"))
+    dev.off()
+}

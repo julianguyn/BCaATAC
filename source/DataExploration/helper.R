@@ -107,7 +107,7 @@ load_bca_RNA <- function() {
     ubr2 <- ubr2@molecularProfiles@ExperimentList$genes_counts
     rna <- ubr2@assays@data$expr
     colnames(rna) <- ubr2@colData$sampleid
-    rownames(rna) <- ubr2@rowRanges$gene_name
+    #rownames(rna) <- ubr2@rowRanges$gene_name
 
     # from map_sen()
     # missing: "HBL100" "HCC1008" 
@@ -119,8 +119,45 @@ load_bca_RNA <- function() {
     # keep only cell lines being used
     samples <- get_cells()
     rna <- rna[,colnames(rna) %in% samples$sample]
-    rna <- cbind(data.frame(Genes = rownames(rna), rna))
-    write.table(rna, file = "Signatures/data/bcacells_gene_counts.matrix",  quote = F, sep = "\t", col.names = T, row.names = F)
+    df <- cbind(data.frame(Genes = rownames(rna), rna))
+    write.table(df, file = "Signatures/data/bcacells_gene_counts.matrix",  quote = F, sep = "\t", col.names = T, row.names = F)
 
     return(rna)
+}
+
+#' Load in RNA-Seq counts matrix from other PSets
+#' 
+get_pset_rna <- function(filepath) {
+    pset <- readRDS(filepath) |> updateObject()
+    pset <- summarizeMolecularProfiles(pset, mDataType = "Kallisto_0.46.1.rnaseq.counts")
+    rna <- pset@assays@data$expr
+    #rownames(rna) <- rowData(pset)$gene_name
+
+    # keep only cell lines being used
+    samples <- get_cells()
+    rna <- rna[,colnames(rna) %in% samples$sample]
+    return(rna)
+}
+
+#' Correlate RNA-Seq expression of two psets
+#' 
+#' @param pset1 dataframe. Melted gene counts matrix of first pset
+#' @param pset2 dataframe. Melted gene counts matrix of second pset
+#' 
+corr_pset_rna <- function(pset1, pset2) {
+
+    # keep common cell lines
+    ccls <- intersect(pset1$Var2, pset2$Var2)
+
+    pset1 <- pset1[pset1$Var2 %in% ccls,]
+    pset2 <- pset2[pset2$Var2 %in% ccls,]
+
+    # check that order is the same
+    pset1$pairs <- paste0(pset1$Var1, pset1$Var2)
+    pset2$pairs <- paste0(pset2$Var1, pset2$Var2)
+    table(pset1$pairs == pset2$pairs)
+
+    # pearson correlation coefficient
+    corr <- cor(pset1$value, pset2$value,  method = "spearman", use = "complete.obs")
+    return(corr)
 }
