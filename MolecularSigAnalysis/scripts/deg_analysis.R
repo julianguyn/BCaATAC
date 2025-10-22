@@ -27,6 +27,7 @@ rownames(counts) <- genes
 # load in metadata file
 meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
 meta <- meta[match(colnames(counts), meta$Sample.Name),]
+meta$Signature <- gsub("Signature", "ARCHE", meta$Signature)
 
 ###########################################################
 # Un-log2 counts
@@ -106,4 +107,5 @@ plot_MYCexp(myc, "Signature", "basal")
 # DEG
 myc_counts <- counts[,match(rownames(myc), colnames(counts))]
 a25 <- run_DEG(myc_counts, myc, arche = "ARCHE2")
+plot_volcano(a25, "Basal ARCHE2")
 plot_volcano_MYC(a25, "Basal ARCHE2")

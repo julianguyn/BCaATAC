@@ -23,7 +23,7 @@ source("source/palettes.R")
 ###########################################################
 
 # read in meta data file
-meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
+meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles_mut.csv")
 
 # load in matrix file from NMF
 mat <- get_ARCHE()

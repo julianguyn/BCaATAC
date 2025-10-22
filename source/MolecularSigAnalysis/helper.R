@@ -35,6 +35,16 @@ get_ARCHE_mat <- function() {
   return(atac)
 }
 
+#' Get tumour metadata for mutations
+#' 
+get_meta_mut <- function() {
+  meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
+  meta$SNV.File.Name <- paste0("MolecularSigAnalysis/data/maf/", meta$SNV.File.Name)
+  meta <- meta[-which(meta$SNV.File.Name == "MolecularSigAnalysis/data/maf/NA"),]
+  meta$Signature <- gsub("Signature", "ARCHE", meta$Signature)
+  return(meta)
+}
+
 #' BCa-relevant mutations
 #' 
 #' List of mutation of interest
@@ -78,6 +88,8 @@ run_DEG <- function(counts, meta, arche = NA, subtype = NA) {
   # DEG
   dds <- DESeq(dds) |> suppressMessages()
   res <- results(dds, name=label)
+
+  write.csv(res, file = paste0("MolecularSigAnalysis/results/data/DEG/", label, ".csv"), quote = F, row.names = T)
 
   return(res)
 }

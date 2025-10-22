@@ -20,7 +20,7 @@ source("source/palettes.R")
 ###########################################################
 
 # read in meta data file
-meta <- read.csv("MolecularSigAnalysis/data/TCGA_sourcefiles.csv")
+meta <- get_meta_mut()
 
 # load in matrix file from NMF
 mat <- get_ARCHE()
@@ -61,12 +61,12 @@ write.table(mut,
 # Map files to metadata
 ###########################################################
 
-#mapping <- data.frame(snv = colnames(mut))
-#mapping$Sample.Name <- sub("^([^-]+-[^-]+-[^-]+).*", "\\1", mapping$snv)
-#mapping$Sample.Name <- gsub("-", "\\.", mapping$Sample.Name)
+mapping <- data.frame(snv = colnames(mut))
+mapping$Sample.Name <- sub("^([^-]+-[^-]+-[^-]+).*", "\\1", mapping$snv)
+mapping$Sample.Name <- gsub("-", "\\.", mapping$Sample.Name)
 
-#meta$snv_label <- mapping$snv[match(meta$Sample.Name, mapping$Sample.Name)]
-#write.csv(meta, file = "MolecularSigAnalysis/data/TCGA_sourcefiles.csv", quote = F, row.names = F)
+meta$snv_label <- mapping$snv[match(meta$Sample.Name, mapping$Sample.Name)]
+write.csv(meta, file = "MolecularSigAnalysis/data/TCGA_sourcefiles_mut.csv", quote = F, row.names = F)
 
 ###########################################################
 # Formating dataframe for plotting
