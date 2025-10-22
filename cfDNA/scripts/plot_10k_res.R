@@ -1,7 +1,5 @@
 # plot results from Sasha (top 10k sites in each CALS)
 
-setwd("C:/Users/julia/Documents/BCaATAC")
-
 # load libraries
 suppressPackageStartupMessages({
   library(reshape2)

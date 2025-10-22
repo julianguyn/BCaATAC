@@ -1,6 +1,5 @@
 # script to assess the predictive power of PAM50
 
-setwd("C:/Users/julia/Documents/BCaATAC")
 
 # load libraries
 suppressPackageStartupMessages({

@@ -1,5 +1,3 @@
-setwd("C:/Users/julia/Documents/BCaATAC")
-
 # load libraries
 suppressPackageStartupMessages({
   library(reshape2)

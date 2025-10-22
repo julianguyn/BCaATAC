@@ -1,5 +1,3 @@
-setwd("/Users/julianguyen/Documents/BCaATAC")
-
 # load libraries
 suppressPackageStartupMessages({
     library(PharmacoGx)

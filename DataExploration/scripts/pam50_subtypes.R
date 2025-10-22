@@ -1,6 +1,5 @@
 # Script to call PAM50 molecular subtypes from cell line RNA-Seq data
 
-setwd("C:/Users/julia/Documents/BCaATAC")
 
 # load libraries
 suppressPackageStartupMessages({

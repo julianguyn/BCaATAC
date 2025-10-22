@@ -1,5 +1,3 @@
-setwd("Documents/BCaATAC")
-
 # load libraries
 suppressPackageStartupMessages({
   library(data.table)

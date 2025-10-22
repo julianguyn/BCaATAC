@@ -1,4 +1,4 @@
-setwd("C:/Users/julia/Documents/BCaATAC")
+
 
 suppressMessages(library(Xeva))
 

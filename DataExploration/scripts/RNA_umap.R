@@ -1,6 +1,5 @@
 # Make UMAP of RNA-Seq gene counts between tumour and cell lines coloured by subtype
 
-setwd("C:/Users/julia/Documents/BCaATAC")
 
 library(umap)
 library(ggplot2)

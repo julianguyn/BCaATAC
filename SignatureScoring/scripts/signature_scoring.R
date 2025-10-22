@@ -1,4 +1,3 @@
-setwd("/home/bioinf/bhklab/julia/projects/ATACseq")
 
 library(data.table)
 library(matrixStats)

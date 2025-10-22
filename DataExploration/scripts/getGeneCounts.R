@@ -1,6 +1,5 @@
 # Script to extract gene counts matrix from UHN Breast PSet
 
-setwd("C:/Users/julia/Documents/BCaATAC")
 
 suppressMessages(library(PharmacoGx))
 

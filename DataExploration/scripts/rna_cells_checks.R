@@ -1,6 +1,5 @@
 # Compare the RNA-Seq expression to other PSets
 
-setwd("C:/Users/julia/Documents/BCaATAC")
 
 # load libraries
 suppressPackageStartupMessages({

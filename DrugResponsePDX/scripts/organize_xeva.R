@@ -1,6 +1,5 @@
 # script to organize treatment response files for xeva
 
-setwd("C:/Users/julia/Documents/BCaATAC")
 
 # load libraries
 suppressPackageStartupMessages({

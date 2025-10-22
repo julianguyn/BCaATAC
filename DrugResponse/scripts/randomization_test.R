@@ -1,7 +1,5 @@
 # randomizes the drug sensitivity to see if biomarker detection is better than chance alone
 
-setwd("C:/Users/julia/Documents/BCaATAC")
-
 suppressMessages(library(survcomp))
 library(wesanderson)
 library(ggplot2)
