@@ -97,3 +97,30 @@ format_drug_pset <- function(pset1, pset2) {
     
     return(toPlot)
 }
+
+#' Load in RNA-Seq counts matrix from UHNBreast2 PSet
+#' 
+load_bca_RNA <- function() {
+
+    # get RNA-seq matrix
+    ubr2 <- readRDS("DrugResponse/data/PharmacoSet.RDS")
+    ubr2 <- ubr2@molecularProfiles@ExperimentList$genes_counts
+    rna <- ubr2@assays@data$expr
+    colnames(rna) <- ubr2@colData$sampleid
+    rownames(rna) <- ubr2@rowRanges$gene_name
+
+    # from map_sen()
+    # missing: "HBL100" "HCC1008" 
+    for (i in 1:length(colnames(rna))) {
+        cell = colnames(rna)[i]
+        if (cell %in% names(mapping_cells)) {colnames(rna)[i] <- unname(mapping_cells[cell])}
+    }
+
+    # keep only cell lines being used
+    samples <- get_cells()
+    rna <- rna[,colnames(rna) %in% samples$sample]
+    rna <- cbind(data.frame(Genes = rownames(rna), rna))
+    write.table(rna, file = "Signatures/data/bcacells_gene_counts.matrix",  quote = F, sep = "\t", col.names = T, row.names = F)
+
+    return(rna)
+}
