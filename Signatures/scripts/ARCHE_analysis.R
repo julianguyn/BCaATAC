@@ -147,32 +147,23 @@ plot_annotatePeak(toPlot, analysis)
 ###########################################################
 
 # run GREAT
-great1 <- runGREAT(gr1, "ARCHE1", analysis)
-great2 <- runGREAT(gr2, "ARCHE2", analysis)
-great3 <- runGREAT(gr3, "ARCHE3", analysis)
-great4 <- runGREAT(gr4, "ARCHE4", analysis)
-great5 <- runGREAT(gr5, "ARCHE5", analysis)
-great6 <- runGREAT(gr6, "ARCHE6", analysis)
+great1 <- runGREAT(gr1, "ARCHE1", analysis) #great1 <- fread("Signatures/results/data/GREAT/ARCHE1_20k.tsv", data.table = FALSE)
+great2 <- runGREAT(gr2, "ARCHE2", analysis) #great2 <- fread("Signatures/results/data/GREAT/ARCHE2_20k.tsv", data.table = FALSE)
+great3 <- runGREAT(gr3, "ARCHE3", analysis) #great3 <- fread("Signatures/results/data/GREAT/ARCHE3_20k.tsv", data.table = FALSE)
+great4 <- runGREAT(gr4, "ARCHE4", analysis) #great4 <- fread("Signatures/results/data/GREAT/ARCHE4_20k.tsv", data.table = FALSE)
+great5 <- runGREAT(gr5, "ARCHE5", analysis) #great5 <- fread("Signatures/results/data/GREAT/ARCHE5_20k.tsv", data.table = FALSE)
+great6 <- runGREAT(gr6, "ARCHE6", analysis) #great6 <- fread("Signatures/results/data/GREAT/ARCHE6_20k.tsv", data.table = FALSE)
 
 
-# plot results
-plot_GREAT <- function(great) {
+###########################################################
+# Plot GREAT enrichment
+###########################################################
 
-    # keep only top 30
-    toPlot <- df[1:30,]
-    toPlot <- toPlot[order(toPlot$Adjp_BH, decreasing = TRUE),]
-    toPlot$GO.Name <- factor(toPlot$GO.Name, levels=unique(toPlot$GO.Name))
+n <- 20 # play with this threshold
 
-    p <- ggplot(toPlot, aes(x = GO.Name, y = -log(Adjp_BH), size = Total_Genes_Annotated, color = Label), shape = 19) +
-        geom_point() + #scale_size(range = c(0.1, 3)) +
-        coord_cartesian(clip = "off") + coord_flip()  +
-        guides(shape = guide_legend(ncol = 1), color = guide_legend(override.aes=list(shape=19, size = 4))) +
-        #guides(shape = guide_legend(override.aes = list(size = 1)), color = guide_legend(override.aes = list(shape = 19, size = 1))) +
-        scale_color_manual(values = c("#574B60", "#CBC9AD", "#5B96AF"), labels = c("BP", "CC", "MF")) +
-        theme_classic() + 
-        theme(legend.key.size = unit(0.5, 'cm'), text = element_text(size = 10),
-            legend.position = c(0.76, 0.2), #plot.margin=unit(c(0.6,0,0,1),"cm"),
-            panel.border = element_rect(color = "black", fill = NA, size = 0.5)) + 
-        labs(x = "GO Term", y = "-log(FDR)", size = "N", color = "Ontology")
-    return(p)
-}
+plot_GREAT(great1, n, "ARCHE1")
+plot_GREAT(great2, n, "ARCHE2")
+plot_GREAT(great3, n, "ARCHE3")
+plot_GREAT(great4, n, "ARCHE4")
+plot_GREAT(great5, n, "ARCHE5")
+plot_GREAT(great6, n, "ARCHE6")

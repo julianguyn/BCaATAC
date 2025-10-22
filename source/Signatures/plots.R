@@ -130,3 +130,38 @@ plot_annotatePeak <- function(toPlot, label) {
         )
     dev.off()
 }
+
+#' Plot GREAT results
+#' 
+#' Plot lollipop graphs of GREAT enrcichment results
+#' @param great dataframe. Output of runGREAT()
+#' @param n_genes int. Number of annotated genes to filter by
+#' @param label string. ARCHE label for filename
+#' 
+plot_GREAT <- function(great, n_genes, label) {
+
+    # keep only top 30 with > n_genes
+    great <- great[great$Total_Genes_Annotated > n_genes,]
+    great <- great[order(great$Hyper_Fold_Enrichment, decreasing = TRUE),]
+    toPlot <- great[1:30,]
+    toPlot$name <- factor(toPlot$name, levels=rev(toPlot$name))
+
+    p <- ggplot(toPlot, aes(x = name, y = Hyper_Fold_Enrichment, color = Label)) +
+        geom_point(aes(size = Total_Genes_Annotated), shape = 19) + 
+        geom_segment(aes(x = name, xend = name, y = 0, yend = Hyper_Fold_Enrichment, color = Label, alpha = Hyper_Adjp_BH), size = 1) +
+        coord_cartesian(clip = "off") + 
+        coord_flip() +
+        scale_alpha(range = c(1, 0.2)) +
+        guides(shape = guide_legend(ncol = 1), color = guide_legend(override.aes=list(shape=19, size = 4))) +
+        scale_color_manual(values = c("#574B60", "#CBC9AD", "#5B96AF"), labels = c("BP", "CC", "MF")) +
+        theme_classic() + 
+        theme(legend.key.size = unit(0.5, 'cm'), text = element_text(size = 10),
+              plot.title = element_text(hjust = 0.5, size = 12), 
+              panel.border = element_rect(color = "black", fill = NA, size = 0.5)) + 
+        labs(x = "GO Term", y = "Fold Enrichment", size = "Genes", alpha = "Adjusted\nP-Value", color = "GO\nCategory", title = label)
+
+    filename <- paste0("Signatures/results/figures/GREAT/", label, "_ngene_", n_genes, ".png")
+    png(filename, width = 7, height = 7, res = 600, units = "in")
+    print(p)
+    dev.off()
+}
