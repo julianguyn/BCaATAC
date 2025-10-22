@@ -125,6 +125,19 @@ load_bca_RNA <- function() {
     return(rna)
 }
 
+#' Get UBR2 rna meta
+#' 
+get_rna_meta <- function() {
+    # load in RNA-Seq metadata (to get gene names)
+    ubr2 <- readRDS("DrugResponse/data/PharmacoSet.RDS")
+    ubr2 <- ubr2@molecularProfiles@ExperimentList$genes_counts@rowRanges |> as.data.frame()
+
+    # format colnames of gene_meta
+    gene_meta <- ubr2[,c("gene_id", "gene_name")]
+    colnames(gene_meta) <- c("GeneID", "Gene.Symbol")
+    return(gene_meta)
+}
+
 #' Load in RNA-Seq counts matrix from other PSets
 #' 
 get_pset_rna <- function(filepath) {
@@ -160,4 +173,51 @@ corr_pset_rna <- function(pset1, pset2) {
     # pearson correlation coefficient
     corr <- cor(pset1$value, pset2$value,  method = "spearman", use = "complete.obs")
     return(corr)
+}
+
+#' Compute PAM50 subtypes using genefu
+#' 
+#' @param rna dataframe. RNA-Seq counts matrix
+#' @return dataframe of subtype scores per sample
+pam50subtype <- function(rna) {
+
+    # get meta
+    meta <- get_rna_meta()
+
+    # format matrix
+    rna <- t(rna) |> as.data.frame()
+    
+    # match and get gene names
+    colnames(rna) <- meta$Gene.Symbol[match(colnames(rna), meta$GeneID)]
+
+    # get subtype predictions for PAM50
+    SubtypePredictions <- molecular.subtyping(sbt.model = "pam50", 
+                                              data = rna,
+                                              annot = meta, 
+                                              do.mapping = FALSE)
+
+    # reutrn subtypes and subtyping probability
+    res_df <- cbind(Subtype = as.character(SubtypePredictions$subtype), 
+                    as.data.frame(SubtypePredictions$subtype.proba))
+    return(res_df)
+}
+
+#' Get cell line subtype
+#'
+get_cell_subtype <- function() {
+
+    anno <- read.csv("MetaData/Lupien/BCa_samples.csv")
+    cells <- anno[anno$type == "cell.line",]
+    cells <- cells[-which(cells$dup == 'T' & cells$dup_nerg == FALSE),]
+    cells$filename <- gsub("_peaks.*", "", cells$filename)
+
+    samples <- get_cells()
+    samples$file <- gsub("\\.(?!$)", "-", samples$file, perl = TRUE)
+    cells <- cells[cells$filename %in% samples$file,]
+    cells$sample <- samples$sample[match(cells$filename, samples$file)]
+
+    # set 600MPE as Luminal A: https://pmc.ncbi.nlm.nih.gov/articles/PMC5001206/
+    cells$subtype[cells$sample == "600MPE"] <- "LumA"
+
+    return(cells[,c(1:5)])
 }

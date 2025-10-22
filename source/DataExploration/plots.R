@@ -166,3 +166,54 @@ plot_rna_corr <- function(p1, p2, p3, p4, p5, p6) {
     print(plot_heatmap(mat, "Spearman"))
     dev.off()
 }
+
+#' Plot PAM50 subtypes
+#' 
+plot_pam50_true <- function(toPlot) {
+
+    # format dataframe for plotting
+    toPlot$samples <- rownames(toPlot)
+    toPlot <- melt(toPlot, id.vars = "samples")
+
+    # modify subtype pal for plotting
+    subtype_pal <- c("Basal" = "#AF4C5B", "TNBC" = "#AF4C5B", 
+                 "Her2" = "#EED4D3", "ER+" = "#6567AA", 
+                 "LumA" = "#B3B4D0", "LumB" = "#363E62", 
+                 "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
+
+
+    p1 <- ggplot(toPlot[toPlot$variable == "true_subtype",], aes(x = 1, y = samples, fill = value)) + 
+        geom_tile(color = "white") + theme_void() +
+        geom_text(aes(label = value), color = "black", size = 3) +
+        scale_fill_manual(values = subtype_pal, na.value = "#D1D7DD") +        
+        theme(
+                axis.text.x = element_blank(),
+                axis.title.x = element_text(),
+                axis.text.y = element_text(vjust = 0.5, hjust = 1),
+                axis.title.y = element_text(angle = 90),
+                strip.text.x = element_text(),
+                legend.position = "none"
+            ) +
+        labs(x = "Subtype\n\n", y = "Cell Line", fill = "")
+    
+    p2 <- ggplot(toPlot[toPlot$variable != "true_subtype",], aes(x = variable, y = samples, fill = value)) + 
+    geom_tile(color = "white") + theme_void() +
+    geom_text(aes(label = value), color = "black", size = 3) +
+    scale_fill_manual(values = subtype_pal, na.value = "#D1D7DD") +        
+    theme(
+            axis.text.x = element_text(vjust = 0.5),
+            axis.title.x = element_text(),
+            axis.text.y = element_blank(),
+            axis.title.y = element_text(angle = 90),
+            strip.text.x = element_text(),
+            legend.key.size = unit(0.7, 'cm')
+        ) +
+    labs(x = "\nPSet", y = "", fill = "Subtype")
+
+    png("DataExploration/results/figures/pam50_true.png", width = 7, height = 7, res = 600, units = "in")
+    print(
+        grid.arrange(p1, p2, ncol = 4, nrow = 2, layout_matrix = rbind(c(1,2,2,2), c(1,2,2,2)))
+        #ggarrange(p1, p2)
+    )
+    dev.off()
+}
