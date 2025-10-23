@@ -48,7 +48,8 @@ get_all_scores <- function() {
 #' 
 
 # define mappings
-mapping_cells <- c("BT20" = "BT-20", 
+mapping_cells <- c( "AU665" = "AU565",      # misspelt in tdxd
+                    "BT20" = "BT-20", 
                     "BT474" = "BT-474", 
                     "BT549" = "BT-549", 
                     "CAL120" = "CAL-120", 
@@ -58,6 +59,7 @@ mapping_cells <- c("BT20" = "BT-20",
                     "CAMA1" = "CAMA-1", 
                     "EFM19" = "EFM-19", 
                     "EFM192A" = "EFM-192A",
+                    "HBL100" = "HBL-100",
                     "HDQP1" = "HDQ-P1", 
                     "HS578T" = "Hs 578T",
                     "JIMT1" = "JIMT-1", 
@@ -65,11 +67,13 @@ mapping_cells <- c("BT20" = "BT-20",
                     "LY2" = "MCF-7/LY2", 
                     "MCF7" = "MCF-7", 
                     "MDAMB157" = "MDA-MB-157",
+                    "MDA-MB-175VII" = "MDA-MB-175-VII", 
                     "MDAMB175VII" = "MDA-MB-175-VII", 
                     "MDAMB231" = "MDA-MB-231", 
                     "MDAMB361" = "MDA-MB-361", 
                     "MDAMB436" = "MDA-MB-436", 
                     "MDAMB468" = "MDA-MB-468", 
+                    "MPE600" = "600MPE",
                     "MX1" = "MX-1", 
                     "SKBR3" = "SK-BR-3", 
                     "SKBR5" = "SK-BR-5", 
@@ -406,4 +410,17 @@ compileClassB <- function(PC_res, ClassB) {
     toPlot$pset <- factor(toPlot$pset, levels = c(unique(PC_res$pset), "Meta Estimate"))
 
     return(toPlot)
+}
+
+#' Helper function for TDXd analysis
+#' 
+#' Combine drug response and signature scores
+#' 
+combine_data <- function(signature_scores, tdxd) {
+    combined <- t(rbind(tdxd, signature_scores)) |> as.data.frame()
+    samples <- rownames(combined)
+    combined <- sapply(combined, as.numeric) |> as.data.frame()
+    rownames(combined) <- samples
+    combined$subtype <- true_subtype$subtype[match(samples, true_subtype$sample)]
+    return(combined)
 }

@@ -336,3 +336,62 @@ plot_ClassB_heatmap <- function(toPlot) {
     )
     dev.off()
 }
+
+#' Correlation plots of ARCHE and IC50
+#' 
+#' Helper function
+#' 
+plot_tdxd_corr <- function(combined, tdxd_PC, arche, ic50, save = FALSE) {
+
+    # get corr
+    pair <- paste(arche, ic50, sep = "_")
+    corr <- round(tdxd_PC$pc[tdxd_PC$pairs == pair], 2)
+    fdr <- round(tdxd_PC$FDR[tdxd_PC$pairs == pair], 2)
+
+    p <- ggplot(combined, aes(x = .data[[arche]], y = .data[[ic50]], fill = subtype, color = subtype)) +
+        geom_point(size = 3, shape = 21) +
+        geom_smooth(method = "lm", se=F) + 
+        scale_fill_manual(values = subtype_pal) +
+        scale_color_manual(values = subtype_pal) +
+        theme_classic() + 
+        theme(
+            panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+            plot.title = element_text(hjust = 0.5, size = 10), 
+            legend.key.size = unit(0.7, 'cm')
+        ) +
+        #xlim(-x, x) + ylim(-y, y) + 
+        labs(title = paste0(arche, "\nPCC: ", corr, " (FDR: ", fdr, ")")) 
+
+    if (save == TRUE) {
+        filename <- paste0("DrugResponse/results/figures/TDXd/", arche, "_", ic50, ".png")
+        png(filename, width = 5, height = 4, res = 600, units = "in")
+        print(p)
+        dev.off()
+    } else {
+        return(p)
+    }
+}
+
+#' Correlation plots of ARCHE and IC50
+#' 
+#' Merge plots together
+#' @param combined dataframe. Output of combined_data()
+#' @param tdxd_PC dataframe. Output of computePC()
+#' @param ic50 string. "Avg.IC50" or "Avg.IC50.Treps"
+#' @param label string. For plot filename
+#' 
+plot_tdxd_all <- function(combined, tdxd_PC, ic50, label) {
+    p1 <- plot_tdxd_corr(combined, tdxd_PC, "ARCHE1", ic50)
+    p2 <- plot_tdxd_corr(combined, tdxd_PC, "ARCHE2", ic50)
+    p3 <- plot_tdxd_corr(combined, tdxd_PC, "ARCHE3", ic50)
+    p4 <- plot_tdxd_corr(combined, tdxd_PC, "ARCHE4", ic50)
+    p5 <- plot_tdxd_corr(combined, tdxd_PC, "ARCHE5", ic50)
+    p6 <- plot_tdxd_corr(combined, tdxd_PC, "ARCHE6", ic50)
+
+    filename <- paste0("DrugResponse/results/figures/TDXd/", label, "_", ic50, ".png")
+    png(filename, width = 10, height = 7, res = 600, units = "in")
+    print(ggarrange(p1, p2, p3, p4, p5, p6, 
+              nrow = 2, ncol = 3, 
+              common.legend = TRUE, legend = "bottom"))
+    dev.off()
+}
