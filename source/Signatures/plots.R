@@ -146,22 +146,91 @@ plot_GREAT <- function(great, n_genes, label) {
     toPlot <- great[1:30,]
     toPlot$name <- factor(toPlot$name, levels=rev(toPlot$name))
 
-    p <- ggplot(toPlot, aes(x = name, y = Hyper_Fold_Enrichment, color = Label)) +
+    p <- ggplot(toPlot, aes(x = name, y = Hyper_Fold_Enrichment, color = Hyper_Adjp_BH)) +
         geom_point(aes(size = Total_Genes_Annotated), shape = 19) + 
-        geom_segment(aes(x = name, xend = name, y = 0, yend = Hyper_Fold_Enrichment, color = Label, alpha = Hyper_Adjp_BH), size = 1) +
+        geom_segment(aes(x = name, xend = name, y = 0, yend = Hyper_Fold_Enrichment, color = Hyper_Adjp_BH), size = 1) +
         coord_cartesian(clip = "off") + 
         coord_flip() +
         scale_alpha(range = c(1, 0.2)) +
         guides(shape = guide_legend(ncol = 1), color = guide_legend(override.aes=list(shape=19, size = 4))) +
-        scale_color_manual(values = c("#574B60", "#CBC9AD", "#5B96AF"), labels = c("BP", "CC", "MF")) +
+        scale_colour_gradient(low = random_lightblue, high = "black") +
         theme_classic() + 
         theme(legend.key.size = unit(0.5, 'cm'), text = element_text(size = 10),
               plot.title = element_text(hjust = 0.5, size = 12), 
               panel.border = element_rect(color = "black", fill = NA, size = 0.5)) + 
-        labs(x = "GO Term", y = "Fold Enrichment", size = "Genes", alpha = "Adjusted\nP-Value", color = "GO\nCategory", title = label)
+        labs(x = "GO Term", y = "Fold Enrichment", size = "Genes", color = "Adjusted\nP-Value", title = label)
 
     filename <- paste0("Signatures/results/figures/GREAT/", label, "_ngene_", n_genes, ".png")
-    png(filename, width = 7, height = 7, res = 600, units = "in")
+    png(filename, width = 8, height = 7, res = 600, units = "in")
     print(p)
     dev.off()
+}
+
+#' Plot GREAT results with annotations
+#' 
+plot_GREAT_anno <- function(great, n_genes, label, anno) {
+
+    # keep only top 20 with > n_genes
+    great <- great[great$Total_Genes_Annotated > n_genes,]
+    great <- great[order(great$Hyper_Fold_Enrichment, decreasing = TRUE),]
+    toPlot <- great[1:20,]
+    toPlot$name <- factor(toPlot$name, levels=rev(toPlot$name))
+
+    # annotation bar
+    anno$Label <- gsub("Developmental process", "Developmental\nprocess", anno$Label)
+    anno <- anno[anno$ARCHE == label,]
+    toPlot$anno <- anno$Label #[match(toPlot$ID, anno$GO)]
+
+    p1 <- ggplot(toPlot, aes(x = name, y = 1, fill = anno)) +
+        geom_tile(color = "black") +
+        coord_flip() +
+        scale_fill_manual(values = c(random_blue, "white")) +
+        theme_void() +
+        theme(
+            axis.text.y = element_text(hjust = 1),
+            axis.title.y = element_text(angle = 90),
+            plot.margin=unit(c(1.03,-0.1,1.3,1), "cm")
+        ) +
+        labs(x = "GO Term", fill = "Related Pathways")
+
+    # lollipop
+    x <- max(toPlot$Hyper_Fold_Enrichment) + 0.25
+
+    p2 <- ggplot(toPlot, aes(x = name, y = Hyper_Fold_Enrichment, color = Hyper_Adjp_BH)) +
+        geom_point(aes(size = Total_Genes_Annotated), shape = 19) + 
+        geom_segment(aes(x = name, xend = name, y = 0, yend = Hyper_Fold_Enrichment, color = Hyper_Adjp_BH), size = 1) +
+        coord_cartesian(clip = "off") + 
+        coord_flip() +
+        scale_y_continuous(limits = c(0, x), expand = c(0,0)) +
+        guides(shape = guide_legend(ncol = 1), color = guide_legend(override.aes=list(shape=19, size = 4))) +
+        scale_colour_gradient(low = random_lightblue, high = "black") +
+        theme_classic() + 
+        theme(
+            legend.key.size = unit(0.5, 'cm'), text = element_text(size = 10),
+            axis.text.y = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            plot.title = element_text(hjust = 0.5, size = 12), 
+            panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+            plot.margin=unit(c(0.5,1,0.5,0), "cm")
+        ) + 
+        labs(y = "Fold Enrichment", size = "Number of Genes", color = "Adjusted P-Value", title = paste(label, "      "))
+
+    # extract legends
+    l1 <- as_ggplot(get_legend(p1))
+    l2 <- as_ggplot(get_legend(p2))
+    p1 <- p1+theme(legend.position = "none")
+    p2 <- p2+theme(legend.position = "none")
+
+    filename <- paste0("Signatures/results/figures/GREAT/", label, "_annotated_ngene_", n_genes, ".png")
+    png(filename, width = 10, height = 7, res = 600, units = "in")
+    print(grid.arrange(p1, p2, l1, l2, ncol = 7, nrow = 6,
+        layout_matrix = rbind(c(1,1,1,1,2,2,NA),
+                              c(1,1,1,1,2,2,3),
+                              c(1,1,1,1,2,2,3),
+                              c(1,1,1,1,2,2,4),
+                              c(1,1,1,1,2,2,NA),
+                              c(1,1,1,1,2,2,NA))))
+    dev.off()
+
 }

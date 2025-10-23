@@ -159,7 +159,7 @@ great6 <- runGREAT(gr6, "ARCHE6", analysis) #great6 <- fread("Signatures/results
 # Plot GREAT enrichment
 ###########################################################
 
-n <- 20 # play with this threshold
+n <- 20 
 
 plot_GREAT(great1, n, "ARCHE1")
 plot_GREAT(great2, n, "ARCHE2")
@@ -167,3 +167,12 @@ plot_GREAT(great3, n, "ARCHE3")
 plot_GREAT(great4, n, "ARCHE4")
 plot_GREAT(great5, n, "ARCHE5")
 plot_GREAT(great6, n, "ARCHE6")
+
+###########################################################
+# Annotated GREAT enrichment plot
+###########################################################
+
+anno <- read.csv("Signatures/results/data/GREAT_20_Anno.csv")
+
+plot_GREAT_anno(great2, n, "ARCHE2", anno)
+plot_GREAT_anno(great5, n, "ARCHE5", anno)
