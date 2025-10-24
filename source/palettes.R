@@ -33,6 +33,11 @@ binary_pal <- c(
     "#BC4749"
 )
 
+binary_pal2 <- c(
+    "#1E4076", 
+    "#A94745"
+)
+
 cohort_pal <- c(
     "Baseline" = "#D07C7B", 
     "On treatment control" = "#F5C6C6",
@@ -55,6 +60,13 @@ genfeat_pal <- c(
     "Other Intron" = "#FDBF6F",
     "Downstream (<=300)" = "#B15928",
     "Distal Intergenic" = "#FFFF99"
+)
+
+mrecist_pal <- c(
+    "CR" = "#136F63",
+    "PD" = "#9DCBBA",
+    "SD" = "#FFADA1",
+    "PR" = "#B02E0C"
 )
 
 random_blue <- "#3E517A"
