@@ -96,15 +96,16 @@ run_DEG <- function(counts, meta, arche = NA, subtype = NA) {
 
 #' Run single sample gsea
 #' 
-run_ssgsea <- function(counts) {
+#' @param counts data.frame. Gene counts matrix
+#' @param gmt GeneSetCollection or list. 
+#' @param label string. Signature label for saving
+#' 
+run_ssgsea <- function(counts, gmt, label) {
 
-  # downloadeded from https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp#H
-  hallmarks <- getGmt("MolecularSigAnalysis/data/h.all.v2025.1.Hs.symbols.gmt")
+  es <- gsva(ssgseaParam(counts, gmt), verbose = FALSE)
+  write.csv(es, file = paste0("MolecularSigAnalysis/results/data/", label, "_ES.csv"), quote = F, row.names = T)
 
-  hm.es <- gsva(ssgseaParam(counts, hallmarks), verbose = FALSE)
-  write.csv(hm.es, file = "MolecularSigAnalysis/results/data/hallmarks_ES.csv", quote = F, row.names = T)
-
-  return(hm.es)
+  return(es)
 }
 
 #' Format mutational sig dataframes for plotting

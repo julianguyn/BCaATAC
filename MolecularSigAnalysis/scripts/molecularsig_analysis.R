@@ -1,5 +1,6 @@
 # load libraries
 suppressPackageStartupMessages({
+  library(maftools)
   library(data.table)
   library(GSVA)
   library(GSEABase)
@@ -9,6 +10,7 @@ suppressPackageStartupMessages({
   library(BSgenome.Hsapiens.UCSC.hg38)
   library(pheatmap)
   library(dplyr)
+  library(qusage)
 })
 
 source("source/MolecularSigAnalysis/helper.R")
@@ -61,7 +63,12 @@ write.csv(v3.cosm, file = "MolecularSigAnalysis/results/data/v3_cosm.csv", quote
 # Single sample gsea on hallmarks gene sets
 ###########################################################
 
-hm.es <- run_ssgsea(counts)
+# load in gmt files
+hallmarks <- getGmt("MolecularSigAnalysis/data/h.all.v2025.1.Hs.symbols.gmt")  # from https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp#H
+myc_targs <- read.gmt("MolecularSigAnalysis/data/All_MYC_Target_Signatures.gmt") # from peter lin
+
+hm.es <- run_ssgsea(counts, hallmarks, "hallmarks")
+my.es <- run_ssgsea(counts, myc_targs, "MYC")
 
 ###########################################################
 # Heatmaps cluster by mutational signatures
@@ -85,11 +92,13 @@ v3.cosm <- t(v3.cosm) |> as.data.frame()
 corr_og <- corr_signatures(og30.cosm, "og30")
 corr_v3 <- corr_signatures(v3.cosm, "v3")
 corr_hm <- corr_signatures(hm.es, "hm")
+corr_my <- corr_signatures(my.es, "myc")
 
 # plot heatmaps of signature correlations
 plot_molecularsig_corr(corr_og, "Original 30 COSMIC Signatures", "og30")
 plot_molecularsig_corr(corr_v3, "Mutational Signatures", "v3")
 plot_molecularsig_corr(corr_hm, "Hallmark Gene Sets", "hm")
+plot_molecularsig_corr(corr_my, "MYC Target Signatures", "myc")
 
 # plot box plots
 plot_corr_boxplots(corr_v3, corr_hm)
