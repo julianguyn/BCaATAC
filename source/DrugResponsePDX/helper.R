@@ -111,30 +111,6 @@ get_xeva_july <- function() {
     return(xeva2)
 }
 
-#' Check overlap of sample IDs and report missing
-#' 
-#' Helper function for finding mismatched sample IDs lol
-#' 
-#' @param list1 string. First list of model IDs
-#' @param list2 string. Second list of model IDs
-#' @param label1 string. Name of first list
-#' @param label2 string. Name of second list
-#' 
-check_sample_overlap <- function(list1, list2, label1, label2) {
-    list1 <- unique(list1)
-    list2 <- unique(list2)
-    message(paste("\nNumber of samples from", label1, "in", label2))
-    print(table(list1 %in% list2))
-    message(paste("\nSamples from", label1, "NOT in", label2))
-    missing <- list1[-which(list1 %in% list2)]
-    print(missing[order(missing)])
-    message(paste("\nNumber of samples from", label2, "in", label1))
-    print(table(list2 %in% list1))
-    message(paste("\nSamples from", label2, "NOT in", label1))
-    missing <- list2[-which(list2 %in% list1)]
-    print(missing[order(missing)])
-}
-
 #' Extract PDX ARCHE signature scores
 #'
 #' Append columns to treatment response matrices with PDX ARCHE signature scores.

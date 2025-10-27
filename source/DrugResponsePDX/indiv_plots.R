@@ -17,7 +17,7 @@ mrecist_labs <- c(
 #' @return ggplot object of waterfall plot.
 #' 
 waterfall_mRECIST <- function(df, arche, drug, plot.indiv = FALSE) {
- 
+
     # create ranking order
     df <- df[order(df[[arche]], decreasing = T),]
     df$rank <- 1:nrow(df)
@@ -29,7 +29,13 @@ waterfall_mRECIST <- function(df, arche, drug, plot.indiv = FALSE) {
     p <- ggplot(df, aes(x = rank, y = .data[[arche]], fill = mRECIST)) + 
         geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
         scale_fill_manual(values = mrecist_pal, labels = mrecist_labs) +
-        theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        theme_classic() + 
+        theme(
+            legend.key.size = unit(0.8, 'cm'), 
+            axis.text.x = element_blank(), 
+            axis.ticks.x = element_blank(),
+            legend.position = "none"
+        ) +
         ylim(c(-y, y)) + labs(x = "PDX Model", y = paste(arche, "Score"), fill = "mRECIST") 
     
     # print out waterfall plot if needed
@@ -97,7 +103,7 @@ avg_ARCHE_mRECIST <- function(df, arche, drug, plot.indiv = F) {
 #' @param plot.indiv boolean. TRUE if waterfall plot should be saved as an individual file.
 #' @return ggplot object of waterfall plot.
 #' 
-waterfall_mRECIST_accuracy <- function(df, arche, drug, combiations, i, plot.indiv = F) {
+waterfall_mRECIST_accuracy <- function(df, arche, drug, combinations, i, plot.indiv = F) {
 
     # create ranking order
     df <- df[order(df[[arche]], decreasing = T),]
@@ -118,7 +124,13 @@ waterfall_mRECIST_accuracy <- function(df, arche, drug, combiations, i, plot.ind
     p <- ggplot(df, aes(x = rank, y = .data[[arche]], fill = accuracy)) + 
         geom_bar(stat = "identity", color = "black") + geom_hline(yintercept = 0) +
         scale_fill_manual(values = binary_pal2) +
-        theme_classic() + theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        theme_classic() + 
+        theme(
+            legend.key.size = unit(0.8, 'cm'), 
+            axis.text.x = element_blank(), 
+            axis.ticks.x = element_blank(),
+            legend.position = "none"
+        ) +
         ylim(c(-y, y)) + labs(x = "PDX Model", y = paste(arche, "Score"), fill = "ARCHE Score\nAccuracy") 
     
     # print out plot if needed
@@ -230,7 +242,7 @@ waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
 #' @param plot.indiv boolean. TRUE if scatter plot should be saved as an individual file.
 #' @return ggplot object of scatter plot.
 #' 
-scatter_TR <- function(df, arche, drug, TR, combiations, i, plot.indiv = F) {
+scatter_TR <- function(df, arche, drug, TR, combinations, i, plot.indiv = F) {
 
     # compute pearson's correlation
     pc <- cor.test(df[[arche]], df[[TR]], method = "pearson", alternative = "two.sided")
