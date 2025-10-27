@@ -15,6 +15,8 @@ suppressPackageStartupMessages({
 
 source("source/MolecularSigAnalysis/helper.R")
 source("source/MolecularSigAnalysis/plots.R")
+source("source/DataExploration/helper.R")
+source("source/DrugResponse/helper.R")
 source("source/palettes.R")
 
 ###########################################################
@@ -31,12 +33,22 @@ mat <- mat[mat$variable %in% meta$ATAC.Seq.File.Name,]
 # get mafs
 mafs <- merge_mafs(meta$SNV.File.Name)
 
-# load in gene counts matrix
-counts <- fread("Signatures/data/TCGA_BRCA_gene_counts.matrix") |>
+# load in tumour gene counts matrix
+t_counts <- fread("Signatures/data/TCGA_BRCA_gene_counts.matrix") |>
   as.data.frame()
-rownames(counts) <- counts$V1
-counts$V1 <- NULL
-counts <- t(counts)
+rownames(t_counts) <- t_counts$V1
+t_counts$V1 <- NULL
+t_counts <- t(t_counts)
+
+# load in ccls gene counts matrix
+c_counts <- get_ubr2_rna()
+colnames(c_counts) <- gsub("\\.", "-", colnames(c_counts))
+
+# quick cell line mapping from map_sen()
+for (i in 1:ncol(c_counts)) {
+    cell = colnames(c_counts)[i]
+    if (cell %in% names(mapping_cells)) {colnames(c_counts)[i] <- unname(mapping_cells[cell])}
+}
 
 ###########################################################
 # Extract BCa mutation calls
@@ -67,8 +79,13 @@ write.csv(v3.cosm, file = "MolecularSigAnalysis/results/data/v3_cosm.csv", quote
 hallmarks <- getGmt("MolecularSigAnalysis/data/h.all.v2025.1.Hs.symbols.gmt")  # from https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp#H
 myc_targs <- read.gmt("MolecularSigAnalysis/data/All_MYC_Target_Signatures.gmt") # from peter lin
 
-hm.es <- run_ssgsea(counts, hallmarks, "hallmarks")
-my.es <- run_ssgsea(counts, myc_targs, "MYC")
+# ssgsea on tumour counts
+t_hm.es <- run_ssgsea(t_counts, hallmarks, "hallmarks")
+t_my.es <- run_ssgsea(t_counts, myc_targs, "MYC")
+
+# ssgsea on ccls counts
+c_hm.es <- run_ssgsea(c_counts, hallmarks, "hallmarks_ccls")
+c_my.es <- run_ssgsea(c_counts, myc_targs, "MYC_ccls")
 
 ###########################################################
 # Heatmaps cluster by mutational signatures
@@ -91,14 +108,18 @@ v3.cosm <- t(v3.cosm) |> as.data.frame()
 # correlate signatures
 corr_og <- corr_signatures(og30.cosm, "og30")
 corr_v3 <- corr_signatures(v3.cosm, "v3")
-corr_hm <- corr_signatures(hm.es, "hm")
-corr_my <- corr_signatures(my.es, "myc")
+corr_t_hm <- corr_signatures(t_hm.es, "hm")
+corr_t_my <- corr_signatures(t_my.es, "myc")
+corr_c_hm <- corr_signatures(c_hm.es, "hm_ccls", "ccls")
+corr_c_my <- corr_signatures(c_my.es, "myc_ccls", "ccls")
 
-# plot heatmaps of signature correlations
+# plot heatmaps of signature correlations (tumours)
 plot_molecularsig_corr(corr_og, "Original 30 COSMIC Signatures", "og30")
 plot_molecularsig_corr(corr_v3, "Mutational Signatures", "v3")
-plot_molecularsig_corr(corr_hm, "Hallmark Gene Sets", "hm")
-plot_molecularsig_corr(corr_my, "MYC Target Signatures", "myc")
+plot_molecularsig_corr(corr_t_hm, "Hallmark Gene Sets", "hm")
+plot_molecularsig_corr(corr_t_my, "MYC Target Signatures", "myc")
+plot_molecularsig_corr(corr_c_hm, "Hallmark Gene Sets", "hm", "ccls")
+plot_molecularsig_corr(corr_c_my, "MYC Target Signatures", "myc", "ccls")
 
 # plot box plots
-plot_corr_boxplots(corr_v3, corr_hm)
+plot_corr_boxplots(corr_v3, corr_t_hm)

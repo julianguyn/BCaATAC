@@ -152,7 +152,7 @@ plot_heatmap_mutsig <- function(toPlot, type) {
 
 #' Plot molecular sig - ARCHE correlations
 #' 
-plot_molecularsig_corr <- function(corr, label, type) {
+plot_molecularsig_corr <- function(corr, label, type, data = "tumour") {
   
     corr$ATAC.Sig <- factor(corr$ATAC.Sig, levels = c(paste0("ARCHE", 1:6)))
     
@@ -174,12 +174,15 @@ plot_molecularsig_corr <- function(corr, label, type) {
     } else if (type == "v3") {
         w <- 3
         h <- 8.5
-    } else {
+    } else if (type == "hm") {
         w <- 5
+        h <- 8
+    } else if (type == "myc") {
+        w <- 6
         h <- 8
     }
   
-    png(paste0("MolecularSigAnalysis/results/figures/molecularsig/", type, "_corr.png"), width = w, height = h, res = 600, units = "in")
+    png(paste0("MolecularSigAnalysis/results/figures/molecularsig/", type, "_", data, "_corr.png"), width = w, height = h, res = 600, units = "in")
     print(p)
     dev.off()
 }

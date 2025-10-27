@@ -21,6 +21,33 @@ get_ARCHE <- function() {
   return(mat)
 }
 
+#' Load in UBR2 RNA-Seq matrix
+#' 
+#' Load in matrix and format gene names
+#' 
+get_ubr2_rna <- function() {
+  
+  # load in ubr2 gene counts matrix
+  counts <- fread("Signatures/data/bcacells_gene_counts.matrix")
+
+  # map ccls gene names
+  gene_meta <- get_rna_meta()
+  counts$Genes <- gene_meta$Gene.Symbol[match(counts$Genes, gene_meta$GeneID)]
+
+  # average across duplicate genes
+  counts <- counts %>%
+    group_by(Genes) %>%
+    summarise(across(where(is.numeric), mean, na.rm = TRUE)) %>%
+    ungroup()
+
+  counts <- as.data.frame(counts)
+  rownames(counts) <- counts$Genes
+  counts$Genes <- NULL
+  counts <- as.matrix(counts)
+  return(counts)
+}
+
+
 #' Get ARCHE assignments from NMF output (keep as mat)
 #' 
 #' Helper function to speed up loading in ARCHE matrix
@@ -128,11 +155,16 @@ format_sig <- function(cosm_df) {
 #' 
 #' @param sig data.frame. Output of compareSignatures |> t() or ssgsea
 #' @param label string. Label for file output
+#' @param data string. "tumour" or "ccls"
 #' 
-corr_signatures <- function(sig, label) {
+corr_signatures <- function(sig, label, data = "tumour") {
 
   # load in ARCHE matrix
-  atac <- get_ARCHE_mat()
+  if (data == "tumour") {
+    atac <- get_ARCHE_mat()
+  } else if (data == "ccls") {
+    atac <- get_all_scores()
+  }
 
   # keep common samples
   common <- intersect(colnames(atac), colnames(sig))
