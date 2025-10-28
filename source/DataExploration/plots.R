@@ -169,23 +169,33 @@ plot_rna_corr <- function(p1, p2, p3, p4, p5, p6) {
 
 #' Plot PAM50 subtypes
 #' 
-plot_pam50_true <- function(toPlot) {
+#' @param model string. Subtyping classification model for label
+plot_bcasubtype <- function(toPlot, model) {
 
     # format dataframe for plotting
     toPlot$samples <- rownames(toPlot)
-    toPlot <- melt(toPlot, id.vars = "samples")
+    toPlot <- reshape2::melt(toPlot, id.vars = "samples")
 
     # modify subtype pal for plotting
-    subtype_pal <- c("Basal" = "#AF4C5B", "TNBC" = "#AF4C5B", 
-                 "Her2" = "#EED4D3", "ER+" = "#6567AA", 
-                 "LumA" = "#B3B4D0", "LumB" = "#363E62", 
-                 "Normal" = "#6365AF", "Not Available" = "#eFeBF7")
-
+    subtype_pal <- c(
+        "Basal" = "#AF4C5B", 
+        "TNBC" = "#AF4C5B", 
+        "ER-/HER2-" = "#AF4C5B", 
+        "Her2" = "#EED4D3", 
+        "LumA" = "#B3B4D0", 
+        "ER+/HER2- Low Prolif" = "#B3B4D0",
+        "LumB" = "#363E62", 
+        "ER+/HER2- High Prolif" = "#363E62", 
+        "Normal" = "#6365AF", 
+        "Not Available" = "#eFeBF7")
+    toPlot$value <- factor(toPlot$value, levels = names(subtype_pal))
 
     p1 <- ggplot(toPlot[toPlot$variable == "true_subtype",], aes(x = 1, y = samples, fill = value)) + 
         geom_tile(color = "white") + theme_void() +
         geom_text(aes(label = value), color = "black", size = 3) +
-        scale_fill_manual(values = subtype_pal, na.value = "#D1D7DD") +        
+        scale_fill_manual(
+            values = subtype_pal, 
+            na.value = "#D1D7DD") +        
         theme(
                 axis.text.x = element_blank(),
                 axis.title.x = element_text(),
@@ -210,8 +220,10 @@ plot_pam50_true <- function(toPlot) {
         ) +
     labs(x = "\nPSet", y = "", fill = "Subtype")
 
-    png("DataExploration/results/figures/pam50_true.png", width = 7, height = 7, res = 600, units = "in")
-    print(
+    filename <- paste0("DataExploration/results/figures/bcasubtypes_",model,"_true.png")
+    png(filename, width = 8, height = 7, res = 600, units = "in")
+    grid::grid.newpage()
+    grid::grid.draw(
         grid.arrange(p1, p2, ncol = 4, nrow = 2, layout_matrix = rbind(c(1,2,2,2), c(1,2,2,2)))
         #ggarrange(p1, p2)
     )

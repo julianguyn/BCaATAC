@@ -98,60 +98,6 @@ format_drug_pset <- function(pset1, pset2) {
     return(toPlot)
 }
 
-#' Load in RNA-Seq counts matrix from UHNBreast2 PSet
-#' 
-load_bca_RNA <- function() {
-
-    # get RNA-seq matrix
-    ubr2 <- readRDS("DrugResponse/data/PharmacoSet.RDS")
-    ubr2 <- ubr2@molecularProfiles@ExperimentList$genes_counts
-    rna <- ubr2@assays@data$expr
-    colnames(rna) <- ubr2@colData$sampleid
-    #rownames(rna) <- ubr2@rowRanges$gene_name
-
-    # from map_sen()
-    # missing: "HBL100" "HCC1008" 
-    for (i in 1:length(colnames(rna))) {
-        cell = colnames(rna)[i]
-        if (cell %in% names(mapping_cells)) {colnames(rna)[i] <- unname(mapping_cells[cell])}
-    }
-
-    # keep only cell lines being used
-    samples <- get_cells()
-    rna <- rna[,colnames(rna) %in% samples$sample]
-    df <- cbind(data.frame(Genes = rownames(rna), rna))
-    write.table(df, file = "Signatures/data/bcacells_gene_counts.matrix",  quote = F, sep = "\t", col.names = T, row.names = F)
-
-    return(rna)
-}
-
-#' Get UBR2 rna meta
-#' 
-get_rna_meta <- function() {
-    # load in RNA-Seq metadata (to get gene names)
-    ubr2 <- readRDS("DrugResponse/data/PharmacoSet.RDS")
-    ubr2 <- ubr2@molecularProfiles@ExperimentList$genes_counts@rowRanges |> as.data.frame()
-
-    # format colnames of gene_meta
-    gene_meta <- ubr2[,c("gene_id", "gene_name")]
-    colnames(gene_meta) <- c("GeneID", "Gene.Symbol")
-    return(gene_meta)
-}
-
-#' Load in RNA-Seq counts matrix from other PSets
-#' 
-get_pset_rna <- function(filepath) {
-    pset <- readRDS(filepath) |> updateObject()
-    pset <- summarizeMolecularProfiles(pset, mDataType = "Kallisto_0.46.1.rnaseq.counts")
-    rna <- pset@assays@data$expr
-    #rownames(rna) <- rowData(pset)$gene_name
-
-    # keep only cell lines being used
-    samples <- get_cells()
-    rna <- rna[,colnames(rna) %in% samples$sample]
-    return(rna)
-}
-
 #' Correlate RNA-Seq expression of two psets
 #' 
 #' @param pset1 dataframe. Melted gene counts matrix of first pset
@@ -175,26 +121,43 @@ corr_pset_rna <- function(pset1, pset2) {
     return(corr)
 }
 
-#' Compute PAM50 subtypes using genefu
+#' Compute BCa subtypes using genefu
 #' 
 #' @param rna dataframe. RNA-Seq counts matrix
+#' @param meta dataframe. Gene metadata
+#' @param model string. Subtyping classification model for genefu
+#' Options: "scmgene", "scmod1", "scmod2", "pam50", "ssp2006", "ssp2003", "intClust", "AIMS", or "claudinLow"
 #' @return dataframe of subtype scores per sample
-pam50subtype <- function(rna) {
-
-    # get meta
-    meta <- get_rna_meta()
+score_bcasubtype <- function(rna, meta, model) {
 
     # format matrix
     rna <- t(rna) |> as.data.frame()
-    
-    # match and get gene names
-    colnames(rna) <- meta$Gene.Symbol[match(colnames(rna), meta$GeneID)]
+
+    # set do.mapping param
+    do.mapping <- ifelse(model == "pam50", FALSE, TRUE)
+
+    if (do.mapping == TRUE) {   # if not PAM50
+        subset_meta <- meta[-which(is.na(meta$EntrezGene.ID)),]
+        rna <- rna[,match(subset_meta$Ensembl, colnames(rna))]
+        colnames(rna) <- subset_meta$EntrezGene.ID[match(subset_meta$Ensembl, colnames(rna))]
+
+        # average across duplicates
+        unique_genes <- unique(colnames(rna))
+        rna <- as.data.frame(sapply(unique_genes, function(x) {
+            rowMeans(rna[, names(rna) == x, drop = FALSE])
+        }))
+        meta <- subset_meta[!duplicated(subset_meta$EntrezGene.ID),]
+        dimnames(meta)[[1]] <- meta$EntrezGene.ID
+    } else {                    # if PAM50
+        # match and get gene names
+        colnames(rna) <- meta$Gene.Symbol[match(colnames(rna), meta$Ensembl)]
+    }
 
     # get subtype predictions for PAM50
-    SubtypePredictions <- molecular.subtyping(sbt.model = "pam50", 
+    SubtypePredictions <- molecular.subtyping(sbt.model = model, 
                                               data = rna,
                                               annot = meta, 
-                                              do.mapping = FALSE)
+                                              do.mapping = do.mapping)
 
     # reutrn subtypes and subtyping probability
     res_df <- cbind(Subtype = as.character(SubtypePredictions$subtype), 

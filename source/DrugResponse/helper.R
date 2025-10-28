@@ -47,56 +47,6 @@ get_all_scores <- function() {
 #' @return Sen dataframe with standardized cell and drug names.
 #' 
 
-# define mappings
-mapping_cells <- c( "AU665" = "AU565",      # misspelt in tdxd
-                    "BT20" = "BT-20", 
-                    "BT474" = "BT-474", 
-                    "BT549" = "BT-549", 
-                    "CAL120" = "CAL-120", 
-                    "CAL148" = "CAL-148", 
-                    "CAL51" = "CAL-51", 
-                    "CAL851" = "CAL-85-1",
-                    "CAMA1" = "CAMA-1", 
-                    "EFM19" = "EFM-19", 
-                    "EFM192A" = "EFM-192A",
-                    "HBL100" = "HBL-100",
-                    "HDQP1" = "HDQ-P1", 
-                    "HS578T" = "Hs 578T",
-                    "Hs-578T" = "Hs 578T",
-                    "JIMT1" = "JIMT-1", 
-                    "KPL1" = "KPL-1", 
-                    "LY2" = "MCF-7/LY2", 
-                    "MCF-7-LY2" = "MCF-7/LY2",
-                    "MCF7" = "MCF-7", 
-                    "MDAMB157" = "MDA-MB-157",
-                    "MDA-MB-175VII" = "MDA-MB-175-VII", 
-                    "MDAMB175VII" = "MDA-MB-175-VII", 
-                    "MDAMB231" = "MDA-MB-231", 
-                    "MDAMB361" = "MDA-MB-361", 
-                    "MDAMB436" = "MDA-MB-436", 
-                    "MDAMB468" = "MDA-MB-468", 
-                    "MPE600" = "600MPE",
-                    "MX1" = "MX-1", 
-                    "SKBR3" = "SK-BR-3", 
-                    "SKBR5" = "SK-BR-5", 
-                    "SKBR7" = "SK-BR-7", 
-                    "SUM149" = "SUM149PT", 
-                    "SUM159" = "SUM159PT",
-                    "SUM52" =  "SUM52PE",
-                    "T47D" = "T-47D",
-                    "UACC812" = "UACC-812", 
-                    "X600MPE" = "600MPE",
-                    "ZR751" = "ZR-75-1")
-mapping_drugs <- c("carboplatin" = "Carboplatinum", 
-                    "dipyridamole" = "Dipyridamole", 
-                    "epirubicin" = "Epirubicin", 
-                    "eribulin" = "Eribulin", 
-                    "fluvastatin" = "Fluvastatin", 
-                    "herceptin" = "Trastuzumab", 
-                    "lapatinib" = "Lapatinib", 
-                    "paclitaxel" = "Paclitaxel",
-                    "OLA" = "Olaparib")
-
 # function to standardize mapping of sensitivity dataframe
 map_sen <- function(sen) {
 

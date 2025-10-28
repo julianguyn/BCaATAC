@@ -12,6 +12,8 @@ SupervisedSignatures/data
 cfDNA/data
 MolecularSigAnalysis/data
 SignatureExtraction/data
+Preprocessing/procdata
+Preprocessing/rawdata
 
 # all results folders
 DataExploration/results
