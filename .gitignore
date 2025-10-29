@@ -1,38 +1,7 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# all data folders
-DataExploration/data
-DrugResponse/data
-Signatures/data
-DrugResponsePDX/data
-RNAChemoResistance/data
-SignatureScoring/data
-PacResistantPDX/data
-SupervisedSignatures/data
-cfDNA/data
-MolecularSigAnalysis/data
-SignatureExtraction/data
-Preprocessing/procdata
-Preprocessing/rawdata
-
-# all results folders
-DataExploration/results
-DrugResponse/results
-Signatures/results
-DrugResponsePDX/results
-RNAChemoResistance/results
-SignatureScoring/results
-PacResistantPDX/results
-SupervisedSignatures/results
-cfDNA/results
-MolecularSigAnalysis/results
-SignatureExtraction/results
-
-# others
+data
 archive
-MetaData
-Misc
+metadata
 temp
 *.DS_Store
-Signatures/scripts/NMFcode/utils/__pycache__
+scripts/1-Signatures/NMFcode/utils/__pycache__
 log.txt
