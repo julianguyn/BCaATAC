@@ -2,6 +2,7 @@
 suppressPackageStartupMessages({
     library(data.table)
     library(readxl)
+    library(reshape2)
 })
 
 
@@ -43,3 +44,48 @@ counts_mat <- t(counts)
 
 # save
 write.table(counts_mat, file = "data/procdata/TCGA/TCGA_BRCA_gene_counts.matrix", quote = F, sep = "\t", col.names = T)
+
+###########################################################
+# Process methylation beta values
+###########################################################
+
+# load meta
+beta_meta <- read.csv("beta_tcga.csv")
+beta_meta$SampleID <- gsub("\\.", "-", beta_meta$SampleID)
+
+# check duplicated correlations
+#betas <- read.csv("data/procdata/TCGA/duplicated_betas.csv")
+
+#df <- reshape2::melt(betas)
+#df$sampleid <- gsub("\\.2", "", df$variable)
+#df$dup <- rep(c("dup1", "dup2"), each = 486427, times = 9)
+
+# correlate beta values for duplicates
+#for (sample in unique(df$sampleid)) {
+#    subset <- df[df$sampleid == sample,]
+#    dup1 <- subset[subset$dup == "dup1",]
+#    dup2 <- subset[subset$dup == "dup2",]
+#    res <- cor.test(dup1$value, dup2$value, method = "pearson")
+#    message(paste(sample, as.numeric(res$estimate)))
+#}
+
+# loop to process all files
+for (i in 1:nrow(beta_meta)) {
+    sampleid <- beta_meta$SampleID[i]
+    file <- paste0("data/rawdata/tcga/betas/", beta_meta$File[i])
+    
+    df <- read.table(file)
+    colnames(df) <- c("CpG", sampleid)
+
+    if (i == 1) {
+        betas <- df
+    } else {
+        df <- df[match(betas$CpG, df$CpG),]
+        if (sampleid %in% names(betas)) {
+            betas[[sampleid]] <- rowMeans(cbind(betas[[sampleid]], df[[sampleid]]), na.rm = TRUE)
+        } else {
+            betas[[sampleid]] <- df[[sampleid]]
+        }
+    }
+}
+saveRDS(betas, file = "data/procdata/TCGA/TCGA_betas.RDS")
