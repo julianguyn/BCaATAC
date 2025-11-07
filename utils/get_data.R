@@ -258,3 +258,57 @@ get_xeva_july <- function() {
     xeva2$mRECIST[xeva2$drug == "PACLITAXEL"] <- bar$mRECIST[match(xeva2$model_group[xeva2$drug == "PACLITAXEL"], bar$model_group)]
     return(xeva2)
 }
+
+#' Get CpG sites from 450k array in each ARCHE
+#' 
+#' @param ann450k anno 
+#' ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+#' 
+
+# helper function to find cpgs overlapping in arches
+anno_cpgs <- function(arche) {
+
+    # gr for arche
+    bed <- fread(paste0("data/procdata/ARCHEs/beds/", arche, "_20k.bed"))
+    gr <- GRanges(
+        seqnames = paste0("chr", bed$chrom), 
+        ranges = IRanges(bed$chromStart, bed$chromEnd)
+    )
+
+    # get overlap
+    hits <- findOverlaps(anno_gr, gr)
+    arche_cpgs <- ann450k[queryHits(hits), ] |> rownames()
+    return(arche_cpgs)
+}
+
+get_arche_cpgs <- function(ann450k) {
+    
+    # create gr of anno
+    anno_gr <- GRanges(
+        seqnames = ann450k$chr,
+        ranges = IRanges(start = ann450k$pos, end = ann450k$pos),
+        probeID = rownames(ann450k)
+    )
+
+    # get cpgs in arche regions
+    arche1_cpgs <- anno_cpgs("ARCHE1")
+    arche2_cpgs <- anno_cpgs("ARCHE2")
+    arche3_cpgs <- anno_cpgs("ARCHE3")
+    arche4_cpgs <- anno_cpgs("ARCHE4")
+    arche5_cpgs <- anno_cpgs("ARCHE5")
+    arche6_cpgs <- anno_cpgs("ARCHE6")
+
+    # compile df of cpgs in arches
+    arche_cpgs <- data.frame(
+        CpGs = c(arche1_cpgs, arche2_cpgs, arche3_cpgs, arche4_cpgs, arche5_cpgs, arche6_cpgs),
+        ARCHE = c(
+            rep("ARCHE1", length(arche1_cpgs)),
+            rep("ARCHE2", length(arche2_cpgs)),
+            rep("ARCHE3", length(arche3_cpgs)),
+            rep("ARCHE4", length(arche4_cpgs)),
+            rep("ARCHE5", length(arche5_cpgs)),
+            rep("ARCHE6", length(arche6_cpgs))
+        )
+    )
+    return(arche_cpgs)
+}

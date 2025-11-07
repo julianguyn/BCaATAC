@@ -76,5 +76,14 @@ mrecist_pal <- c(
     "PR" = "#B02E0C"
 )
 
+dmp_pal <- c(
+    "Island" = "#134611",
+    "N_Shore" = "#3E8914",
+    "S_Shore" = "#9CC5A1",
+    "N_Shelf" = "#7AC1D8",
+    "S_Shelf" = "#39A0ED",
+    "OpenSea" = "#29339B"
+)
+
 random_blue <- "#3E517A"
 random_lightblue <- "#88A0A8"
