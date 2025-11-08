@@ -7,12 +7,17 @@ suppressPackageStartupMessages({
     library(GenomicRanges)
     library(dplyr)
     library(limma)
+    library(missMethyl)
     library(DMRcate)
+    library(qusage)
+    library(ggpubr)
+    library(grid)
+    library(gridExtra)
+    library(ggh4x)
 })
 
 source("utils/palettes.R")
 source("utils/get_data.R")
-source("utils/methylation_analysis.R")
 source("utils/plots/methylation_analysis.R")
 
 ###########################################################
@@ -35,8 +40,15 @@ pheno <- read.table("data/rawdata/tcga/Human__TCGA_BRCA__MS__Clinical__Clinical_
 # get 450k probe annotations
 ann450k <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
+# create gr of anno
+anno_gr <- GRanges(
+    seqnames = ann450k$chr,
+    ranges = IRanges(start = ann450k$pos, end = ann450k$pos),
+    probeID = rownames(ann450k)
+)
+
 # get cpgs in each ARCHE
-arche_cpgs <- get_arche_cpgs(ann450k)
+arche_cpgs <- get_arche_cpgs(ann450k, anno_gr)
 
 ###########################################################
 # Remove ctrl and rs probes
@@ -68,26 +80,6 @@ for (arche in paste0("ARCHE", 1:6)) {
     toPlot <- rbind(toPlot, bvals)
 }
 
-# categorize methylation status
-toPlot <- toPlot %>%
-    mutate(
-        status = case_when(
-            value <  0.2 ~ "Hypomethylated",
-            value > 0.8 ~ "Hypermethylated",
-            between(value, 0.2, 0.8) ~ "Intermediate",
-            TRUE ~ NA_character_
-        )
-    )
-
-# get proportions by methylation status
-toPlot <- toPlot %>%
-    filter(!is.na(status)) %>%
-    group_by(ARCHE, label, status) %>%
-    summarise(n = n(), .groups = "drop") %>%
-    group_by(ARCHE, label) %>%
-    mutate(prop = n / sum(n))
-toPlot$status <- factor(toPlot$status, levels = c("Hypomethylated", "Intermediate", "Hypermethylated"))
-
 # plot beta value proportions
 plot_bval_arches(toPlot)
 
@@ -95,8 +87,7 @@ plot_bval_arches(toPlot)
 # Format data for DMP
 ###########################################################
 
-# convert beta values to M values
-# add 1e-6 to avoid log 0
+# convert beta values to M values (add 1e-6 to avoid log 0)
 mvals <- log2((betas + 1e-6) / (1 - betas + 1e-6))
 
 # format pheno data
@@ -188,9 +179,123 @@ counts <- dmps %>%
 plot_dmps_arches(toPlot, counts)
 
 ###########################################################
-# Get differentially methylated probes
+# Gene ontology of DMPs
 ###########################################################
 
+#go2 <- gometh(sig.cpg = rownames(dmp2), all.cpg = rownames(mvals), collection = "GO")
+#go3 <- gometh(sig.cpg = rownames(dmp3), all.cpg = rownames(mvals), collection = "GO")
+# all FDR = 1
+
 ###########################################################
-# Differentially methylated regions
+# Get CpG annotations (for dmrcate)
 ###########################################################
+
+# helper function to get cpg annotation
+get_annot <- function(arche) {
+
+    myannotation <- cpg.annotate(
+        datatype = "array",
+        object = as.matrix(mvals),
+        what = "M",
+        analysis.type = "differential",
+        design = design,
+        contrasts = TRUE,
+        cont.matrix = contrasts,
+        coef = arche,
+        arraytype = "450K",
+        fdr = 0.1
+    )
+    return(myannotation)
+}
+
+# get cpg annotations
+arche2_annot <- get_annot("ARCHE2")
+arche3_annot <- get_annot("ARCHE3")
+
+###########################################################
+# Get differentially methylated regions
+###########################################################
+
+dmr2 <- extractRanges(
+    dmrcate(arche2_annot, lambda = 1000, C = 2),    #1026 dmps, 162 DMRs
+    genome = "hg19"
+)
+dmr3 <- extractRanges(
+    dmrcate(arche3_annot, lambda = 1000, C = 2),    #409 dmps, 52 DMRs
+    genome = "hg19"
+)
+save(dmr2, dmr3, file = "data/procdata/TCGA/DMRs.RData")
+# no DMPs (and hence DMRs) for other ARCHEs
+
+###########################################################
+# Quick gene region analysis with missMethyl
+###########################################################
+
+# gene ontology
+go2 <- goregion(dmr2, all.cpg=rownames(mvals), collection="GO", array.type="450K")
+go3 <- goregion(dmr3, all.cpg=rownames(mvals), collection="GO", array.type="450K")
+go3 <- go3[go3$FDR < 0.05,] # cell adhesion, 3 terms only, none for a2
+
+# kegg pathway (none with FDR<0.05)
+kegg2 <- goregion(dmr2, all.cpg=rownames(mvals), collection="KEGG", array.type="450K")
+kegg3 <- goregion(dmr3, all.cpg=rownames(mvals), collection="KEGG", array.type="450K")
+
+# hallmarks (ran this on November 7, 2025 @ 8pm est)
+# none with FDR<0.05
+hallmark <- readRDS(url("http://bioinf.wehi.edu.au/MSigDB/v7.1/Hs.h.all.v7.1.entrez.rds"))
+hallmarks2 <- gsaregion(dmr2, all.cpg=rownames(mvals), collection=hallmark)
+hallmarks3 <- gsaregion(dmr3, all.cpg=rownames(mvals), collection=hallmark)
+
+# for arche2:                                 N DE      P.DE FDR
+#HALLMARK_MYC_TARGETS_V1                    200  0 1.0000000   1
+#HALLMARK_MYC_TARGETS_V2                     58  0 1.0000000   1
+
+###########################################################
+# Plot DMRs
+###########################################################
+
+# get colours for each TCGA samples (by ARCHE)
+cols <- ARCHE_pal[as.character(paste0("ARCHE", meta$ARCHE))]
+
+# plot mean diff
+plot_all_dmrs(dmr2, "ARCHE2", w = 16, h = 5)
+plot_all_dmrs(dmr3, "ARCHE3", w = 8, h = 5)
+
+# plot ARCHE2 and FOXA1
+plot_dmr_arche(dmr2, arche2_annot, "ARCHE2", 103, "FOXA1", h = 12)
+
+###########################################################
+# Find MYC target genes in ARCHE2
+###########################################################
+
+# get myc target genes
+myc_targs <- read.gmt("data/rawdata/gmt/All_MYC_Target_Signatures.gmt") 
+myc_genes <- unique(unlist(myc_targs))
+
+# get genes in ARCHE2 DMRs
+arche2_genes <- dmr2$overlapping.genes[!is.na(dmr2$overlapping.genes)]
+arche2_genes <- unique(trimws(unlist(strsplit(arche2_genes, ","))))
+
+# get ARCHE2 DMR genes in myc genes
+overlap <- arche2_genes[arche2_genes %in% myc_genes]
+
+# get ARCHE3 genes too while we're at it
+arche3_genes <- dmr3$overlapping.genes[!is.na(dmr3$overlapping.genes)]
+arche3_genes <- unique(trimws(unlist(strsplit(arche3_genes, ","))))
+
+# save all genes for DEG analysis later
+save(arche2_genes, arche3_genes, overlap, file = "data/results/data/2-MolecularSigAnalysis/DMR_genes.RData")
+
+###########################################################
+# Plot dmrcate plots of MYC target genes in ARCHE2
+###########################################################
+
+for (gene in overlap) {
+    plot_dmr_arche(dmr2, arche2_annot, "ARCHE2", grep(gene, dmr2$overlapping.genes), gene, h = 15)
+}
+
+###########################################################
+# Plot gene overlaps of MYC Gene Sets and ARCHE2 DMRs
+###########################################################
+
+plot_arche2_myc_dmrs(overlap, myc_targs)

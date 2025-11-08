@@ -281,14 +281,7 @@ anno_cpgs <- function(arche) {
     return(arche_cpgs)
 }
 
-get_arche_cpgs <- function(ann450k) {
-    
-    # create gr of anno
-    anno_gr <- GRanges(
-        seqnames = ann450k$chr,
-        ranges = IRanges(start = ann450k$pos, end = ann450k$pos),
-        probeID = rownames(ann450k)
-    )
+get_arche_cpgs <- function(ann450k, anno_gr) {
 
     # get cpgs in arche regions
     arche1_cpgs <- anno_cpgs("ARCHE1")
