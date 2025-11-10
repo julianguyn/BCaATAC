@@ -58,15 +58,15 @@ preclinical_pal <- c(
 )
 
 genfeat_pal <- c(
-    "Promoter" = "#CAB2D6",
-    "5' UTR" = "#E31A1C",
-    "3' UTR" = "#FB9A99",
-    "1st Exon" = "#1F78B4",
-    "Other Exon" = "#A6CEE3",
-    "1st Intron" = "#FF7F00",
-    "Other Intron" = "#FDBF6F",
-    "Downstream (<=300)" = "#B15928",
-    "Distal Intergenic" = "#FFFF99"
+    "Promoter" = "#9C7DA6",
+    "5' UTR" = "#47718A",
+    "3' UTR" = "#A6CEE3",
+    "1st Exon" = "#51745C",
+    "Other Exon" = "#9ABB9F",
+    "1st Intron" = "#B44857",
+    "Other Intron" = "#F4A4AF",
+    "Downstream (<=300)" = "#E5C55E",
+    "Distal Intergenic" = "#F2E3BA"
 )
 
 mrecist_pal <- c(

@@ -77,12 +77,20 @@ plot_ATAC_Upset <- function(m, label) {
     filter <- ifelse(label == "all", 2000000, 100000)
     m = m[comb_size(m) > filter]
 
+    if (label == "20k") {
+        w = 7
+        h = 4
+    } else {
+        w = 11
+        h = 5
+    }
+
     filename <- paste0("data/results/figures/1-Signatures/ATAC_Upset_", label, ".png")
-    png(filename, width = 11, height = 5, res = 600, units = "in")
+    png(filename, width = w, height = h, res = 600, units = "in")
     print(
         UpSet(m, set_order = c(paste0("ARCHE", 1:6)), comb_order = order(-comb_size(m)),
-        bg_col = "gray", comb_col = random_blue, 
-        right_annotation = upset_right_annotation(m, gp = gpar(fill = random_blue)))
+        bg_col = "gray", 
+        right_annotation = upset_right_annotation(m))
     )
     dev.off()
 }
@@ -95,7 +103,7 @@ plot_annotatePeak <- function(toPlot, label) {
     png(filename, width = 7, height = 5, res = 600, units = "in")
     print(
         ggplot(toPlot, aes(fill=Feature, y=Frequency, x=ARCHE)) + 
-            geom_bar(position="fill", stat="identity", color = "black", size = 0.3) +
+            geom_bar(position="fill", stat="identity", color = "black", size = 0.1) +
             scale_fill_manual(values = genfeat_pal) +
             theme_minimal() + 
             labs(y = "Percentage (%)")
