@@ -137,3 +137,14 @@ myc_counts <- counts[,match(rownames(myc), colnames(counts))]
 a25 <- run_DEG(myc_counts, myc, arche = "ARCHE2")
 plot_volcano(a25, "Basal ARCHE2")
 plot_volcano_MYC(a25, "Basal ARCHE2")
+
+###########################################################
+# Label DMR genes in DEG volcano plots
+###########################################################
+
+# load in genes from DMRs (ARCHE2 and 3)
+load("data/results/data/2-MolecularSigAnalysis/DMR_genes.RData")
+
+plot_volcano_select_genes(a2, arche2_genes, "ARCHE2", subset = TRUE)
+plot_volcano_select_genes(a2, overlap, "MYC_ARCHE2")
+plot_volcano_select_genes(a3, arche3_genes, "ARCHE3", subset = TRUE)

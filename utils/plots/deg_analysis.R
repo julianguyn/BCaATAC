@@ -92,3 +92,47 @@ plot_MYCexp <- function(toPlot, variable, label) {
     )
     dev.off()
 }
+
+#' Plot volcano plots with selected genes labeled
+#' 
+#' @param toPlot dataframe. Result from run_DEG()
+#' @param genes string. Vector of genes to label
+#' @param label string. Label for filename
+#' @param subset boolean. If genes should be subsetted for DEG thresholds
+#' 
+plot_volcano_select_genes <- function(toPlot, genes, label, subset = FALSE) {
+
+    toPlot <- toPlot[complete.cases(toPlot),]
+
+    # get genes to label 
+    toPlot$to_label <- ifelse(rownames(toPlot) %in% genes, "Yes", "No")
+
+    # if subset == TRUE, only label abs(logFC) > 2 and padj < 5%
+    if (subset == TRUE) {
+        toPlot$to_label[toPlot$to_label == "Yes"] <- ifelse(toPlot$padj[toPlot$to_label == "Yes"] < 0.05, "Yes", "No")
+        toPlot$to_label[toPlot$to_label == "Yes"] <- ifelse(abs(toPlot$log2FoldChange)[toPlot$to_label == "Yes"] > 1.5, "Yes", "No")
+    }
+
+    # label direction
+    toPlot$direction <- ifelse(toPlot$log2FoldChange > 0, "Positive", "Negative")
+    toPlot$direction <- factor(toPlot$direction, levels = c("Positive", "Negative"))
+
+    filename <- paste0("data/results/figures/2-MolecularSigAnalysis/DMR/volcano_", label, "vsOther.png")
+    png(filename, width = 6, height = 5, res = 600, units = "in")
+    print(
+        ggplot(toPlot, aes(x = log2FoldChange, y = -log(padj))) +
+        geom_point(color = "grey") +
+        geom_point(data = toPlot[toPlot$to_label == "Yes",], 
+                    aes(x = log2FoldChange, y = -log(padj), color = direction)) +
+        geom_text_repel(data = toPlot[toPlot$to_label == "Yes",],
+                        aes(x = log2FoldChange, y = -log(padj), label = X),
+                        size = 3.5, force = 10, max.overlaps = Inf, force_pull = 0.1) +
+        geom_hline(yintercept = -log(0.05), linetype = "dashed") +
+        geom_vline(xintercept = c(1.5, -1.5), linetype = "dashed") +
+        scale_color_manual(values = binary_pal) +
+        theme_classic() +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        ggtitle(paste(label, "vs Other"))
+    )
+    dev.off()
+}
