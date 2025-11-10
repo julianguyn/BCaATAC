@@ -4,7 +4,83 @@
 #' 
 plot_ARCHE_heatmap <- function(mat) {
 
-    p1 <- ggplot(mat, aes(x = variable, y = 1, fill = subtype)) + 
+    omics_pal <- c("Yes" = random_blue, "No" = "white")
+
+    # os
+    p10 <- ggplot(mat, aes(x = rank, y = 1, fill = t_purity)) + 
+        scale_fill_gradient(
+            #name = "OS (Days)   ",
+            #limits = c(130, 4300),
+            name = "Tumour Purity",
+            limits = c(0.4, 1),
+            low = "#F8F4E3",
+            high = "#7C3626",
+            na.value = na_value
+        ) +
+        geom_tile(color = NA) +
+        theme_void() + 
+        theme(axis.title.y = element_text(size=12)) + 
+        labs(y = "              ")
+
+    # stage
+    p9 <- ggplot(mat, aes(x = rank, y = 1, fill = stage)) + 
+        geom_tile(color = NA) +
+        theme_void() + 
+        scale_fill_manual(
+            "Stage          ", 
+            values = c(stage_pal), na.value = "#FAF8F3",
+            labels = c("StageI", "StageII", "StageIII", "StageIV")) +
+        theme(axis.title.y = element_text(size=12)) + 
+        labs(y = "              ")
+
+    # age
+    p8 <- ggplot(mat, aes(x = rank, y = 1, fill = age)) + 
+        scale_fill_gradient(
+            name = "Age           ",
+            limits = c(30, 85),
+            low = "#C1D4E6",
+            high = "#13315C",
+            na.value = na_value
+        ) +
+        geom_tile(color = NA) +
+        theme_void() + 
+        theme(axis.title.y = element_text(size=12)) + 
+        labs(y = "              ")
+
+    # methylation
+    p4 <- ggplot(mat, aes(x = rank, y = 1, fill = met)) + 
+        geom_tile(color = "gray") +
+        theme_void() + 
+        scale_fill_manual("", values = omics_pal) +
+        theme(axis.title.y = element_text(size=12), legend.position = "none") + 
+        labs(y = "              ")
+
+    # rna
+    p5 <- ggplot(mat, aes(x = rank, y = 1, fill = rna)) + 
+        geom_tile(color = "gray") +
+        theme_void() + 
+        scale_fill_manual("", values = omics_pal) +
+        theme(axis.title.y = element_text(size=12), legend.position = "none") + 
+        labs(y = "              ")
+
+    # snv
+    p6 <- ggplot(mat, aes(x = rank, y = 1, fill = snv)) + 
+        geom_tile(color = "gray") +
+        theme_void() + 
+        scale_fill_manual("", values = omics_pal) +
+        theme(axis.title.y = element_text(size=12), legend.position = "none") + 
+        labs(y = "              ")
+    
+    # atac dup
+    p7 <- ggplot(mat, aes(x = rank, y = 1, fill = dup)) + 
+        geom_tile(color = "gray") +
+        theme_void() + 
+        scale_fill_manual("", values = omics_pal) +
+        theme(axis.title.y = element_text(size=12), legend.position = "none") + 
+        labs(y = "              ")
+
+    # subtype
+    p1 <- ggplot(mat, aes(x = rank, y = 1, fill = subtype)) + 
         geom_tile(color = NA) +
         theme_void() + 
         scale_fill_manual("BCa\nSubtype", values = subtype_pal,
@@ -12,40 +88,62 @@ plot_ARCHE_heatmap <- function(mat) {
         theme(axis.title.y = element_text(size=12)) + 
         labs(y = "              ")
 
-    p2 <- ggplot(mat, aes(x = variable, y = 1, fill = signature_assign)) + 
+    # ARCHE
+    p2 <- ggplot(mat, aes(x = rank, y = 1, fill = signature_assign)) + 
         geom_tile(color = NA) +
         theme_void() + 
         scale_fill_manual("Assigned\nARCHE", values = ARCHE_pal) +
         theme(axis.title.y = element_text(size=12)) + 
         labs(y = "              ")
 
-    p3 <- ggplot(mat, aes(x = variable, y = Signature, fill = value)) + 
+    # NMF output
+    p3 <- ggplot(mat, aes(x = rank, y = ARCHE, fill = value)) + 
         geom_tile(color = NA) +
         scale_fill_gradientn("ARCHE        \nExpression\nScore", colours = brewer.pal(9, "Blues")) + 
         theme_void() +
         theme(
-            axis.text.y = element_text(size=11, margin = margin(r = 2)), 
+            axis.text.y = element_text(size=11, margin = margin(r = 2), hjust=1), 
             axis.title.x = element_text(size=12)
         ) + 
-        labs(x = "Tumour Sample")
+        labs(x = "Tumour Sample\n")
 
     # extract legends
     l1 <- as_ggplot(get_legend(p1))
     l2 <- as_ggplot(get_legend(p2))
     l3 <- as_ggplot(get_legend(p3))
+    l4 <- as_ggplot(get_legend(p8))
+    l5 <- as_ggplot(get_legend(p9))
+    l6 <- as_ggplot(get_legend(p10))
     p1 <- p1+theme(legend.position = "none")
     p2 <- p2+theme(legend.position = "none")
     p3 <- p3+theme(legend.position = "none")
+    p8 <- p8+theme(legend.position = "none")
+    p9 <- p9+theme(legend.position = "none")
+    p10 <- p10+theme(legend.position = "none")
 
-    png("data/results/figures/1-Signatures/ARCHE_heatmap.png", width = 11, height = 4, res = 600, units = "in")
+    png("data/results/figures/1-Signatures/ARCHE_heatmap.png", width = 11, height = 6, res = 600, units = "in")
     print(
-        grid.arrange(p1, p2, p3, l1, l2, l3, ncol = 9, nrow = 12,
-        layout_matrix = rbind(c(1,1,1,1,1,1,1,4,5), c(2,2,2,2,2,2,2,4,5),
-                            c(3,3,3,3,3,3,3,4,5), c(3,3,3,3,3,3,3,4,5),
-                            c(3,3,3,3,3,3,3,4,5), c(3,3,3,3,3,3,3,4,5),
-                            c(3,3,3,3,3,3,3,6,NA),c(3,3,3,3,3,3,3,6,NA),
-                            c(3,3,3,3,3,3,3,6,NA),c(3,3,3,3,3,3,3,6,NA),
-                            c(3,3,3,3,3,3,3,6,NA),c(3,3,3,3,3,3,3,NA,NA)))
+        grid.arrange(
+            p1, p2, p3, l1, l2, l3, 
+            p4, p5, p6, p7, p8, p9, 
+            l4, l5, p10, l6, 
+            ncol = 9, nrow = 13,
+        layout_matrix = rbind(
+                            c(10,10,10,10,10,10,10,NA,NA), 
+                            c(9,9,9,9,9,9,9,NA,NA),
+                            c(8,8,8,8,8,8,8,16,13), 
+                            c(7,7,7,7,7,7,7,16,13),
+                            c(11,11,11,11,11,11,11,16,13),
+                            c(15,15,15,15,15,15,15,16,13),
+                            c(12,12,12,12,12,12,12,16,13), 
+                            c(1,1,1,1,1,1,1,4,14), 
+                            c(2,2,2,2,2,2,2,4,14),
+                            c(3,3,3,3,3,3,3,4,14), c(3,3,3,3,3,3,3,4,14),
+                            c(3,3,3,3,3,3,3,4,14), c(3,3,3,3,3,3,3,4,14),
+                            c(3,3,3,3,3,3,3,6,5), c(3,3,3,3,3,3,3,6,5),
+                            c(3,3,3,3,3,3,3,6,5), c(3,3,3,3,3,3,3,6,5),
+                            c(3,3,3,3,3,3,3,6,5), c(3,3,3,3,3,3,3,6,5)
+        ))
     )
     dev.off()
 }

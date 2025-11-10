@@ -33,13 +33,45 @@ analysis <- "20k"
 # Load in data
 ###########################################################
 
-# get siganture scores from NMF
+# load in metadata
+meta <- read.csv("data/rawdata/TCGA/TCGA_sourcefiles.csv")
+meta$Sample.Name <- gsub("\\.", "-", meta$Sample.Name)
+
+# get signature scores from NMF
 mat <- get_arche_tcga()
+mat$variable <- meta$Sample.Name[match(mat$variable, meta$ATAC.Seq.File.Name)]
+
+# read in tcga clinical data
+pheno <- read.table("data/rawdata/tcga/Human__TCGA_BRCA__MS__Clinical__Clinical__01_28_2016__BI__Clinical__Firehose.tsi", header = TRUE, row.names = 1)
+pheno <- t(pheno) |> as.data.frame()
+rownames(pheno) <- gsub("\\.", "-", rownames(pheno))
+
+# load in samples with rna and methylation
+have_methylation <- readRDS("data/procdata/TCGA/samples_w_methylation.RDS")
+have_rna <- readRDS("data/procdata/TCGA/samples_w_rna.RDS")
+have_snv <- meta$Sample.Name[!is.na(meta$SNV.File.Name)]
+dup_atac <- "TCGA-A2-A0T4"
 
 ###########################################################
 # Plot ATAC-Signature heatmap
 ###########################################################
 
+# add variables to matrix for plotting
+mat$met <- ifelse(mat$variable %in% have_methylation, "Yes", "No")
+mat$rna <- ifelse(mat$variable %in% have_rna, "Yes", "No")
+mat$snv <- ifelse(mat$variable %in% have_snv, "Yes", "No")
+mat$dup <- ifelse(mat$variable %in% dup_atac, "Yes", "No")
+
+mat$age <- pheno$years_to_birth[match(mat$variable, rownames(pheno))] |> as.numeric()
+mat$t_purity <- pheno$Tumor_purity[match(mat$variable, rownames(pheno))] |> as.numeric()
+mat$stage <- pheno$pathologic_stage[match(mat$variable, rownames(pheno))]
+mat$stageT <- pheno$pathology_T_stage[match(mat$variable, rownames(pheno))]
+mat$stageN <- pheno$pathology_N_stage[match(mat$variable, rownames(pheno))]
+mat$stageM <- pheno$pathology_M_stage[match(mat$variable, rownames(pheno))]
+mat$OS <- pheno$overall_survival[match(mat$variable, rownames(pheno))] |> as.numeric()
+
+# plot heatmap
+mat$rank <- rep(1:75, each = 6)
 plot_ARCHE_heatmap(mat)
 
 ###########################################################

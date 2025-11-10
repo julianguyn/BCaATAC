@@ -160,7 +160,7 @@ get_arche_tcga <- function(mat = FALSE) {
             tmp <- mat[mat$variable == sample,]
             mat[mat$variable == sample,]$signature_assign <- as.character(tmp[which.max(tmp$value),]$ARCHE)
         }
-        mat <- mat[,colnames(mat) %in% c("variable", "signature_assign")] |> unique()
+        #mat <- mat[,colnames(mat) %in% c("variable", "signature_assign")] |> unique()
 
         # save subtype
         mat$subtype <- meta$bca_subtype[match(gsub("X", "", mat$variable), gsub("-", "\\.", meta$File.Name))]

@@ -29,6 +29,10 @@ betas <- readRDS("data/procdata/TCGA/TCGA_betas.RDS")
 rownames(betas) <- betas$CpG
 betas$CpG <- NULL
 
+# save samples w methylation data (for heatmap)
+have_methylation <- colnames(betas)
+saveRDS(have_methylation, file = "data/procdata/TCGA/samples_w_methylation.RDS")
+
 # read in meta data file
 meta <- read.csv("data/rawdata/TCGA/TCGA_sourcefiles.csv")
 meta$Sample.Name <- gsub("\\.", "-", meta$Sample.Name)

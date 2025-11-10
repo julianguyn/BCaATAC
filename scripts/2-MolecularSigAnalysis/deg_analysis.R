@@ -17,6 +17,10 @@ source("utils/palettes.R")
 # load in counts matrix
 counts <- get_tcga_rna()
 
+# save samples w rna data (for heatmap)
+have_rna <- gsub("\\.", "-", colnames(counts))
+saveRDS(have_rna, file = "data/procdata/TCGA/samples_w_rna.RDS")
+
 # load in metadata file
 meta <- read.csv("data/rawdata/tcga/TCGA_sourcefiles.csv")
 meta <- meta[match(colnames(counts), meta$Sample.Name),]
