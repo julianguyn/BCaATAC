@@ -75,6 +75,52 @@ mat$rank <- rep(1:75, each = 6)
 plot_ARCHE_heatmap(mat)
 
 ###########################################################
+# Plot staging variables
+###########################################################
+
+toPlot <- mat[,c("signature_assign", "stage", "stageT", "stageN", "stageM", "age", "OS", "t_purity")] |> unique()
+
+# plot bar plots
+plot_stage(toPlot, "stageT")
+plot_stage(toPlot, "stageN")
+plot_stage(toPlot, "stageM")
+plot_stage(toPlot, "stage")
+
+###########################################################
+# ANOVA of clinical variables ~ ARCHE, and Tukey's HDS
+###########################################################
+
+aov(age ~ signature_assign, data = toPlot) |> summary()
+#                 Df Sum Sq Mean Sq F value Pr(>F)
+#signature_assign  5   1163   232.6   1.759  0.133
+#Residuals        67   8863   132.3
+aov(OS ~ signature_assign, data = toPlot) |> summary()
+#                 Df   Sum Sq Mean Sq F value Pr(>F)
+#signature_assign  5  2507859  501572   0.602  0.699
+#Residuals        64 53324737  833199
+tp.aov <- aov(t_purity ~ signature_assign, data = toPlot)
+summary(tp.aov)
+#                 Df Sum Sq Mean Sq F value  Pr(>F)
+#signature_assign  5 0.3009 0.06018   6.447 5.7e-05 ***
+#Residuals        69 0.6441 0.00933
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# Tukey's HSD
+tukey <- TukeyHSD(tp.aov)$signature_assign |> as.data.frame()
+sig_tukey <- tukey[tukey$"p adj" < 0.05,]
+
+###########################################################
+# Plot other clinical variables
+###########################################################
+
+sig_codes <- round(sig_tukey$"p adj", 4)
+
+plot_clinical(toPlot, "age")
+plot_clinical(toPlot, "OS")
+plot_clinical(toPlot, "t_purity")
+
+###########################################################
 # Load in BEDs
 ###########################################################
 

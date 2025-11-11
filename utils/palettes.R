@@ -86,13 +86,15 @@ dmp_pal <- c(
 )
 
 stage_pal <- c(
-    #"stagei" = "#9BBF82",
     "stagei" = "#ADB38D",
-    "stageii" = "#F3EBC1",
-    "stageiii" = "#E1C361",
-    "stageiv" = "#D9793F"
+    "stageii" = "#E8E1D9",
+    "stageiii" = "#D6BE94",
+    "stageiv" = "#A97360",
 )
+
+
 
 random_blue <- "#3E517A"
 random_lightblue <- "#88A0A8"
 na_value <- "#eFeBF7"
+na_stage <- "#FAF8F3"

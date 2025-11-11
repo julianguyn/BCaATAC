@@ -28,7 +28,7 @@ plot_ARCHE_heatmap <- function(mat) {
         theme_void() + 
         scale_fill_manual(
             "Stage          ", 
-            values = c(stage_pal), na.value = "#FAF8F3",
+            values = c(stage_pal), na.value = na_stage,
             labels = c("StageI", "StageII", "StageIII", "StageIV")) +
         theme(axis.title.y = element_text(size=12)) + 
         labs(y = "              ")
@@ -162,6 +162,79 @@ plot_ARCHE_peakInfo <- function(df, analysis) {
             theme_classic() +
             labs(x = "Number of 500bp Windows")
     )
+    dev.off()
+}
+
+#' Plot TCGA tumour staging by ARCHE
+#' 
+#' @param tnm string. Column label
+#' 
+plot_stage <- function(toPlot, tnm = "stage") {
+    
+    label <- switch(
+        tnm,
+        stage = "Stage",
+        stageT = "Tumour Size",
+        stageN = "Nodal Status",
+        stageM = "Metastasis"
+    )
+
+    if (tnm == "stage") {
+        p <- ggplot(toPlot, aes(x = signature_assign, fill = stage)) +
+        geom_bar() +
+        scale_y_continuous(expand = c(0,0)) +
+        scale_fill_manual(label, 
+                    values = c(stage_pal), na.value = "#695F58",
+                    labels = c("StageI", "StageII", "StageIII", "StageIV")) +
+        theme_classic() + 
+        theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        labs(y = "Number of Tumours", x = "\nAssigned ARCHE")
+    } else {
+        p <- ggplot(toPlot, aes(x = signature_assign, fill = .data[[tnm]])) +
+        geom_bar() +
+        scale_y_continuous(expand = c(0,0)) +
+        scale_fill_manual(label, values = c(unname(stage_pal))) +
+        theme_classic() +
+        theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        labs(y = "Number of Tumours", x = "\nAssigned ARCHE")
+    }
+
+    png(paste0("data/results/figures/1-Signatures/ARCHE_", tnm, ".png"), width = 4, height = 4, res = 600, units = "in")
+    print(p)
+    dev.off()
+}
+
+#' Plot distribution of other clinical variabels by ARCHE
+#' 
+plot_clinical <- function(toPlot, var) {
+
+    label <- switch(
+        var,
+        age = "Age",
+        OS = "Overall Survival (Days)",
+        t_purity = "Tumour Purity"
+    )
+
+    p <- ggplot(toPlot, aes(x = signature_assign, y = .data[[var]], fill = signature_assign)) +
+    geom_boxplot() + geom_jitter(width = 0.1, alpha = 0.5) +
+    theme_classic() + 
+    theme(
+        axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        legend.position = "none") +
+    scale_fill_manual(NULL, values = ARCHE_pal) +
+    labs(y = label, x = "Assigned ARCHE")
+
+    if (var == "t_purity") {
+        p <- p + geom_signif(
+            y_position = c(1.06, 1.02, 1, 0.91, 0.98),
+            xmin = c(1, 2, 5, 3, 4), xmax = c(5, 5, 6, 5, 5),
+            annotation = sig_codes,
+            tip_length = 0.01,
+            textsize = 4)
+    }
+    png(paste0("data/results/figures/1-Signatures/ARCHE_", var, ".png"), width = 4, height = 4, res = 600, units = "in")
+    print(p)
     dev.off()
 }
 
