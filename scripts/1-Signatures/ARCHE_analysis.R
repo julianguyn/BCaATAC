@@ -15,6 +15,7 @@ suppressPackageStartupMessages({
     library(GenomicRanges)
     library(rGREAT)
     library(RColorBrewer)
+    library(readxl)
 })
 
 source("utils/plots/signatures.R")
@@ -272,3 +273,20 @@ anno <- read.csv("data/procdata/ARCHEs/GREAT_20_Anno.csv") # manually annotated
 
 plot_GREAT_anno(great2, n, "ARCHE2", anno)
 plot_GREAT_anno(great5, n, "ARCHE5", anno)
+
+###########################################################
+# Plot HOMER findMotifsGenome results
+###########################################################
+
+plot_motifs("ARCHE1", "known")
+plot_motifs("ARCHE1", "denovo")
+plot_motifs("ARCHE2", "known")
+plot_motifs("ARCHE2", "denovo")
+plot_motifs("ARCHE3", "known")
+plot_motifs("ARCHE3", "denovo")
+plot_motifs("ARCHE4", "known")
+plot_motifs("ARCHE4", "denovo")
+plot_motifs("ARCHE5", "known")
+plot_motifs("ARCHE5", "denovo")
+plot_motifs("ARCHE6", "known")
+plot_motifs("ARCHE6", "denovo")

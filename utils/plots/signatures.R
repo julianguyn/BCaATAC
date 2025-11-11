@@ -193,7 +193,7 @@ plot_stage <- function(toPlot, tnm = "stage") {
         p <- ggplot(toPlot, aes(x = signature_assign, fill = .data[[tnm]])) +
         geom_bar() +
         scale_y_continuous(expand = c(0,0)) +
-        scale_fill_manual(label, values = c(unname(stage_pal))) +
+        scale_fill_manual(label, values = c(unname(stage_pal)), na.value = "#695F58") +
         theme_classic() +
         theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
         labs(y = "Number of Tumours", x = "\nAssigned ARCHE")
@@ -384,4 +384,55 @@ plot_GREAT_anno <- function(great, n_genes, label, anno) {
                               c(1,1,1,1,2,2,NA))))
     dev.off()
 
+}
+
+#' Plot HOMER motifs
+#' 
+plot_motifs <- function(arche, analysis) {
+    
+    label <- switch(
+        analysis,
+        known = paste(gsub("RCHE", "", arche), "K", sep = " - "),
+        denovo = paste(gsub("RCHE", "", arche), "dn", sep = " - ")
+    )
+
+    file <- "data/results/data/1-Signatures/findMotifsGenome/findMotifsGenome.xlsx"
+    motifs <- read_excel(file, sheet = label) |> as.data.frame()
+
+    # get variables and format
+    if (analysis == "known") {
+        motifs$Name <- sub("\\/.*", "", motifs$Name)
+    } else {
+        motifs$Name <- sub("\\/.*", "", motifs$'Best Match/Details')
+    }
+    colnames(motifs) <- gsub(" Sequences with Motif", "", colnames(motifs))
+    motifs <- motifs[,c("Name", "Rank", "P-value", "% of Targets", "% of Background")]
+    motifs$Rank <- factor(motifs$Rank, levels = motifs$Rank)
+    motifs <- reshape2::melt(motifs, id.var = c("Name", "Rank", "P-value"))
+
+    filename <- paste0("data/results/figures/1-Signatures/motifs/", arche, "_", analysis, ".png")
+    png(filename, width = 3.5, height = 5, res = 600, units = "in")
+    print(
+        ggplot(motifs, aes(x = Rank, y = value*100, fill = variable)) +
+        geom_col(position = position_dodge()) +
+        scale_fill_manual(NULL,
+            values = two_pal, 
+            labels = c("Target Sequences", "Background Sequences")) +
+        scale_y_continuous(limits = c(0, 110), expand = c(0,0)) +
+        scale_x_discrete(labels = setNames(motifs$Name, motifs$Rank)) +
+        coord_flip() +
+        theme_classic() +
+        theme(
+            legend.key.size = unit(0.5, 'cm'), text = element_text(size = 10),
+            plot.title = element_text(hjust = 0.5, size = 12), 
+            panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+            axis.text.x = element_text(size = 10),
+            legend.position = "none"        # grabbed this on MIRO already
+        ) +
+        labs(
+            y = "% of Sequences with Motif",
+            x = "Transcription Factor (Family)",
+            title = paste(arche, analysis, "motifs"))
+        )
+    dev.off()
 }

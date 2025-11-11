@@ -89,10 +89,13 @@ stage_pal <- c(
     "stagei" = "#ADB38D",
     "stageii" = "#E8E1D9",
     "stageiii" = "#D6BE94",
-    "stageiv" = "#A97360",
+    "stageiv" = "#A97360"
 )
 
-
+two_pal <- c(
+    "#A9654F", 
+    "#BFB0AB"
+)
 
 random_blue <- "#3E517A"
 random_lightblue <- "#88A0A8"
