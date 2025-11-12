@@ -43,8 +43,8 @@ t_counts <- get_tcga_rna()
 c_counts <- get_pset_rna("UBR2", gene.symbol = TRUE) |> as.matrix()
 
 # load in gmt files
-hallmarks <- getGmt("data/rawdata/gmt/h.all.v2025.1.Hs.symbols.gmt")  
-myc_targs <- read.gmt("data/rawdata/gmt/All_MYC_Target_Signatures.gmt") 
+hallmarks <- getGmt("data/rawdata/gmt/h.all.v2025.1.Hs.symbols.gmt")
+myc_targs <- read.gmt("data/rawdata/gmt/All_MYC_Target_Signatures.gmt")
 
 ###########################################################
 # Extract BCa mutation calls

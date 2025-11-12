@@ -82,8 +82,11 @@ plot_heatmap_mutsig <- function(toPlot, type) {
 plot_molecularsig_corr <- function(corr, label, type, data = "tumour") {
   
     corr$ATAC.Sig <- factor(corr$ATAC.Sig, levels = c(paste0("ARCHE", 1:6)))
+    corr$label <- ifelse(abs(corr$Corr) > 0.5, round(corr$Corr, 2), "")
     
-    p <- ggplot(corr) + geom_tile(aes(x = Mol.Sig, y = ATAC.Sig, fill = Corr), color = "gray") +
+    p <- ggplot(corr) + 
+        geom_tile(aes(x = Mol.Sig, y = ATAC.Sig, fill = Corr), color = "gray") +
+        geom_text(aes(x = Mol.Sig, y = ATAC.Sig, label = label), color = "black", size = 2.5) +
         scale_fill_gradient2("Spearman\nCorrelation",
                             low = "#AF4C5B", high = "#046C9A", mid = "white",
                             midpoint = 0, limits = c(-1, 1)) +
