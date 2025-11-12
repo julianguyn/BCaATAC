@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
   library(grid)
   library(gridExtra)
   library(ggh4x)
+  library(ggsignif)
 })
 
 source("utils/get_data.R")
@@ -41,6 +42,30 @@ plot_mafSummary(arche = "ARCHE3")
 plot_mafSummary(arche = "ARCHE4")
 plot_mafSummary(arche = "ARCHE5")
 plot_mafSummary(arche = "ARCHE6")
+
+###########################################################
+# Compute and plot TMB
+###########################################################
+
+# get tmb and format plot
+tmb <- tmb(mafs)
+tmb$Sample_ID <- sub("^((?:[^-]+-){2}[^-]+).*", "\\1", tmb$Tumor_Sample_Barcode)
+tmb$ARCHE <- meta$ARCHE[match(tmb$Sample_ID, gsub("\\.", "-", meta$Sample.Name))]
+
+# ANOVA
+tmb.aov <- aov(total_perMB_log ~ ARCHE, data = tmb)
+summary(tmb.aov)
+#            Df Sum Sq Mean Sq F value Pr(>F)  
+#ARCHE        5  1.441 0.28815    3.07 0.0153 *
+#Residuals   63  5.913 0.09385                 
+
+# Tukey's HSD
+tukey <- TukeyHSD(tmb.aov)$ARCHE |> as.data.frame()
+sig_tukey <- tukey[tukey$"p adj" < 0.05,]
+
+# plot TMB ~ ARCHE
+plot_tmb_boxplot(tmb)
+plot_tmb_waterfall(tmb)
 
 ###########################################################
 # Create mutations counts matrix

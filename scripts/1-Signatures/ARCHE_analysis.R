@@ -16,6 +16,7 @@ suppressPackageStartupMessages({
     library(rGREAT)
     library(RColorBrewer)
     library(readxl)
+    library(ggsignif)
 })
 
 source("utils/plots/signatures.R")

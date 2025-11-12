@@ -19,6 +19,49 @@ plot_mafSummary <- function(arche = "all") {
     dev.off()
 }
 
+#' Plot distribution of TMB by ARCHE
+#' 
+plot_tmb_boxplot <- function(tmb) {
+
+    p <- ggplot(tmb, aes(x = ARCHE, y = total_perMB_log, fill = ARCHE)) +
+    geom_boxplot() + geom_jitter(width = 0.1, alpha = 0.5) +
+    geom_signif(
+            y_position = 0.7,
+            xmin = 3, xmax = 6,
+            annotation = round(sig_tukey$'p adj', 4),
+            tip_length = 0.01,
+            textsize = 4) +
+    theme_classic() + 
+    theme(
+        axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        legend.position = "none") +
+    scale_fill_manual(NULL, values = ARCHE_pal) +
+    labs(y = "TMB/MB (log10)", x = "Assigned ARCHE")
+
+    png(paste0("data/results/figures/2-MolecularSigAnalysis/maf/tmb_boxplot.png"), width = 4, height = 4, res = 600, units = "in")
+    print(p)
+    dev.off()
+}
+
+#' Waterfall plot ranked by TMB coloured by ARCHE
+#' 
+# plot rank TMB and ARCHE
+plot_tmb_waterfall <- function(tmb) {
+  tmb$Rank <- 1:nrow(tmb) |> as.factor()
+
+  p <- ggplot(tmb, aes(x = Rank, y = total_perMB_log, fill = ARCHE)) +
+    geom_col(color = "black", linewidth = 0.3) +
+    scale_fill_manual(values = ARCHE_pal) +
+    theme_classic() +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+    labs(y = "TMB/MB (log10)", x = "Tumour Sample")
+
+  png(paste0("data/results/figures/2-MolecularSigAnalysis/maf/tmb_waterfall.png"), width = 6, height = 4, res = 600, units = "in")
+  print(p)
+  dev.off()
+}
+
 #' Plot detection of BCa-relevant mutations
 #' 
 plot_BCa_mutations <- function(toPlot) {
