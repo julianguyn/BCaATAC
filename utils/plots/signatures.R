@@ -408,31 +408,41 @@ plot_motifs <- function(arche, analysis) {
     colnames(motifs) <- gsub(" Sequences with Motif", "", colnames(motifs))
     motifs <- motifs[,c("Name", "Rank", "P-value", "% of Targets", "% of Background")]
     motifs$Rank <- factor(motifs$Rank, levels = motifs$Rank)
+
+    # save fold change results in another dataframe
+    fc <- motifs
+    fc$FoldChange <- motifs$'% of Targets' / motifs$'% of Background'
+
     motifs <- reshape2::melt(motifs, id.var = c("Name", "Rank", "P-value"))
 
-    filename <- paste0("data/results/figures/1-Signatures/motifs/", arche, "_", analysis, ".png")
-    png(filename, width = 3.5, height = 5, res = 600, units = "in")
-    print(
-        ggplot(motifs, aes(x = Rank, y = value*100, fill = variable)) +
-        geom_col(position = position_dodge()) +
-        scale_fill_manual(NULL,
-            values = two_pal, 
-            labels = c("Target Sequences", "Background Sequences")) +
-        scale_y_continuous(limits = c(0, 110), expand = c(0,0)) +
-        scale_x_discrete(labels = setNames(motifs$Name, motifs$Rank)) +
+    fc$logP <- log(fc$'P-value' + 1)
+
+    # plot fc
+    p <- ggplot(fc, aes(x = Rank, y = FoldChange, fill = .data[['% of Targets']])) + 
+        #geom_point(aes(size = logP)) +
+        geom_col(color = "black", linewidth = 0.2) +
         coord_flip() +
-        theme_classic() +
+        scale_x_discrete(labels = setNames(motifs$Name, motifs$Rank)) +
+        scale_fill_gradient(
+            limits = c(0, 1),
+            low = "#F8F4E3",
+            high = "#7C3626",
+            na.value = na_value
+        ) +
+        theme_minimal() +
         theme(
             legend.key.size = unit(0.5, 'cm'), text = element_text(size = 10),
             plot.title = element_text(hjust = 0.5, size = 12), 
-            panel.border = element_rect(color = "black", fill = NA, size = 0.5),
-            axis.text.x = element_text(size = 10),
-            legend.position = "none"        # grabbed this on MIRO already
+            legend.position = "none",
+            axis.text.x = element_text(size = 10)
         ) +
         labs(
-            y = "% of Sequences with Motif",
             x = "Transcription Factor (Family)",
+            fill = "% of Target\nSequences\nwith Motif",
             title = paste(arche, analysis, "motifs"))
-        )
+
+    filename <- paste0("data/results/figures/1-Signatures/motifs/", arche, "_", analysis, ".png")
+    png(filename, width = 3.5, height = 4, res = 600, units = "in")
+    print(p)
     dev.off()
 }
