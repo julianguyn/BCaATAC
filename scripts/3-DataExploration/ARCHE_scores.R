@@ -4,18 +4,19 @@ suppressPackageStartupMessages({
     library(ComplexHeatmap)
     library(circlize)
     library(reshape2)
+    library(ggplot2)
 })
 
 source("utils/get_data.R")
 source("utils/palettes.R")
-sourcE("utils/plots/ARCHE_scores_heatmap.R")
+source("utils/plots/ARCHE_scores_heatmap.R")
 
 ###########################################################
 # Load in data
 ###########################################################
 
 # read in scoring on 20k sites
-p2 <- read.table("data/rawdata/pdx/chromvar-Nov132025/BCa_PDXs.Zscore.txt")
+p2 <- read.table("data/rawdata/pdx/chromvar-Nov132025-20k/BCa_PDXs.Zscore.txt")
 colnames(p2) <- sub("_.*", "", sub("X", "", colnames(p2)))
 p2 <- p2[,-which(colnames(p2) %in% "104987")]
 
@@ -48,3 +49,5 @@ plot_ARCHE_scores_heatmap(c1, "CCLs_all_old", c_subtypes)
 ###########################################################
 # Compare 20k to all ARCHE sites
 ###########################################################
+
+plot_ARCHE_scores_compare(p2, p3, label = "20k sites", "PDX")
