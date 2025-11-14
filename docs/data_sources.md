@@ -174,6 +174,14 @@ Includes all data from `data/rawdata/`
 ### data/rawdata/pdx
 
 ```markdown
+## chromvar-Nov132025/ (Internal)
+
+- **Name**: PDX ARCHE scoring outputs on 20k sites
+- **Creation Date**: 2025-11-13
+- **Source**: BHK Lab (J.N.)
+```
+
+```markdown
 ## auc.xlsx (Internal)
 
 - **Name**: PDX drug response data (AUC)
