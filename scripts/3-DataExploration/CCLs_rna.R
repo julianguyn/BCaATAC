@@ -38,11 +38,35 @@ data(scmgene.robust)
 data(scmod2.robust)
 
 ###########################################################
-# Melt for correlations
+# Get overlapping genes
 ###########################################################
 
 # common genes
 genes <- intersect(rownames(ubr2), rownames(ccle))
+
+# subset for overlapping genes
+ubr2 <- ubr2[match(genes, rownames(ubr2)),order(colnames(ubr2))]
+gray <- gray[match(genes, rownames(gray)),order(colnames(gray))]
+gcsi <- gcsi[match(genes, rownames(gcsi)),order(colnames(gcsi))]
+ccle <- ccle[match(genes, rownames(ccle)),order(colnames(ccle))]
+
+###########################################################
+# Scale UBR2 RNA-Seq counts
+###########################################################
+
+# function to scale to 1e6
+scale_rna <- function(x) {
+  x / sum(x, na.rm = TRUE) * 1e6
+}
+
+ubr2 <- apply(ubr2, 2, scale_rna) |> as.data.frame()
+gray <- apply(gray, 2, scale_rna) |> as.data.frame()
+gcsi <- apply(gcsi, 2, scale_rna) |> as.data.frame()
+ccle <- apply(ccle, 2, scale_rna) |> as.data.frame()
+
+###########################################################
+# Melt for correlations
+###########################################################
 
 # add gene column
 ubr2$Gene <- rownames(ubr2)
@@ -51,18 +75,17 @@ gcsi$Gene <- rownames(gcsi)
 ccle$Gene <- rownames(ccle)
 
 # melt
-ubr2_m <- reshape2::melt(ubr2[match(genes, rownames(ubr2)),order(colnames(ubr2))])
-gray_m <- reshape2::melt(gray[match(genes, rownames(gray)),order(colnames(gray))])
-gcsi_m <- reshape2::melt(gcsi[match(genes, rownames(gcsi)),order(colnames(gcsi))])
-ccle_m <- reshape2::melt(ccle[match(genes, rownames(ccle)),order(colnames(ccle))])
-
+ubr2_m <- reshape2::melt(ubr2)
+gray_m <- reshape2::melt(gray)
+gcsi_m <- reshape2::melt(gcsi)
+ccle_m <- reshape2::melt(ccle)
 
 ###########################################################
 # Correlate RNA-seq expression
 ###########################################################
 
 # helper function to correlate RNA-Seq expression of two psets
-corr_pset_rna <- function(pset1, pset2) {
+corr_pset_rna <- function(pset1, pset2, corr) {
 
     ccls <- intersect(pset1$variable, pset2$variable)
     pset1 <- pset1[pset1$variable %in% ccls,]
@@ -71,22 +94,24 @@ corr_pset_rna <- function(pset1, pset2) {
     pset1$pairs <- paste0(pset1$Gene, pset1$variable)
     pset2$pairs <- paste0(pset2$Gene, pset2$variable)
     table(pset1$pairs == pset2$pairs)
-    corr <- cor(pset1$value, pset2$value,  method = "spearman", use = "complete.obs")
+    corr <- cor(pset1$value, pset2$value,  method = corr, use = "complete.obs")
     return(corr)
 }
 
-p1 <- corr_pset_rna(ubr2_m, gray_m)
-p2 <- corr_pset_rna(ubr2_m, gcsi_m)
-p3 <- corr_pset_rna(ubr2_m, ccle_m)
-p4 <- corr_pset_rna(gray_m, gcsi_m)
-p5 <- corr_pset_rna(gray_m, ccle_m)
-p6 <- corr_pset_rna(gcsi_m, ccle_m)
+corr <- "pearson"
+
+p1 <- corr_pset_rna(ubr2_m, gray_m, corr)
+p2 <- corr_pset_rna(ubr2_m, gcsi_m, corr)
+p3 <- corr_pset_rna(ubr2_m, ccle_m, corr)
+p4 <- corr_pset_rna(gray_m, gcsi_m, corr)
+p5 <- corr_pset_rna(gray_m, ccle_m, corr)
+p6 <- corr_pset_rna(gcsi_m, ccle_m, corr)
 
 ###########################################################
 # Plot RNA-seq correlation matrix
 ###########################################################
 
-plot_rna_corr(p1, p2, p3, p4, p5, p6)
+plot_rna_corr(p1, p2, p3, p4, p5, p6, "Pearson_new")
 
 ###########################################################
 # Compute subtyping model scores

@@ -76,7 +76,7 @@ plot_drug_corr <- function(pset1, pset2, label1, label2, corr_res) {
 
 #' Plot correlation results from RNA-Seq pset analysis
 #' 
-plot_rna_corr <- function(p1, p2, p3, p4, p5, p6) {
+plot_rna_corr <- function(p1, p2, p3, p4, p5, p6, corr) {
     # initialize correlation matrix
     psets <- c("UBR2", "GRAY", "gCSI", "CCLE")
     mat <- matrix(NA, nrow = 4, ncol = 4, dimnames = list(psets, psets))
@@ -112,8 +112,9 @@ plot_rna_corr <- function(p1, p2, p3, p4, p5, p6) {
         return(plot)
     }
 
-    png("data/results/figures/3-DataExploration/rna_corr.png", width=125, height=100, units='mm', res = 600, pointsize=80)
-    print(plot_heatmap(mat, "Spearman"))
+    filename <- paste0("data/results/figures/3-DataExploration/rna_", corr, ".png")
+    png(filename, width=125, height=100, units='mm', res = 600, pointsize=80)
+    print(plot_heatmap(mat, corr))
     dev.off()
 }
 
