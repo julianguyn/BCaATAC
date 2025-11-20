@@ -76,7 +76,13 @@ plot_peakWeights <- function(peaks, arche, num_windows) {
 #' @param peaks string. Vector of coordinates chr:start:end
 #' @param filename string. Filename for BED
 #' 
-createBED <- function(peaks, filename, all = FALSE) {
+createBED <- function(peaks, filename, n = 0, all = FALSE) {
+
+  n <- ifelse(
+    all == TRUE,
+    "all",
+    paste0(as.character(n/1000), "k")
+  )
 
   # if all == TRUE
   if (all == TRUE) {
@@ -93,7 +99,7 @@ createBED <- function(peaks, filename, all = FALSE) {
   BED$chrom <- gsub("chr", "", BED$chrom)
 
   # save file
-  filename <- paste0("data/procdata/ARCHEs/beds/", filename, ".bed")
+  filename <- paste0("data/procdata/ARCHEs/beds/", filename, "_", n, ".bed")
   write.table(BED, file = filename, quote = F, sep = "\t", col.names = T, row.names = F)
 }
 

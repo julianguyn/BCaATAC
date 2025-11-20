@@ -28,7 +28,8 @@ colnames(mixture) <- anno
 ###########################################################
 
 # order ARCHE peaks by weight and subset
-n <- 20000
+#n <- 20000
+n <- 50000
 
 a1 <- top_peaks(mixture, "ARCHE1", n)
 a2 <- top_peaks(mixture, "ARCHE2", n)
@@ -53,20 +54,20 @@ plot_peakWeights(a6, "ARCHE6", n)
 createBED(anno, "Background")
 
 # ARCHE bed files for top 20k sites
-createBED(rownames(a1), "ARCHE1_20k")
-createBED(rownames(a2), "ARCHE2_20k")
-createBED(rownames(a3), "ARCHE3_20k")
-createBED(rownames(a4), "ARCHE4_20k")
-createBED(rownames(a5), "ARCHE5_20k")
-createBED(rownames(a6), "ARCHE6_20k")
+createBED(rownames(a1), "ARCHE1", n)
+createBED(rownames(a2), "ARCHE2", n)
+createBED(rownames(a3), "ARCHE3", n)
+createBED(rownames(a4), "ARCHE4", n)
+createBED(rownames(a5), "ARCHE5", n)
+createBED(rownames(a6), "ARCHE6", n)
 
 # ARCHE bed files for all
-createBED(mixture, "ARCHE1_all", all = TRUE)
-createBED(mixture, "ARCHE2_all", all = TRUE)
-createBED(mixture, "ARCHE3_all", all = TRUE)
-createBED(mixture, "ARCHE4_all", all = TRUE)
-createBED(mixture, "ARCHE5_all", all = TRUE)
-createBED(mixture, "ARCHE6_all", all = TRUE)
+createBED(mixture, "ARCHE1", all = TRUE)
+createBED(mixture, "ARCHE2", all = TRUE)
+createBED(mixture, "ARCHE3", all = TRUE)
+createBED(mixture, "ARCHE4", all = TRUE)
+createBED(mixture, "ARCHE5", all = TRUE)
+createBED(mixture, "ARCHE6", all = TRUE)
 
 ###########################################################
 # Create HOMER peak files for each ARCHE

@@ -51,7 +51,7 @@ gcsi <- gcsi[match(genes, rownames(gcsi)),order(colnames(gcsi))]
 ccle <- ccle[match(genes, rownames(ccle)),order(colnames(ccle))]
 
 ###########################################################
-# Scale UBR2 RNA-Seq counts
+# Scale RNA-Seq gene counts
 ###########################################################
 
 # function to scale to 1e6
@@ -111,7 +111,7 @@ p6 <- corr_pset_rna(gcsi_m, ccle_m, corr)
 # Plot RNA-seq correlation matrix
 ###########################################################
 
-plot_rna_corr(p1, p2, p3, p4, p5, p6, "Pearson_new")
+plot_rna_corr(p1, p2, p3, p4, p5, p6, "Pearson_unlog")
 
 ###########################################################
 # Compute subtyping model scores
