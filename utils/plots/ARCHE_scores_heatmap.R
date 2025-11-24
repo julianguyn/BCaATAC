@@ -63,7 +63,7 @@ plot_ARCHE_scores_compare <- function(p2, p5, pa, sample) {
     toPlot$ARCHE <- sub("ARCHE", "", toPlot$ARCHE)
 
     filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", sample, "_compare_unnorm.png")
-    png(filename, width = 4, height = 6, res = 600, units = "in")
+    png(filename, width = 5, height = 6, res = 600, units = "in")
     print(ggplot(toPlot, aes(x = ARCHE, y = variable, fill = value)) +
         geom_tile() +
         facet_wrap(~Sites) +
@@ -92,7 +92,7 @@ plot_ARCHE_scores_compare <- function(p2, p5, pa, sample) {
     toPlot$ARCHE <- sub("ARCHE", "", toPlot$ARCHE)
 
     filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", sample, "_compare_znorm.png")
-    png(filename, width = 4, height = 6, res = 600, units = "in")
+    png(filename, width = 5, height = 6, res = 600, units = "in")
     print(ggplot(toPlot, aes(x = ARCHE, y = variable, fill = value)) +
         geom_tile() +
         facet_wrap(~Sites) +
