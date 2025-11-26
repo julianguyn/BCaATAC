@@ -132,10 +132,10 @@ createBEDforGriffin <- function(filename, num_windows = 10000) {
 
   bed <- fread(paste0("data/procdata/ARCHEs/beds/", filename, ".bed"), data.table=F)
   sites <- data.frame(
-    Chr = paste0("chr", bed$chrom),
+    Chrom = paste0("chr", bed$chrom),
     Start = bed$chromStart,
     End = bed$chromEnd,
-    Position = bed$chromEnd - 250
+    position = bed$chromEnd - 250
   )
   sites <- sites[1:num_windows,]
   # save file
