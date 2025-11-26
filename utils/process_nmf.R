@@ -122,3 +122,24 @@ createBEDforHOMER <- function(filename) {
   filename <- paste0("data/procdata/ARCHEs/HOMERbeds/", filename, ".bed")
   write.table(peak, file = filename, quote = F, sep = "\t", col.names = T, row.names = F)
 }
+
+#' Create Griffin site peak file 
+#' 
+#' @param filename string. Same was used in createBED()
+#' @param num_windows int. Number of windows to keep (top)
+#' 
+createBEDforGriffin <- function(filename, num_windows = 10000) {
+
+  bed <- fread(paste0("data/procdata/ARCHEs/beds/", filename, ".bed"), data.table=F)
+  sites <- data.frame(
+    Chr = paste0("chr", bed$chrom),
+    Start = bed$chromStart,
+    End = bed$chromEnd,
+    Position = bed$chromEnd - 250
+  )
+  sites <- sites[1:num_windows,]
+  # save file
+  filename <- sub("_.*", paste0("_", paste0(as.character(num_windows/1000), "k")), filename)
+  filename <- paste0("data/procdata/ARCHEs/GriffinSites/", filename, ".txt")
+  write.table(sites, file = filename, quote = F, sep = "\t", col.names = T, row.names = F)
+}

@@ -85,6 +85,17 @@ createBEDforHOMER("ARCHE5_20k")
 createBEDforHOMER("ARCHE6_20k")
 
 ###########################################################
+# Create Griffin site files for each ARCHE
+###########################################################
+
+createBEDforGriffin("ARCHE1_20k")
+createBEDforGriffin("ARCHE2_20k")
+createBEDforGriffin("ARCHE3_20k")
+createBEDforGriffin("ARCHE4_20k")
+createBEDforGriffin("ARCHE5_20k")
+createBEDforGriffin("ARCHE6_20k")
+
+###########################################################
 # TODO: Create BEDs for BETA
 ###########################################################
 
