@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
     library(data.table)
     library(GenomicRanges)
     library(ggplot2)
+    library(ComplexHeatmap)
 })
 
 source("utils/palettes.R")
@@ -38,11 +39,18 @@ colnames(blood_her2) <- c("chr", "start", "end")
 # Find hits in ARCHE beds
 ###########################################################
 
-filter_PBMC_signal(blood_er, "BloodvsER")
-filter_PBMC_signal(blood_all, "BloodvsAll")
-filter_PBMC_signal(blood_basal, "BloodvsBasal")
-filter_PBMC_signal(blood_her2, "BloodvsHer2")
+removed_all <- filter_PBMC_signal(blood_all, "BloodvsAll")
+removed_er <- filter_PBMC_signal(blood_er, "BloodvsER")
+removed_basal <- filter_PBMC_signal(blood_basal, "BloodvsBasal")
+removed_her2 <- filter_PBMC_signal(blood_her2, "BloodvsHer2")
 
 ###########################################################
 # TODO: compare sites filtered across different differntials
 ###########################################################
+
+#m <- make_comb_mat(removed_er)
+#m <- m[comb_size(m) > 10]
+#UpSet(m, set_order = names(removed_er), comb_order = order(-comb_size(m)),
+#        bg_col = "gray", 
+#        right_annotation = upset_right_annotation(m))
+#todo: plot for each diff, then plot for each filetype across diffs

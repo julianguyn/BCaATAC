@@ -15,17 +15,21 @@ filter_PBMC_signal <- function(sites_to_filter, filter_label, overlap = 25) {
     toPlot$ARCHE <- sub("_.*", "", toPlot$filename)
     toPlot$filetype <- sub(".*_", "", toPlot$filename)
     toPlot$num_rm <- NA
+
+    # initialize list to store removed sites
+    sites_removed <- list()
     
-    #message(paste("ARCHE filtering for", filter_label))
+    message(paste("ARCHE filtering for", filter_label))
 
     for (file in ARCHEs) {
 
         filename <- sub(paste0(dir, "/"), "", sub("\\.txt", "", file))
-        #message(paste("***Filtering", filename))
+        message(paste("***Filtering", filename))
         bed <- fread(file)
 
         # initialize new bed file
         filtered_bed <- bed
+        colnames(filtered_bed) <- c("Chrom", "Start", "End", "position")
 
         # define region of overlap
         slice <- 500 * overlap/100
@@ -37,9 +41,13 @@ filter_PBMC_signal <- function(sites_to_filter, filter_label, overlap = 25) {
         hits <- findOverlaps(arche, sites_to_filter)
         hitsDF <- data.frame(hits)
 
+        # save overlaping sites (that are removed)
+        to_rm <- filtered_bed[hitsDF$queryHits, ]
+        to_rm <- paste(to_rm$Chrom, to_rm$Start, to_rm$End, sep = ":")
+        sites_removed[filename] <- list(to_rm)
+
         # keep only sites not in overlap
         filtered_bed <- filtered_bed[-hitsDF$queryHits, ]
-        colnames(filtered_bed) <- c("Chrom", "Start", "End", "position")
         
         num_rm <- nrow(bed)-nrow(filtered_bed)
         toPlot$num_rm[toPlot$filename == filename] <- num_rm
@@ -78,4 +86,6 @@ filter_PBMC_signal <- function(sites_to_filter, filter_label, overlap = 25) {
     png(outdir, width=7, height=3, units='in', res = 600, pointsize=80)
     print(p)
     dev.off()
+
+    return(sites_removed)
 }
