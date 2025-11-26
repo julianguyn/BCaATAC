@@ -230,7 +230,26 @@ Includes all data from `data/rawdata/`
 - **Creation Date**: 2025-09-09
 - **Creation Method**: Bratman Lab 6Base-Seq Griffin pipeline
 - **Input Data**: 6Base-seq bam files
-- **Processing Scripts**: todo
+- **Processing Scripts**: /cluster/projects/bhklab/projects/BCaATAC/Griffin
+```
+
+```markdown
+## preclinical-ARCHE/ (Internal)
+
+- **Name**: Preclinical model ARCHE scores
+- **Creation Date**: 2025-09-09
+- **Creation Method**: Bratman Lab Griffin pipeline
+- **Processing Scripts**: /cluster/projects/bhklab/projects/BCaATAC/Griffin
+```
+
+```markdown
+## Collaboration_w_Tina_Griffin_Reference/ (Internal)
+
+- **Name**: 
+- **Creation Date**: 2025-07-24
+- **Creation Method**: Lupien & Bratman Lab (T.K. and S.M.)
+- **Access Date**: Downloaded 2025-10-09
+- **url**: in log.txt
 ```
 
 ### data/rawdata/gmt
