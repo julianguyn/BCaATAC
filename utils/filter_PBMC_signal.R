@@ -89,3 +89,50 @@ filter_PBMC_signal <- function(sites_to_filter, filter_label, overlap = 25) {
 
     return(sites_removed)
 }
+
+#' Helper function to ARCHE specific lists
+#' 
+get_list <- function(arche) {
+    label_10k <- paste(arche, "10k", sep = "_")
+    label_20k <- paste(arche, "20k", sep = "_")
+    label_50k <- paste(arche, "50k", sep = "_")
+
+    arche_list <- list(
+        all_10k = unlist(removed_all[label_10k], use.names = FALSE),
+        all_20k = unlist(removed_all[label_20k], use.names = FALSE),
+        all_50k = unlist(removed_all[label_50k], use.names = FALSE),
+        er_10k = unlist(removed_er[label_10k], use.names = FALSE),
+        er_20k = unlist(removed_er[label_20k], use.names = FALSE),
+        er_50k = unlist(removed_er[label_50k], use.names = FALSE),
+        basal_10k = unlist(removed_basal[label_10k], use.names = FALSE),
+        basal_20k = unlist(removed_basal[label_20k], use.names = FALSE),
+        basal_50k = unlist(removed_basal[label_50k], use.names = FALSE),
+        her2_10k = unlist(removed_her2[label_10k], use.names = FALSE),
+        her2_20k = unlist(removed_her2[label_20k], use.names = FALSE),
+        her2_50k = unlist(removed_her2[label_50k], use.names = FALSE)
+    )
+
+    return(arche_list)
+}
+
+#' Function to plot UPSET plots
+#' 
+plot_sites_UPSET <- function(list, label = NA, arche_list = FALSE) {
+
+    w <- 10
+    h <- 6
+    if (arche_list == TRUE) {
+        label <- list
+        list <- get_list(list)
+        w <- 7
+        h <- 4
+    }
+    m <- make_comb_mat(list)
+    if (arche_list == FALSE) m <- m[comb_size(m) > 10]
+    filename <- paste0("data/results/figures/5-cfDNA/FilteredGriffinSites/", label, ".png")
+    png(filename, width=w, height=h, units='in', res = 600)
+    print(UpSet(m, set_order = names(arche_list), comb_order = order(-comb_size(m)),
+            bg_col = "gray", 
+            right_annotation = upset_right_annotation(m)))
+    dev.off()
+}

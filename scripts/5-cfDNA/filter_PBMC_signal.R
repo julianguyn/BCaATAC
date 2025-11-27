@@ -45,12 +45,17 @@ removed_basal <- filter_PBMC_signal(blood_basal, "BloodvsBasal")
 removed_her2 <- filter_PBMC_signal(blood_her2, "BloodvsHer2")
 
 ###########################################################
-# TODO: compare sites filtered across different differntials
+# Compare sites filtered across different cases
 ###########################################################
 
-#m <- make_comb_mat(removed_er)
-#m <- m[comb_size(m) > 10]
-#UpSet(m, set_order = names(removed_er), comb_order = order(-comb_size(m)),
-#        bg_col = "gray", 
-#        right_annotation = upset_right_annotation(m))
-#todo: plot for each diff, then plot for each filetype across diffs
+plot_sites_UPSET("ARCHE1", arche_list = TRUE)
+plot_sites_UPSET("ARCHE2", arche_list = TRUE)
+plot_sites_UPSET("ARCHE3", arche_list = TRUE)
+plot_sites_UPSET("ARCHE4", arche_list = TRUE)
+plot_sites_UPSET("ARCHE5", arche_list = TRUE)
+plot_sites_UPSET("ARCHE6", arche_list = TRUE)
+
+plot_sites_UPSET(removed_all, "All_Subtypes")
+plot_sites_UPSET(removed_er, "ER")
+plot_sites_UPSET(removed_basal, "Basal")
+plot_sites_UPSET(removed_her2, "Her2")
