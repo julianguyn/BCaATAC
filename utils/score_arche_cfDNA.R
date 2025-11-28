@@ -53,6 +53,6 @@ summary_ARCHE <- function(df, TF_group) {
         ) %>%
         ungroup()
     summary_df <- as.data.frame(summary_df)
-    summary_df$TF_group <- TF_groups
+    summary_df$TF_group <- TF_group
     return(summary_df)
 }

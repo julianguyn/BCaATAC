@@ -9,7 +9,6 @@ suppressPackageStartupMessages({
 source("utils/score_arche_cfDNA.R")
 source("utils/plots/cfdna.R")
 source("utils/palettes.R")
-source("utils/mappings.R")
 
 ###########################################################
 # Load in data
@@ -27,11 +26,28 @@ c_unfiltered <- score_arche_cfDNA("CICADA-unfiltered", meta)
 c_bloodvser <- score_arche_cfDNA("CICADA-BloodvsER-25", meta)
 
 ###########################################################
+# Split into ARCHE subsets
+###########################################################
+
+c_unfiltered_10k <- c_unfiltered[c_unfiltered$Subset == "10k",]
+c_unfiltered_20k <- c_unfiltered[c_unfiltered$Subset == "20k",]
+c_unfiltered_50k <- c_unfiltered[c_unfiltered$Subset == "50k",]
+
+c_bloodvser_10k <- c_bloodvser[c_bloodvser$Subset == "10k",]
+c_bloodvser_20k <- c_bloodvser[c_bloodvser$Subset == "20k",]
+c_bloodvser_50k <- c_bloodvser[c_bloodvser$Subset == "50k",]
+
+###########################################################
 # Plot correlation of ARCHE scores and TF
 ###########################################################
 
-plot_ARCHE_TF_CICADA(c_unfiltered, "CICADA-unfiltered")
-plot_ARCHE_TF_CICADA(c_bloodvser, "CICADA-BloodvsER-25")
+plot_ARCHE_TF_CICADA(c_unfiltered_10k, "CICADA-unfiltered_10k")
+plot_ARCHE_TF_CICADA(c_unfiltered_20k, "CICADA-unfiltered_20k")
+plot_ARCHE_TF_CICADA(c_unfiltered_50k, "CICADA-unfiltered_50k")
+
+plot_ARCHE_TF_CICADA(c_bloodvser_10k, "CICADA-BloodvsER-25_10k")
+plot_ARCHE_TF_CICADA(c_bloodvser_20k, "CICADA-BloodvsER-25_20k")
+plot_ARCHE_TF_CICADA(c_bloodvser_50k, "CICADA-BloodvsER-25_50k")
 
 ###########################################################
 # Get ARCHE score summary stats
@@ -54,12 +70,22 @@ make_toPlot <- function(scores) {
   return(toPlot)
 }
 
-c_unfiltered <- make_toPlot(c_unfiltered)
-c_bloodvser <- make_toPlot(c_bloodvser)
+c_unfiltered_10k <- make_toPlot(c_unfiltered_10k)
+c_unfiltered_20k <- make_toPlot(c_unfiltered_20k)
+c_unfiltered_50k <- make_toPlot(c_unfiltered_50k)
+
+c_bloodvser_10k <- make_toPlot(c_bloodvser_10k)
+c_bloodvser_20k <- make_toPlot(c_bloodvser_20k)
+c_bloodvser_50k <- make_toPlot(c_bloodvser_50k)
 
 ###########################################################
 # Plot ARCHE scores by TF group
 ###########################################################
 
-plot_ARCHE_score_CICADA(c_unfiltered, "CICADA-unfiltered")
-plot_ARCHE_score_CICADA(c_bloodvser, "CICADA-BloodvsER-25")
+plot_ARCHE_score_CICADA(c_unfiltered_10k, "CICADA-unfiltered_10k")
+plot_ARCHE_score_CICADA(c_unfiltered_20k, "CICADA-unfiltered_20k")
+plot_ARCHE_score_CICADA(c_unfiltered_50k, "CICADA-unfiltered_50k")
+
+plot_ARCHE_score_CICADA(c_bloodvser_10k, "CICADA-BloodvsER-25_10k")
+plot_ARCHE_score_CICADA(c_bloodvser_20k, "CICADA-BloodvsER-25_20k")
+plot_ARCHE_score_CICADA(c_bloodvser_50k, "CICADA-BloodvsER-25_50k")

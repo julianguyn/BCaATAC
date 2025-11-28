@@ -27,6 +27,7 @@ plot_ARCHE_score_CICADA <- function(toPlot, label) {
                     width = 0.2, position = position_dodge(width = 0.9)) +
     theme_classic() + 
     geom_hline(yintercept = 0) + 
+    scale_y_continuous(limits = c(-0.05, 0.65), expand = c(0,0)) +
     scale_fill_manual("Sample Type", values = cohort_pal) +
     theme(
         legend.key.size = unit(0.7, 'cm'),
