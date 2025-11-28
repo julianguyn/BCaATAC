@@ -41,17 +41,23 @@ filter_PBMC_signal <- function(sites_to_filter, filter_label, overlap = 25) {
         hits <- findOverlaps(arche, sites_to_filter)
         hitsDF <- data.frame(hits)
 
-        # save overlaping sites (that are removed)
-        to_rm <- filtered_bed[hitsDF$queryHits, ]
-        to_rm <- paste(to_rm$Chrom, to_rm$Start, to_rm$End, sep = ":")
-        sites_removed[filename] <- list(to_rm)
+        if (!nrow(hitsDF) == 0) {
 
-        # keep only sites not in overlap
-        filtered_bed <- filtered_bed[-hitsDF$queryHits, ]
-        
-        num_rm <- nrow(bed)-nrow(filtered_bed)
-        toPlot$num_rm[toPlot$filename == filename] <- num_rm
-        #message(paste("Removed", num_rm, "sites"))
+            # save overlaping sites (that are removed)
+            to_rm <- filtered_bed[hitsDF$queryHits, ]
+            to_rm <- paste(to_rm$Chrom, to_rm$Start, to_rm$End, sep = ":")
+            sites_removed[filename] <- list(to_rm)
+
+            # keep only sites not in overlap
+            filtered_bed <- filtered_bed[-hitsDF$queryHits, ]
+            
+            num_rm <- nrow(bed)-nrow(filtered_bed)
+            toPlot$num_rm[toPlot$filename == filename] <- num_rm
+            #message(paste("Removed", num_rm, "sites"))
+
+        } else {
+            sites_removed[filename] <- ""
+        }
 
         # write out new file
         if (!dir.exists(paste0("data/procdata/ARCHEs/FilteredGriffinSites/", filter_label))) {
