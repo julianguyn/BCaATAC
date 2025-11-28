@@ -17,8 +17,9 @@ plot_ARCHE_score_preclinical <- function(toPlot) {
 
 #' Plot CICADA ARCHE scores
 #' 
-plot_ARCHE_score_CICADA <- function(toPlot) {
-    png("data/results/figures/5-cfDNA/ARCHE_score_CICADA.png", width=10, height=4, units='in', res = 600, pointsize=80)
+plot_ARCHE_score_CICADA <- function(toPlot, label) {
+    filename <- paste0("data/results/figures/5-cfDNA/ARCHE_score_", label, ".png")
+    png(filename, width=10, height=4, units='in', res = 600, pointsize=80)
     print(ggplot(toPlot, aes(x = ARCHE, y = mean_score, fill = label)) + 
     geom_bar(stat = "identity", position = position_dodge(width = 0.9), color = "black") + 
     facet_wrap(TF_group ~ .) +
@@ -38,11 +39,12 @@ plot_ARCHE_score_CICADA <- function(toPlot) {
 
 #' Plot CICADA ARCHE scores
 #' 
-plot_ARCHE_TF_CICADA <- function(df) {
+plot_ARCHE_TF_CICADA <- function(df, label) {
 
     colnames(df)[colnames(df) == "label"] <- "Sample_Type"
 
-    png("data/results/figures/5-cfDNA/ARCHE_TR_corr.png", width=6, height=3.5, units='in', res = 600, pointsize=80)
+    filename <- paste0("data/results/figures/5-cfDNA/ARCHE_TR_corr", label, ".png")
+    png(filename, width=6, height=3.5, units='in', res = 600, pointsize=80)
     print(ggplot(df, aes(x = Score, y = TF, color = Sample_Type, shape = Sample_Type)) + 
     geom_point(size = 2, alpha = 0.8) + 
     facet_wrap(ARCHE ~ ., nrow = 2, ncol = 3) +

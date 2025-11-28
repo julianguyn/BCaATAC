@@ -82,15 +82,6 @@ mapping_pdxs <- c("X108099P1" = "108099",
                   "REF_S_038" = "REF038"
 )
 
-mapping_griffin <- c(
-    "sig1_top10k" = "ARCHE1",
-    "sig2_top10k" = "ARCHE2",
-    "sig3_top10k" = "ARCHE3",
-    "sig4_top10k" = "ARCHE4",
-    "sig5_top10k" = "ARCHE5",
-    "sig6_top10k" = "ARCHE6"
-)
-
 ###########################################################
 # Map Functions
 ###########################################################
@@ -185,17 +176,4 @@ map_pdx <- function(models) {
         if (model %in% names(mapping_pdxs)) models[i] <- unname(mapping_pdxs[model])
     }
     return(models)
-}
-
-#' Map Griffin site names to ARCHES
-#' 
-#' @param sites string. Vector of site names
-#' @return original vector with mapped ARCHES
-#' 
-map_griffin <- function(sites) {
-    for (i in 1:length(sites)) {
-        site = sites[i]
-        if (site %in% names(mapping_griffin)) sites[i] <- unname(mapping_griffin[site])
-    }
-    return(sites)
 }

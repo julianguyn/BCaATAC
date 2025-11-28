@@ -224,11 +224,31 @@ Includes all data from `data/rawdata/`
 ### data/rawdata/cfdna
 
 ```markdown
+## CICADA-unfiltered/ (Internal)
+
+- **Name**: CICADA ARCHE scores (rerun with new ARCHE subsets)
+- **Creation Date**: 2025-11-28
+- **Creation Method**: Bratman Lab 6Base-Seq Griffin pipeline
+- **Input Data**: 6Base-seq bam files
+- **Processing Scripts**: /cluster/projects/bhklab/projects/BCaATAC/Griffin
+```
+
+```markdown
+## CICADA-BloodvsER-25/ (Internal)
+
+- **Name**: CICADA ARCHE scores after filtering for 25% overlap of BloodvsER sites
+- **Creation Date**: 2025-11-28
+- **Creation Method**: Bratman Lab 6Base-Seq Griffin pipeline
+- **Input Data**: 6Base-seq bam files
+- **Processing Scripts**: /cluster/projects/bhklab/projects/BCaATAC/Griffin
+```
+
+```markdown
 ## CICADA-ARCHE/ (Internal)
 
-- **Name**: CICADA ARCHE scores
+- **Name**: CICADA ARCHE scores (old, archive)
 - **Creation Date**: 2025-09-09
-- **Creation Method**: Bratman Lab 6Base-Seq Griffin pipeline
+- **Creation Method**: Bratman Lab 6Base-Seq Griffin pipeline (S.M.)
 - **Input Data**: 6Base-seq bam files
 - **Processing Scripts**: /cluster/projects/bhklab/projects/BCaATAC/Griffin
 ```

@@ -1,9 +1,11 @@
 #' Function to score ARCHEs from Griffin outputs
 #' 
 #' @param dir filepath. Directory of Griffin outputs
-#' @param sites string. List of site names used on Griffin
+#' @param meta metadata file
 #' 
-score_arche_cfDNA <- function(dir, sites = NA) {
+score_arche_cfDNA <- function(dir, meta) {
+
+    dir <- paste0("data/rawdata/cfDNA/", dir)
 
     # get all griffin files
     files <- list.files(
@@ -13,20 +15,44 @@ score_arche_cfDNA <- function(dir, sites = NA) {
     )
     samples <- gsub("/.*", "", files)
 
-    if (is.na(sites)) sites <- paste0("sig", 1:6, "_top10k")
-
     # create dataframe to store results
     res <- data.frame(matrix(nrow=0, ncol=3)) 
     colnames(res) <- c("Sample", "ARCHE", "Score")
 
     for (file in files) {
         df <- fread(paste0(dir, "/", file))
-        df <- df[df$site_name %in% sites,]
         df  <- data.frame(Sample = df$sample,
-                          ARCHE = df$site_name,
+                          Label = df$site_name,
                           Score = 1-df$central_coverage)
-        df$ARCHE <- map_griffin(df$ARCHE)
         res <- rbind(res, df)
     }
+
+    res$ARCHE <- sub("_.*", "", res$Label)
+    res$Subset <- sub(".*_", "", res$Label)
+
+    # add metadata variables
+    res$label <- meta$time_id[match(res$Sample, meta$sample_id)]
+    res$TF <- meta$metrics_tf[match(res$Sample, meta$sample_id)]
+    res$pheno <- meta$pheno_id[match(res$Sample, meta$sample_id)]
+    res$TF_group <- ifelse(res$TF > 10, "TF>10", "TF<10")
+
     return(res)
+}
+
+#' Function to summarize ARCHE scores
+#' 
+#' Compute mean and SE of ARCHE scores
+#' @param scores df. Output of score_arche_cfDNA()
+#' 
+summary_ARCHE <- function(df, TF_group) {
+    summary_df <- df %>%
+        group_by(ARCHE, label) %>%
+        summarise(
+            mean_score = mean(Score, na.rm = TRUE),
+            se_score = sd(Score, na.rm = TRUE) / sqrt(n())
+        ) %>%
+        ungroup()
+    summary_df <- as.data.frame(summary_df)
+    summary_df$TF_group <- TF_groups
+    return(summary_df)
 }
