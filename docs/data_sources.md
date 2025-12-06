@@ -174,6 +174,14 @@ Includes all data from `data/rawdata/`
 ### data/rawdata/pdx
 
 ```markdown
+## gene_tpm_normalized_matrix.xlsx (Internal)
+
+- **Name**: PDX TPM counts
+- **Access Date**: 2025-11-28
+- **Source**: Cescon Lab (M.E.)
+```
+
+```markdown
 ## chromvar-Nov132025/ (Internal)
 
 - **Name**: PDX ARCHE scoring outputs on 20k sites
