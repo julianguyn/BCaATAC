@@ -14,22 +14,42 @@ znorm <- function(df) {
 #' 
 plot_ARCHE_scores_heatmap <- function(df, label, meta) {
 
+    # unnormalized
+
+    # set colours for plotting
+    lim <- max(c(abs(min(df)), max(df)))
+    score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+
+    ha = HeatmapAnnotation(Subtype = meta[match(colnames(df), meta$sampleid),]$subtype, 
+                       col = list(Subtype = subtype_pal))
+
+    filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
+    #png(filename, width = 8, height = 4, res = 600, units = "in")
+    png(filename, width = 11, height = 4, res = 600, units = "in")
+    print(
+        Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
+            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
+            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
+    )
+    dev.off()
+
     # normalize
     df <- znorm(df)
 
     # set colours for plotting
-    score_pal = colorRamp2(seq(min(df), max(df), length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+    lim <- max(c(abs(min(df)), max(df)))
+    score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
 
-    ha = HeatmapAnnotation(Subtype = meta[match(colnames(df), meta$sample),]$subtype, 
+    ha = HeatmapAnnotation(Subtype = meta[match(colnames(df), meta$sampleid),]$subtype, 
                        col = list(Subtype = subtype_pal))
 
-    filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", label, "_ARCHE_scores.png")
-    png(filename, width = 8, height = 4, res = 600, units = "in")
+    filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")
+    #png(filename, width = 8, height = 4, res = 600, units = "in")
+    png(filename, width = 11, height = 4, res = 600, units = "in")
     print(
         Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
-            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9), row_names_gp = gpar(fontsize = 10))
-            ,
-            #top_annotation = ha)
+            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
+            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
     )
     dev.off()
 }
@@ -63,7 +83,7 @@ plot_ARCHE_scores_compare <- function(p2, p5, pa, sample) {
     toPlot$ARCHE <- sub("ARCHE", "", toPlot$ARCHE)
 
     filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", sample, "_compare_unnorm.png")
-    png(filename, width = 5, height = 6, res = 600, units = "in")
+    png(filename, width = 5, height = 8, res = 600, units = "in")
     print(ggplot(toPlot, aes(x = ARCHE, y = variable, fill = value)) +
         geom_tile() +
         facet_wrap(~Sites) +
@@ -92,7 +112,7 @@ plot_ARCHE_scores_compare <- function(p2, p5, pa, sample) {
     toPlot$ARCHE <- sub("ARCHE", "", toPlot$ARCHE)
 
     filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", sample, "_compare_znorm.png")
-    png(filename, width = 5, height = 6, res = 600, units = "in")
+    png(filename, width = 5, height = 8, res = 600, units = "in")
     print(ggplot(toPlot, aes(x = ARCHE, y = variable, fill = value)) +
         geom_tile() +
         facet_wrap(~Sites) +

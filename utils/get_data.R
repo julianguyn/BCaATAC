@@ -18,25 +18,42 @@ get_cells <- function() {
     return(samples)
 }
 
-#' Get ARCHE scores for BCa cells
+#' Get ARCHE scores for samples
 #'
-#' @return ARCHE scores for 49 BCa cells.
+#' @param sample string. "cells" or "pdxs"
+#' @param arche string. "k20", "k50", or "all"
+#' @return ARCHE scores for requested samples.
 #' 
-get_arche_cells <- function() {
+get_arche_scores <- function(sample, arche, meta) {
 
-    # get samples
-    samples <- get_cells()
+    # get filepath
+    filepath <- switch(
+        sample,
+        cells = "data/rawdata/ccls/cells_",
+        pdxs = "data/rawdata/pdx/PDXs_"
+    )
 
-    # load in signature scores
-    signature_scores <- read.table("data/rawdata/ccls/bca_sign.Zscore.txt")
+    # get filename
+    filename <- switch(
+        arche,
+        k20 = "20k.Zscore.txt",
+        k50 = "50k.Zscore.txt",
+        all = "all.Zscore.txt"
+    )
 
-    # remove duplicates and rename signatures & cells
-    signature_scores <- signature_scores[,which(colnames(signature_scores) %in% samples$file)]
-    rownames(signature_scores) <- paste0("ARCHE", 1:6)
-    colnames(signature_scores) <- samples$sample[match(colnames(signature_scores), samples$file)] 
-    signature_scores <- signature_scores[,order(colnames(signature_scores))]
+    file <- paste0(filepath, filename)
 
-    return(signature_scores)
+    # load in arche scores
+    scores <- read.table(file)
+    rownames(scores) <- paste0("ARCHE", 1:6)
+
+    # standardize sample names of cell lines
+    colnames(scores) <- sub("^X", "", gsub("\\.(?!$)", "-", colnames(scores), perl = TRUE))
+    colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
+    scores <- scores[, order(colnames(scores))]
+    if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]
+
+    return(scores)
 }
 
 #' Extract AAC for drug of interest
@@ -51,7 +68,7 @@ get_arche_cells <- function() {
 get_doiAAC <- function(pset, drug, df, label) {
     if (drug %in% rownames(pset)) {
         # save drug response
-        res <- melt(pset[rownames(pset) == drug,]) |> suppressMessages()
+        res <- reshape2::melt(pset[rownames(pset) == drug,]) |> suppressMessages()
         colnames(res) <- c("Sample", "AAC")
         res$PSet <- label
         # merge results with compiled dataframe

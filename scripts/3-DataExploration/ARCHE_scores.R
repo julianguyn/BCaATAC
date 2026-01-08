@@ -7,6 +7,8 @@ suppressPackageStartupMessages({
     library(ggplot2)
 })
 
+set.seed(101)
+
 source("utils/get_data.R")
 source("utils/palettes.R")
 source("utils/plots/ARCHE_scores_heatmap.R")
@@ -15,44 +17,40 @@ source("utils/plots/ARCHE_scores_heatmap.R")
 # Load in data
 ###########################################################
 
-# read in scoring on 20k sites
-p2 <- read.table("data/rawdata/pdx/chromvar-Nov132025-20k/BCa_PDXs.Zscore.txt")
-colnames(p2) <- sub("_.*", "", sub("X", "", colnames(p2)))
-p2 <- p2[,-which(colnames(p2) %in% "104987")]       # all NA
+# read in cell metadata
+meta <- read.csv("metadata/lupien_metadata.csv")
 
-# read in scoring on 20k sites
-p5 <- read.table("data/rawdata/pdx/chromvar-Nov242025-50k/PDXs_50k.Zscore.txt")
-colnames(p5) <- sub("_.*", "", sub("X", "", colnames(p5)))
-p5 <- p5[,-which(colnames(p5) %in% "104987")]       # A3-6 NA
+# label dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta$sampleid[meta$sampleid %in% dups] <- paste0(meta$sampleid[meta$sampleid %in% dups], " (", meta$tech[meta$sampleid %in% dups], ")")
 
-# read in scoring on all sites (old)
-pa <- read.table("data/rawdata/pdx/chromvar/bca_sign.Zscore.txt")
-colnames(pa) <- sub("X", "", colnames(pa))
-rownames(pa) <- paste0("ARCHE", 1:6)
+c_meta <- meta[meta$type == "cell_line", ]
+p_meta <- meta[meta$type == "PDX", ]
 
-# read in scoring on all sites (new)
-pn <- read.table("data/rawdata/pdx/chromvar-Nov132025-all/BCa_PDXs.Zscore.txt")
-colnames(pn) <- sub("_.*", "", sub("X", "", colnames(pn)))
-# note: 104987 has scores here
+# load in arche scores
+cells_20k <- get_arche_scores("cells", "k20", c_meta)
+cells_50k <- get_arche_scores("cells", "k50", c_meta)
+cells_all <- get_arche_scores("cells", "all", c_meta)
 
-# read in scoring on cell lines (old)
-c1 <- get_arche_cells()
-
-# get cell line subtypes
-c_subtypes <- get_cell_subtype()
+pdxs_20k <- get_arche_scores("pdxs", "k20", p_meta)
+pdxs_50k <- get_arche_scores("pdxs", "k50", p_meta)
+pdxs_all <- get_arche_scores("pdxs", "all", p_meta)
 
 ###########################################################
 # Plot ARCHE scores
 ###########################################################
 
-plot_ARCHE_scores_heatmap(p2, "PDX_20k")
-plot_ARCHE_scores_heatmap(p5, "PDX_50k")
-plot_ARCHE_scores_heatmap(pa, "PDX_all_old")
-plot_ARCHE_scores_heatmap(p3, "PDX_all_new")
-plot_ARCHE_scores_heatmap(c1, "CCLs_all_old", c_subtypes)
+plot_ARCHE_scores_heatmap(cells_20k, "cells_20k", c_meta)
+plot_ARCHE_scores_heatmap(cells_50k, "cells_50k", c_meta)
+plot_ARCHE_scores_heatmap(cells_all, "cells_all", c_meta)
+
+plot_ARCHE_scores_heatmap(pdxs_20k, "pdxs_20k", p_meta)
+plot_ARCHE_scores_heatmap(pdxs_50k, "pdxs_50k", p_meta)
+plot_ARCHE_scores_heatmap(pdxs_all, "pdxs_all", p_meta)
 
 ###########################################################
 # Compare ARCHE signature subsets
 ###########################################################
 
-plot_ARCHE_scores_compare(p2, p5, pn, "PDX")
+plot_ARCHE_scores_compare(cells_20k, cells_50k, cells_all, "cells")
+plot_ARCHE_scores_compare(pdxs_20k, pdxs_50k, pdxs_all, "pdxs")
