@@ -56,36 +56,3 @@ summary_ARCHE <- function(df, TF_group) {
     summary_df$TF_group <- TF_group
     return(summary_df)
 }
-
-#' Function to coverage plots for each ARCHE
-#' 
-#' @param cov data.frame. Coverage at positions (+ site_name and sample name)
-#' @param group string. Site name label (10k, 20k, or 50k)
-#' @param label string. Direcotry label
-#' 
-plot_cov <- function(cov, group, label) {
-    toPlot <- cov[grep(group, cov$site_name), ]
-    toPlot <- reshape2::melt(toPlot)
-    toPlot$TF <- meta$metrics_tf[match(toPlot$sample, meta$sample_id)]
-    toPlot$variable <- as.numeric(as.character(toPlot$variable))
-
-    message(paste("Using the scales:", min(toPlot$value), max(toPlot$value)))
-
-    p <- ggplot(toPlot, aes(x = variable, y = value, color = TF)) +
-      geom_line(alpha = 0.65) +
-      facet_wrap(~ site_name, scales = "fixed", nrow = 2) +
-      coord_cartesian(ylim = c(min(toPlot$value), max(toPlot$value))) +
-      theme_classic() +
-      theme(
-        panel.border = element_rect(color = "black", fill = NA, size = 0.5),
-        legend.key.size = unit(0.5, 'cm')
-      ) +
-      labs(
-        y = "GC-corrected Fragment\nMidpoint Coverage",
-        x = "Position relative to site (bp)"
-      )
-
-    png(paste0("data/results/figures/5-cfDNA/griffinplots/",label, "_", group,"_coverage.png"), width=9, height=6, units='in', res = 600, pointsize=80)
-    print(p)
-    dev.off()
-}

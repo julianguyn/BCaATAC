@@ -89,3 +89,36 @@ plot_ARCHE_score_CICADA(c_unfiltered_50k, "CICADA-unfiltered_50k")
 plot_ARCHE_score_CICADA(c_bloodvser_10k, "CICADA-BloodvsER-25_10k")
 plot_ARCHE_score_CICADA(c_bloodvser_20k, "CICADA-BloodvsER-25_20k")
 plot_ARCHE_score_CICADA(c_bloodvser_50k, "CICADA-BloodvsER-25_50k")
+
+###########################################################
+# Plot coverage plots
+###########################################################
+
+# helper function to plot coverage plots
+coverage_panel <- function(folder, meta) {
+
+  # get all griffin files
+  dir <- paste0("data/rawdata/cfDNA/", folder)
+  files <- list.files(
+      dir,
+      recursive = TRUE,
+      pattern = "GC_corrected.coverage.tsv"
+  )
+  samples <- gsub("/.*", "", files)
+
+  # get covergage across positions
+  cov <- data.frame(matrix(nrow=0, ncol=134))
+  for (file in files) {
+      df <- fread(paste0(dir, "/", file), data.table = FALSE)
+      df <- df[, c("sample", "site_name", names(df)[1:132])] |> as.data.frame()
+      cov <- rbind(cov, df)
+  }
+
+  # plot coverage plots
+  plot_coverage(cov, meta, "10k", folder)
+  plot_coverage(cov, meta, "20k", folder)
+  plot_coverage(cov, meta, "50k", folder)
+}
+
+coverage_panel("CICADA-unfiltered", meta)
+coverage_panel("CICADA-BloodvsER-25", meta)
