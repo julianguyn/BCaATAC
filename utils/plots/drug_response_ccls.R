@@ -1,6 +1,6 @@
 #' Plot individual associations across PSets
 #' 
-plot_indivPlot <- function(pair, class) {
+plot_indivPlot <- function(pair, signature_scores, label) {
 
     arche <- gsub("_.*", "", pair)
     drug <- gsub(paste0(arche, "_"), "", pair)
@@ -25,7 +25,6 @@ plot_indivPlot <- function(pair, class) {
     all_drug_sen <- get_doiAAC(ctrp_sen, drug, all_drug_sen, "CTRP")
 
     # get signature scores
-    signature_scores <- get_all_scores()
     signature_scores <- signature_scores[rownames(signature_scores) == arche,]
     all_drug_sen$Score <- NA
     for (i in 1:nrow(all_drug_sen)) { 
@@ -38,7 +37,7 @@ plot_indivPlot <- function(pair, class) {
     # set up palette for plotting
     pal <- PSet_pal[names(PSet_pal) %in% unique(all_drug_sen$PSet)]
 
-    png(paste0("DrugResponse/results/figures/",class,"/indivPlots/",pair,".png"), width=160, height=125, units='mm', res = 600, pointsize=80)
+    png(paste0("data/results/figures/4-DrugResponse/ClassA/indivplots/",label, "_", pair,".png"), width=160, height=125, units='mm', res = 600, pointsize=80)
     print(ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = PSet)) + 
         geom_point(size = 3, shape = 21) + 
         geom_smooth(method = "lm", se=F, aes(color = PSet)) + 
@@ -100,9 +99,10 @@ plot_ClassA_allAssociations <- function(toPlot, ARCHE, width) {
 #' Plot Class A associations as heatmap
 #'
 #' @param type string. "Multi" for drugs in >1 PSet, "Single" for drugs in only 1 PSet
+#' @param label string. Label for filename
 #' Annotated by ARCHE and BCa relevant drug
 #' 
-plot_ClassA_heatmap <- function(toPlot, type) {
+plot_ClassA_heatmap <- function(toPlot, type, label) {
 
     # format plot
     toPlot <- toPlot[order(toPlot$pairs),]
@@ -167,7 +167,7 @@ plot_ClassA_heatmap <- function(toPlot, type) {
     # figure widths
     w <- ifelse(type == "Multi", 18, 21)
 
-    filename <- paste0("data/results/figures/4-DrugResponse/ClassA/heatmap", type, ".png")
+    filename <- paste0("data/results/figures/4-DrugResponse/ClassA/heatmap", type, "_", label, ".png")
     png(filename, width = w, height = 3.5, res = 600, units = "in")
     print(
         grid.arrange(p1, p2, p3, l3, l1, ncol = 10, nrow = 17,
@@ -184,20 +184,6 @@ plot_ClassA_heatmap <- function(toPlot, type) {
                               c(1,1,1,1,1,1,1,1,1,1,1,1,4,5), 
                               c(1,1,1,1,1,1,1,1,1,1,1,1,NA,NA)))
     )
-    dev.off()
-}
-
-#' Plot Class A biomarker associations
-#' 
-plot_ClassA_biomarkersAssociations <- function(ClassA) {
-    png("DrugResponse/results/figures/ClassA/biomarkersAssociations.png", width = 6, height = 25, res = 600, units = "in")
-    print(ggplot(ClassA, aes(x = pc, y = rank)) +
-        geom_col(aes(fill = signature), color = "black") + 
-        scale_y_discrete(labels = ClassA$drug) +
-        scale_fill_manual(values = ARCHE_pal) +
-        xlim(c(-1, 1)) + 
-        theme_classic() + geom_vline(xintercept = 0) + 
-        labs(y = "Drug", title = "", x = "Pearson's Correlation Coefficient", fill = "ARCHE")) 
     dev.off()
 }
 
@@ -220,9 +206,10 @@ plot_ClassB_biomarkersAssociations <- function(ClassB) {
 #'
 #' Plot individual PC and meta-estimate for Class B biomarkers
 #' 
-plot_ClassB_forest <- function(toPlot) {
+plot_ClassB_forest <- function(toPlot, label) {
 
-    png("data/results/figures/4-DrugResponse/ClassB/forest.png", width = 14, height = 6, res = 600, units = "in")
+    filename <- paste0("data/results/figures/4-DrugResponse/ClassB/forest_", label, ".png")
+    png(filename, width = 14, height = 6, res = 600, units = "in")
     print(ggplot(toPlot, aes(x = estimate, y = pset)) + 
         geom_linerange(aes(xmin = lower, xmax = upper)) + 
         geom_vline(xintercept = 0) + 
@@ -242,7 +229,7 @@ plot_ClassB_forest <- function(toPlot) {
 #'
 #' Annotated by ARCHE and BCa relevant drug
 #' 
-plot_ClassB_heatmap <- function(toPlot) {
+plot_ClassB_heatmap <- function(toPlot, label) {
 
     # format plot
     toPlot <- toPlot[order(toPlot$pairs),]
@@ -316,7 +303,7 @@ plot_ClassB_heatmap <- function(toPlot) {
     p3 <- p3+theme(legend.position = "none")
     p4 <- p4+theme(legend.position = "none")
 
-    filename <- paste0("data/results/figures/4-DrugResponse/ClassB/heatmap.png")
+    filename <- paste0("data/results/figures/4-DrugResponse/ClassB/heatmap_", label, ".png")
     png(filename, width = 7, height = 3.5, res = 600, units = "in")
     print(
         grid.arrange(p1, p2, p3, p4, l2, ncol = 10, nrow = 18,

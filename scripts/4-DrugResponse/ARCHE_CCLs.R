@@ -26,14 +26,28 @@ source("utils/bca_drugs.R")
 # Load in data
 ###########################################################
 
-# load in BCa cell lines
-samples <- get_cells()
+# read in cell metadata
+meta <- read.csv("metadata/lupien_metadata.csv")
 
-# load in signature scores
-signature_scores <- get_arche_cells()
+# remove nergiz dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
 
-# read in subtype information
-true_subtype <- get_cell_subtype()
+# remove komal dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "komal"), ]
+
+c_meta <- meta[meta$type == "cell_line", ]
+p_meta <- meta[meta$type == "PDX", ]
+
+# load in arche scores
+cells_20k <- get_arche_scores("cells", "k20", c_meta)
+cells_50k <- get_arche_scores("cells", "k50", c_meta)
+cells_all <- get_arche_scores("cells", "all", c_meta)
+
+pdxs_20k <- get_arche_scores("pdxs", "k20", p_meta)
+pdxs_50k <- get_arche_scores("pdxs", "k50", p_meta)
+pdxs_all <- get_arche_scores("pdxs", "all", p_meta)
 
 # get drug sensitivity data
 load("data/procdata/CCLs/sensitivity_data.RData")
@@ -74,28 +88,6 @@ erbb2 <- erbb2[,match(common, colnames(erbb2))]
 erbb2_tdxd <- tdxd_sen[,match(common, colnames(tdxd_sen))]
 
 ###########################################################
-# Subset signature associations
-###########################################################
-
-# helper function to get PSet-specific signature scores
-get_scores <- function(sen) {
-    to_keep <- samples[which(samples$sample %in% colnames(sen)),]
-    sig <- signature_scores[,which(colnames(signature_scores) %in% to_keep$sample)]
-    sig <- sig[,order(colnames(sig))]
-    return(sig)
-}
-
-# keep only CCLs with drug response per PSet
-ubr1_sig <- get_scores(ubr1_sen)
-ubr2_sig <- get_scores(ubr2_sen)
-gray_sig <- get_scores(gray_sen)
-gcsi_sig <- get_scores(gcsi_sen)
-gdsc_sig <- get_scores(gdsc_sen)
-ctrp_sig <- get_scores(ctrp_sen)
-ccle_sig <- get_scores(ccle_sen)
-tdxd_sig <- get_scores(tdxd_sen)
-
-###########################################################
 # Stratify HER2 and non-HER2 samples (for tdxd analysis)
 ###########################################################
 
@@ -111,112 +103,120 @@ nonher2 <- tdxd_sig[,colnames(tdxd_sig) %in% nonher2]
 her2_tdxd <- tdxd_sen[,match(colnames(her2), colnames(tdxd_sen))]
 nonher2_tdxd <- tdxd_sen[,match(colnames(nonher2), colnames(tdxd_sen))]
 
+# todo:: implement tdxd associations with new arche scores
+#tdxd_PC <- compute_pc(tdxd_sig, tdxd_sen, "TDXd")
+#erbb2_PC <- compute_pc(erbb2, erbb2_tdxd, "TDXd")
+
 ###########################################################
-# Compute CI and PC of ARCHE-drug associations
+# Compute PC of ARCHE-drug associations
 ###########################################################
 
-# PC
-ubr1_PC <- compute_pc(ubr1_sig, ubr1_sen, "UBR1")
-ubr2_PC <- compute_pc(ubr2_sig, ubr2_sen, "UBR2")
-gray_PC <- compute_pc(gray_sig, gray_sen, "GRAY")
-gcsi_PC <- compute_pc(gcsi_sig, gcsi_sen, "gCSI")
-gdsc_PC <- compute_pc(gdsc_sig, gdsc_sen, "GDSC2")
-ctrp_PC <- compute_pc(ctrp_sig, ctrp_sen, "CTRP")
-ccle_PC <- compute_pc(ccle_sig, ccle_sen, "CCLE")
-tdxd_PC <- compute_pc(tdxd_sig, tdxd_sen, "TDXd")
-erbb2_PC <- compute_pc(erbb2, erbb2_tdxd, "TDXd")
+# helper function to compute arche associations across all psets
+arche_pc <- function(scores) {
+    ubr1_PC <- compute_pc(scores, ubr1_sen, "UBR1")
+    ubr2_PC <- compute_pc(scores, ubr2_sen, "UBR2")
+    gray_PC <- compute_pc(scores, gray_sen, "GRAY")
+    gcsi_PC <- compute_pc(scores, gcsi_sen, "gCSI")
+    gdsc_PC <- compute_pc(scores, gdsc_sen, "GDSC2")
+    ctrp_PC <- compute_pc(scores, ctrp_sen, "CTRP")
+    ccle_PC <- compute_pc(scores, ccle_sen, "CCLE")
 
-# CI (not used)
-ubr1_CI <- compute_ci(ubr1_sig, ubr1_sen, "UBR1")
-ubr2_CI <- compute_ci(ubr2_sig, ubr2_sen, "UBR2")
-gray_CI <- compute_ci(gray_sig, gray_sen, "GRAY")
-gcsi_CI <- compute_ci(gcsi_sig, gcsi_sen, "gCSI")
-gdsc_CI <- compute_ci(gdsc_sig, gdsc_sen, "GDSC2")
-ctrp_CI <- compute_ci(ctrp_sig, ctrp_sen, "CTRP")
-ccle_CI <- compute_ci(ccle_sig, ccle_sen, "CCLE")
+    # compile results
+    PC_res <- rbind(ubr1_PC, ubr2_PC, gray_PC, gcsi_PC, gdsc_PC, ctrp_PC, ccle_PC)
+    return(PC_res)
+}
 
-# compile results
-PC_res <- rbind(ubr1_PC, ubr2_PC, gray_PC, gcsi_PC, gdsc_PC, ctrp_PC, ccle_PC)
-CI_res <- rbind(ubr1_CI, ubr2_CI, gray_CI, gcsi_CI, gdsc_CI, ctrp_CI, ccle_CI)
+pc_20k <- arche_pc(cells_20k)
+pc_50k <- arche_pc(cells_50k)
+pc_all <- arche_pc(cells_all)
 
 # save results
-save(PC_res, CI_res,
+save(pc_20k, pc_50k, pc_all,
      file = "data/results/data/4-DrugResponse/ARCHE_CCLs_associations.RData")
 
 ###########################################################
 # Identify Class A Biomarkers
 ###########################################################
 
-# Class A biomarkers: abs(PCC > 0.5) & FDR < 0.05 in 1 PSet
-ClassA <- PC_res[which((abs(PC_res$pc) >= 0.5) & PC_res$FDR < 0.05),]
-ClassA <- ClassA[order(ClassA$pc, decreasing = T),]
-ClassA$rank <- factor(1:nrow(ClassA), levels = c(1:nrow(ClassA)))
+# helper function to identify Class A biomarkers
+get_classA <- function(PC_res, label) {
+    # Class A biomarkers: abs(PCC > 0.5) & FDR < 0.05 in 1 PSet
+    ClassA <- PC_res[which((abs(PC_res$pc) >= 0.5) & PC_res$FDR < 0.05),]
+    ClassA <- ClassA[order(ClassA$pc, decreasing = T),]
+    ClassA$rank <- factor(1:nrow(ClassA), levels = c(1:nrow(ClassA)))
 
+    # get Class A associations across PSets
+    toPlot <- PC_res[PC_res$pairs %in% ClassA$pairs,]
+    keep <- names(table(toPlot$pair)[table(toPlot$pair)>1])
+    toPlot <- toPlot[toPlot$pair %in% keep,]
+
+    # save Class A biomarkers
+    filepath <- paste0("data/results/data/4-DrugResponse/ClassA_Biomarkers_", label, ".csv")
+    write.csv(ClassA, file = filepath, quote = FALSE, row.names = FALSE)
+    filepath <- paste0("data/results/data/4-Drugresponse/ClassA_allAssociations_", label, ".csv")
+    write.csv(toPlot, file = filepath, quote = FALSE, row.names = FALSE)
+
+    # plot Class A heatmap (drug in >1 PSet)
+    plot_ClassA_heatmap(toPlot, "Multi", label)
+
+    # plot Class A associations in 1 PSet
+    toPlot <- ClassA[-which(ClassA$pairs %in% toPlot$pairs),]
+    toPlot <- map_drugs(toPlot)         # deal w drug names
+    plot_ClassA_heatmap(toPlot, "Single", label)
+
+    return(toPlot)
+}
+
+classA_20k <- get_classA(pc_20k, "20k")
+classA_50k <- get_classA(pc_50k, "50k")
+classA_all <- get_classA(pc_all, "all")
 
 ###########################################################
-# Check and remove discordant associations in other PSets
+# Indiv plots for associations of interest
 ###########################################################
 
-# Class A associations across PSets
-toPlot <- PC_res[PC_res$pairs %in% ClassA$pairs,]
-keep <- names(table(toPlot$pair)[table(toPlot$pair)>1])
-toPlot <- toPlot[toPlot$pair %in% keep,]
+# ARCHE5 and Paclitaxel
+plot_indivPlot("ARCHE5_Paclitaxel", cells_20k, "cells_20k")
+plot_indivPlot("ARCHE5_Paclitaxel", cells_50k, "cells_50k")
+plot_indivPlot("ARCHE5_Paclitaxel", cells_all, "cells_all")
 
-# plot all associations per ARCHE
-plot_ClassA_allAssociations(toPlot, "ARCHE1", 8)
-plot_ClassA_allAssociations(toPlot, "ARCHE2", 18)
-plot_ClassA_allAssociations(toPlot, "ARCHE3", 20)
-plot_ClassA_allAssociations(toPlot, "ARCHE4", 17)
-plot_ClassA_allAssociations(toPlot, "ARCHE5", 22)
-plot_ClassA_allAssociations(toPlot, "ARCHE6", 17)
+# ARCHE1 and Olaparib
+plot_indivPlot("ARCHE1_Olaparib", cells_20k, "cells_20k")
+plot_indivPlot("ARCHE1_Olaparib", cells_50k, "cells_50k")
+plot_indivPlot("ARCHE1_Olaparib", cells_all, "cells_all")
 
-# TODO: remove biomarkers with discordant associations?
+# ARCHE2 and Olaparib
+plot_indivPlot("ARCHE2_Olaparib", cells_20k, "cells_20k")
+plot_indivPlot("ARCHE2_Olaparib", cells_50k, "cells_50k")
+plot_indivPlot("ARCHE2_Olaparib", cells_all, "cells_all")
 
-# save Class A biomarkers
-write.csv(ClassA, file = "data/results/data/4-DrugResponse/ClassA_Biomarkers.csv", quote = F, row.names = F)
-write.csv(toPlot, file = "data/results/data/4-Drugresponse/ClassA_allAssociations.csv", quote = F, row.names = F)
+# ARCHE2 and Topotecan
+plot_indivPlot("ARCHE2_Topotecan", cells_20k, "cells_20k")
+plot_indivPlot("ARCHE2_Topotecan", cells_50k, "cells_50k")
+plot_indivPlot("ARCHE2_Topotecan", cells_all, "cells_all")
 
-###########################################################
-# Plots for Class A biomarkers
-###########################################################
+# ARCHE2 and SN-38
+plot_indivPlot("ARCHE2_SN-38", cells_20k, "cells_20k")
+plot_indivPlot("ARCHE2_SN-38", cells_50k, "cells_50k")
+plot_indivPlot("ARCHE2_SN-38", cells_all, "cells_all")
 
-# plot Class A heatmap (drug in >1 PSet)
-plot_ClassA_heatmap(toPlot, "Multi")
-
-# plot Class A associations in 1 PSet
-toPlot <- ClassA[-which(ClassA$pairs %in% toPlot$pairs),]
-toPlot <- map_drugs(toPlot)         # deal w drug names
-plot_ClassA_heatmap(toPlot, "Single")
-
-# plot Class A biomarker associations
-ClassA <- map_drugs(ClassA)
-plot_ClassA_biomarkersAssociations(ClassA)
-
-# plot indiv scatter plots for Class A biomarker associations across PSets
-#for (pair in ClassA$pair) {
-#    plot_indivPlot(pair, "ClassA")     # rm for now, just plot what's needed
-#}
 
 ###########################################################
 # Identify Class B Biomarkers
 ###########################################################
 
-# perform meta analysis and save results
-estimates <- compute_meta(PC_res)
-write.csv(estimates, file = "data/results/data/4-DrugResponse/meta_estimates.csv", quote = F, row.names = F)
-
-#ClassB biomarkers: abs(TE > 0.4) & FDR < 0.05
-ClassB <- estimates[which(abs(estimates$TE) > 0.4 & estimates$FDR < 0.05),]
-ClassB <- ClassB[order(ClassB$TE, decreasing = T),]
-ClassB$rank <- factor(1:nrow(ClassB), levels = c(1:nrow(ClassB)))
-
-
-###########################################################
-# Plots for Class B biomarkers
-###########################################################
-
 # helper function to compile PCC and meta-estimates for ClassB biomarkers
-compileClassB <- function(PC_res, ClassB) {
+get_classB <- function(PC_res, label) {
+
+    # perform meta analysis and save results
+    estimates <- compute_meta(PC_res)
+    filepath <- paste0("data/results/data/4-DrugResponse/meta_estimates", label, ".csv")
+    write.csv(estimates, file = filepath, quote = FALSE, row.names = FALSE)
+
+    #ClassB biomarkers: abs(TE > 0.4) & FDR < 0.05
+    ClassB <- estimates[which(abs(estimates$TE) > 0.4 & estimates$FDR < 0.05),]
+    ClassB <- ClassB[order(ClassB$TE, decreasing = TRUE),]
+    ClassB$rank <- factor(1:nrow(ClassB), levels = c(1:nrow(ClassB)))
     
     keep <- PC_res[which(PC_res$pairs %in% ClassB$pair),]
     
@@ -234,18 +234,19 @@ compileClassB <- function(PC_res, ClassB) {
     toPlot$meta <- factor(ifelse(toPlot$pset == "Meta Estimate", TRUE, FALSE), levels = c(TRUE, FALSE))
     toPlot$pset <- factor(toPlot$pset, levels = c(unique(PC_res$pset), "Meta Estimate"))
 
+    # plot Class B biomarker associations as forest plot
+    #plot_ClassB_forest(toPlot, label)
+
+    # plot Class B biomarker associations as heatmap
+    plot_ClassB_heatmap(toPlot, label)
+
     return(toPlot)
 }
 
-# plot Class B biomarker associations
-plot_ClassB_biomarkersAssociations(ClassB)
+classB_20k <- get_classB(pc_20k, "20k")
+classB_50k <- get_classB(pc_50k, "50k")
+classB_all <- get_classB(pc_all, "all")
 
-# plot Class B biomarker associations as forest plot
-toPlot <- compileClassB(PC_res, ClassB)
-plot_ClassB_forest(toPlot)
-
-# plot Class B biomarker associations as heatmap
-plot_ClassB_heatmap(toPlot)
 
 ###########################################################
 # Combine TDXd data for plotting

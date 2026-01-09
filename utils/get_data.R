@@ -49,6 +49,7 @@ get_arche_scores <- function(sample, arche, meta) {
 
     # standardize sample names of cell lines
     colnames(scores) <- sub("^X", "", gsub("\\.(?!$)", "-", colnames(scores), perl = TRUE))
+    scores <- scores[, colnames(scores) %in% meta$filename]
     colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
     scores <- scores[, order(colnames(scores))]
     if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]

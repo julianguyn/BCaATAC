@@ -29,12 +29,17 @@ format_combinations <- function(combinations, label) {
 #' Compute concordance index
 #'
 #' Computes concordance index between ARCHE scores and drug AAC.
-#' @param signature_scores dataframe. ARCHE scores from get_scores().
+#' @param signature_scores dataframe. ARCHE scores from get_arche_scores().
 #' @param sensitivity_data dataframe. Drug sensitivity from get_drugsen().
 #' @param label string. PSet name
 #' @return A dataframe of CI and metrics.
 #' 
 compute_ci <- function(signature_scores, sensitivity_data, label) {
+
+    # get PSet-specific cells
+    to_keep <- intersect(colnames(signature_scores),colnames(sensitivity_data))
+    signature_scores <- signature_scores[,match(to_keep, colnames(signature_scores))]
+    sensitivity_data <- sensitivity_data[,match(to_keep, colnames(sensitivity_data))]
 
     # create data frame to hold results
     combinations <- as.data.frame(matrix(data = NA, nrow = nrow(signature_scores) * nrow(sensitivity_data), ncol = 7))
@@ -74,6 +79,11 @@ compute_ci <- function(signature_scores, sensitivity_data, label) {
 #' 
 compute_pc <- function(signature_scores, sensitivity_data, label) {
     
+    # get PSet-specific cells
+    to_keep <- intersect(colnames(signature_scores),colnames(sensitivity_data))
+    signature_scores <- signature_scores[,match(to_keep, colnames(signature_scores))]
+    sensitivity_data <- sensitivity_data[,match(to_keep, colnames(sensitivity_data))]
+
     # create data frame to hold results
     combinations <- as.data.frame(matrix(data = NA, nrow = nrow(signature_scores) * nrow(sensitivity_data), ncol = 7))
     colnames(combinations) <- c("signature", "drug", "pc", "pvalue", "n", "upper", "lower")

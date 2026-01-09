@@ -24,8 +24,8 @@ plot_ARCHE_scores_heatmap <- function(df, label, meta) {
                        col = list(Subtype = subtype_pal))
 
     filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
-    #png(filename, width = 8, height = 4, res = 600, units = "in")
-    png(filename, width = 11, height = 4, res = 600, units = "in")
+    png(filename, width = 10, height = 4, res = 600, units = "in")
+    #png(filename, width = 11, height = 4, res = 600, units = "in")
     print(
         Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
             column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
@@ -44,8 +44,8 @@ plot_ARCHE_scores_heatmap <- function(df, label, meta) {
                        col = list(Subtype = subtype_pal))
 
     filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")
-    #png(filename, width = 8, height = 4, res = 600, units = "in")
-    png(filename, width = 11, height = 4, res = 600, units = "in")
+    png(filename, width = 10, height = 4, res = 600, units = "in")
+    #png(filename, width = 11, height = 4, res = 600, units = "in")
     print(
         Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
             column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),

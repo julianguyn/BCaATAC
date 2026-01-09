@@ -9,8 +9,9 @@
 #' 
 get_drugsen <- function(pset, load = FALSE, update = TRUE, map = FALSE) {
 
-    # get 49 samples
-    samples <- get_cells()
+    # get cells
+    meta <- read.csv("metadata/lupien_metadata.csv")
+    meta <- meta[meta$type == "cell_line", ]
 
     # load in PSet
     if (load == FALSE) {
@@ -21,14 +22,16 @@ get_drugsen <- function(pset, load = FALSE, update = TRUE, map = FALSE) {
         } 
     } else {
         load(pset)
-        pset = CTRP
+        pset <- CTRP
     }
 
     # get sensitivity data
     if (map == FALSE) {
-        sen <- PharmacoGx::summarizeSensitivityProfiles(pset, 
-                                                      sensitivity.measure = "aac_recomputed",  
-                                                      fill.missing = F) |> as.data.frame()
+        sen <- PharmacoGx::summarizeSensitivityProfiles(
+            pset,
+            sensitivity.measure = "aac_recomputed",
+            fill.missing = FALSE
+        ) |> as.data.frame()
     } else {
         # if map = TRUE, use map_sen() 
         sen <- dcast(pset@treatmentResponse$profiles, treatmentid ~ sampleid, value.var = "aac_recomputed")
@@ -43,7 +46,7 @@ get_drugsen <- function(pset, load = FALSE, update = TRUE, map = FALSE) {
     if ("MCF-10A" %in% colnames(sen)) {
         colnames(sen)[colnames(sen) == "MCF-10A"] <- "MCF10A"
     }
-    sen <- sen[,which(colnames(sen) %in% samples$sample)]
+    sen <- sen[,which(colnames(sen) %in% meta$sampleid)]
     sen <- sen[,order(colnames(sen))]
     message(paste("Number of cells:", ncol(sen)))
     return(sen)

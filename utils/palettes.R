@@ -10,7 +10,7 @@ ARCHE_pal <- c(
 )
 
 PSet_pal <- c(
-    "UBR1" = "#588B8B", 
+    "UBR1" = "#1C627A", 
     "UBR2" = "#729B79", 
     "GRAY" = "#BEB2C8", 
     "gCSI" = "#D6CA98", 

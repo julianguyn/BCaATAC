@@ -16,10 +16,10 @@ source("utils/process_ccls.R")
 
 # get drug sensitivites
 ubr1_sen <- get_drugsen("data/rawdata/psets/PSet_UHNBreast.rds")                             #43 CCLs
-ubr2_sen <- get_drugsen("data/rawdata/psets/PharmacoSet.RDS", update = FALSE, map = TRUE)    #42 CCLs
-gray_sen <- get_drugsen("data/rawdata/psets/PSet_GRAY2017.rds")                              #42 CCLs
+ubr2_sen <- get_drugsen("data/rawdata/psets/PharmacoSet.RDS", update = FALSE, map = TRUE)    #40 CCLs
+gray_sen <- get_drugsen("data/rawdata/psets/PSet_GRAY2017.rds")                              #43 CCLs
 gcsi_sen <- get_drugsen("data/rawdata/psets/gCSI.rds")                                       #25 CCLs
-gdsc_sen <- get_drugsen("data/rawdata/psets/GDSC2-8.2.rds")                                  #34 CCLs
+gdsc_sen <- get_drugsen("data/rawdata/psets/GDSC2-8.2.rds")                                  #35 CCLs
 ctrp_sen <- get_drugsen("data/rawdata/psets/CTRP.rds", load = TRUE)                          #32 CCLs
 ccle_sen <- get_drugsen("data/rawdata/psets/CCLE.rds")                                       #23 CCLs
 
