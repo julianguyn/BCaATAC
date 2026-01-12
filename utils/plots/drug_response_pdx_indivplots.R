@@ -2,9 +2,9 @@
 #' 
 mrecist_labs <- c(
     'CR' = 'Complete\nResponse',
-    'PD' = 'Progressive\nDisease',
+    'PR' = 'Partial\nResponse',
     'SD' = 'Stable\nDisease',
-    'PR' = 'Partial\nResponse'
+    'PD' = 'Progressive\nDisease'
 )
 
 #' Plot waterfall plot of ARCHE score coloured by mRECIST 
@@ -68,6 +68,7 @@ avg_ARCHE_mRECIST <- function(df, arche, drug, plot.indiv = F) {
             sd_score = sd(.data[[arche]], na.rm = TRUE),
             .groups = "drop"
         )
+    df$mRECIST <- factor(df$mRECIST, levels = names(mrecist_pal))
 
     # obtain min and max values
     y <- max(abs(min(df$mean_score)), max(df$mean_score)) |> ceiling()
@@ -77,8 +78,8 @@ avg_ARCHE_mRECIST <- function(df, arche, drug, plot.indiv = F) {
         geom_bar(stat = "identity", color = "black", aes(fill = mRECIST)) + ylim(c(-y, y)) +
         geom_hline(yintercept = 0) +
         geom_errorbar(aes(ymin = mean_score - sd_score, ymax = mean_score + sd_score), width = 0.2) +
-        scale_fill_manual(values = mrecist_pal, labels = mrecist_labs) +
-        #scale_x_discrete(labels = mrecist_labs) +
+        scale_fill_manual(values = mrecist_pal) +
+        scale_x_discrete(labels = mrecist_labs) +
         labs(x = "\nmRECIST", y = paste(arche, "Score")) +
         theme_classic() + 
         theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), legend.position = "none")
@@ -115,7 +116,7 @@ waterfall_mRECIST_accuracy <- function(df, arche, drug, combinations, i, plot.in
 
     # determine incorrect predictions
     df$accuracy <- ifelse(df$predicted == df$outcome, 'Correct', 'Incorrect')
-    combinations$AC.mre[i] <- nrow(df[df$accuracy == 'Correct',])/nrow(df) * 100
+    #combinations$AC.mre[i] <- nrow(df[df$accuracy == 'Correct',])/nrow(df) * 100
 
     # obtain min and max values
     y <- max(abs(min(df[[arche]])), max(df[[arche]])) |> ceiling()
@@ -206,6 +207,13 @@ ROC_mRECIST <- function(df, arche, drug, plot.indiv = F) {
 #' 
 waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
 
+    # get label
+    label <- switch(
+        TR,
+        BR_median = "BR",
+        BAR_median = "BAR"
+    )
+
     # order samples
     df[[TR]] <- as.numeric(df[[TR]])
     df <- df[order(df[[TR]], decreasing = T),]
@@ -215,13 +223,22 @@ waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
     score <- max(abs(min(df[[arche]])), max(df[[arche]])) |> ceiling()
 
     # create plot
-    p <- ggplot(df, aes(x = rank, y = .data[[TR]], fill = .data[[arche]])) + 
-        geom_bar(stat = "identity", color = "black") + 
+    p <- ggplot(df, aes(x = rank, y = .data[[TR]], fill = .data[[arche]])) +
+        geom_bar(stat = "identity", color = "black") +
         geom_hline(yintercept = 0) +
         scale_fill_gradientn(colors = c("#BC4749", "#F8F1F8", "#077293"), limits = c(-score, score)) +
-        theme_classic() + 
-        theme(legend.key.size = unit(0.8, 'cm'), axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        labs(x = "PDX Model", y = paste0(drug, " Response (", TR, ")"), fill = paste(arche, "\nScore")) 
+        theme_classic() +
+        theme(
+            legend.position = "inside",
+            legend.position.inside = c(1, 1),
+            legend.justification.inside = c(1, 1),
+            legend.title = element_text(size = 8),
+            legend.text = element_text(size = 7),
+            legend.key.size = unit(0.3, 'cm'),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank()
+        ) +
+        labs(x = "PDX Model", y = paste(drug, label), fill = paste(arche, "\nScore")) 
 
     # print out waterfall plot if needed
     if (plot.indiv == TRUE) {
@@ -244,36 +261,35 @@ waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
 #' 
 scatter_TR <- function(df, arche, drug, TR, combinations, i, plot.indiv = F) {
 
+    # get label
+    label <- switch(
+        TR,
+        BR_median = "BR",
+        BAR_median = "BAR"
+    )
+
     # compute pearson's correlation
     pc <- cor.test(df[[arche]], df[[TR]], method = "pearson", alternative = "two.sided")
     cor <- round(pc$estimate, 4)
     pval <- round(pc$p.value, 4)
 
     # save PCC and pvalue
-    if (TR == "AUC") {
-        combinations$PC.auc[i] <- cor
-        combinations$p.auc[i] <- pval
-    }
-    if (TR == "slope") {
-        combinations$PC.slope[i] <- cor
-        combinations$p.slope[i] <- pval
-    }
-    if (TR == "BR_median") {
-        combinations$PC.BR_median[i] <- cor
-        combinations$p.BR_median[i] <- pval
-    }
-    if (TR == "BAR_median") {
-        combinations$PC.BAR_median[i] <- cor
-        combinations$p.BAR_median[i] <- pval
-    }
+    #if (TR == "BR_median") {
+    #    combinations$PC.BR_median[i] <- cor
+    #    combinations$p.BR_median[i] <- pval
+    #}
+    #if (TR == "BAR_median") {
+    #    combinations$PC.BAR_median[i] <- cor
+    #    combinations$p.BAR_median[i] <- pval
+    #}
 
     # create plot
     p <- ggplot(df, aes(x = .data[[arche]], y = .data[[TR]])) +
-        geom_point(size = 2) +
+        geom_point(size = 1) +
         geom_smooth(method='lm', formula= y~x, color = random_blue) +
         theme_classic() +
         theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
-        labs(x = paste(arche, "Score"), y = paste0(drug, " Response (", TR, ")")) +
+        labs(x = paste(arche, "Score"), y = paste(drug, label)) +
         ggtitle(paste("PCC:", cor, ", pval:", pval))
 
     # print out plot if needed

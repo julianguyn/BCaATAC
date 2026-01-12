@@ -76,9 +76,9 @@ genfeat_pal <- c(
 
 mrecist_pal <- c(
     "CR" = "#136F63",
-    "PD" = "#9DCBBA",
+    "PR" = "#9DCBBA",
     "SD" = "#FFADA1",
-    "PR" = "#B02E0C"
+    "PD" = "#B02E0C"
 )
 
 dmp_pal <- c(

@@ -21,24 +21,38 @@ source("utils/mappings.R")
 # Load in data
 ###########################################################
 
-# pdx drug response data
-xeva1 <- get_xeva("data/rawdata/pdx/DrugResponse_PDX.xlsx", xlsx = TRUE)
-xeva2 <- get_xeva_july()
-xeva3 <- get_xeva("data/rawdata/pdx/PDX_Response_Sept2025.csv")
+# read in cell metadata
+meta <- read.csv("metadata/lupien_metadata.csv")
 
-# get all ARCHE scores
-scores <- get_arche_pdx()
+# remove nergiz dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
+
+# remove komal dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "komal"), ]
+
+p_meta <- meta[meta$type == "PDX", ]
+
+# load in arche scores
+pdxs_20k <- get_arche_scores("pdxs", "k20", p_meta)
+pdxs_50k <- get_arche_scores("pdxs", "k50", p_meta)
+pdxs_all <- get_arche_scores("pdxs", "all", p_meta)
+
+# pdx drug response data
+xeva <- get_xeva()
 
 ###########################################################
-# Assign signature scores
+# Assign ARCHE scores
 ###########################################################
 
 # helper function
-get_ARCHE <- function(df) {
-    df <- df[df$patient.id %in% rownames(scores),]
+format_ARCHE <- function(xeva, scores) {
+    scores <- t(scores) |> as.data.frame()
+    df <- xeva[xeva$patient.id %in% rownames(scores),]
     df$ARCHE6 <- df$ARCHE5 <- df$ARCHE4 <- df$ARCHE3 <- df$ARCHE2 <- df$ARCHE1 <- NA
     for (i in 1:nrow(df)) {
-        sample = df$patient.id[i]
+        sample <- df$patient.id[i]
         df$ARCHE1[i] <- scores[rownames(scores) == sample,]$ARCHE1
         df$ARCHE2[i] <- scores[rownames(scores) == sample,]$ARCHE2
         df$ARCHE3[i] <- scores[rownames(scores) == sample,]$ARCHE3
@@ -50,18 +64,17 @@ get_ARCHE <- function(df) {
     return(df)
 }
 
-# get ARCHE scores per xeva collection
-xeva1_sig <- get_ARCHE(xeva1)
-xeva2_sig <- get_ARCHE(xeva2)
-xeva3_sig <- get_ARCHE(xeva3)
+# get ARCHE scores
+xeva_20k <- format_ARCHE(xeva, pdxs_20k)
+xeva_50k <- format_ARCHE(xeva, pdxs_50k)
+xeva_all <- format_ARCHE(xeva, pdxs_all)
 
 ###########################################################
-# Assess ARCHE drug response associations 
+# Assess ARCHE drug response associations
 ###########################################################
 
-x1 <- assess_ARCHE_PDX(xeva1_sig, "Xeva1") |> suppressWarnings()
-x2 <- assess_ARCHE_PDX(xeva2_sig, "Xeva2") |> suppressWarnings()
-x3 <- assess_ARCHE_PDX(xeva3_sig, "Xeva3")
+x1 <- assess_ARCHE_PDX(xeva_20k, "PDX20k") |> suppressWarnings()
+x2 <- assess_ARCHE_PDX(xeva_50k, "PDX50k") |> suppressWarnings()
+x3 <- assess_ARCHE_PDX(xeva_all, "PDXall") |> suppressWarnings()
 
-##todo: format for x3: no AUC! mre, br, and bar
 ##todo: why does it keep printing NULL out

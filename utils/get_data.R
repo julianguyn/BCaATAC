@@ -53,6 +53,7 @@ get_arche_scores <- function(sample, arche, meta) {
     colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
     scores <- scores[, order(colnames(scores))]
     if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]
+    if (sample == "pdxs") colnames(scores) <- map_pdx(colnames(scores))
 
     return(scores)
 }
@@ -213,27 +214,20 @@ get_arche_pdx <- function() {
 
 #' Load in XEVA drug response spreadsheets
 #' 
-#' @param filepath string. 
-#' @param xlsx boolean. 
-#' 
-get_xeva <- function(filepath, xlsx = FALSE) {
+get_xeva <- function() {
 
     # read in file
-    if (xlsx == TRUE) {
-        xeva <- as.data.frame(read_excel(filepath, sheet = 1))
-    } else {
-        xeva <- read.csv(filepath)
-    }
+    xeva <- read.csv("data/rawdata/pdx/PDX_Response_Sept2025.csv")
 
-    # create patient.id if needed and standardize
-    if ("patient.id" %in% colnames(xeva)) {
-        xeva$patient.id <- map_pdx(xeva$patient.id)
-    } else if ("PDX_ID" %in% colnames(xeva)) {
-        xeva$patient.id <- map_pdx(xeva$PDX_ID)
-    } else {
-        message("Check sampleID column name")
-        return(NA)
-    }
+    # create patient.id and standardize
+    xeva$patient.id <- map_pdx(xeva$PDX_ID)
+
+    # create instances for NOTCH01 passages
+    notch4 <- notch6 <- xeva[xeva$patient.id %in% c("NOTCH01"),]
+    notch4$patient.id <- "NOTCH01P4"
+    notch6$patient.id <- "NOTCH01P6"
+    xeva <- xeva[-which(xeva$patient.id %in% c("NOTCH01")),]
+    xeva <- rbind(xeva, notch4, notch6)
 
     # create model_group
     xeva$model_group <- paste(xeva$patient.id, xeva$drug, sep = "_")
@@ -241,41 +235,6 @@ get_xeva <- function(filepath, xlsx = FALSE) {
     return(xeva)
 }
 
-#' Compile results from July Xeva data access
-#' 
-get_xeva_july <- function() {
-
-    # load individiual files
-    auc <- read.csv("data/procdata/PDXs/drugresponse/auc_reps.csv")
-    mre <- read.csv("data/procdata/PDXs/drugresponse/mRECIST_reps.csv")
-    bar <- as.data.frame(read_excel("data/rawdata/pdx/PDX_BR_BAR_grouped_Julia_8205_TAX_selectedmodels.xlsx", sheet = 1))
-
-    # map sample names
-    auc$patient.id <- map_pdx(auc$patient.id)
-    mre$patient.id <- map_pdx(mre$patient.id)
-    bar$patient.id <- map_pdx(bar$PDX_ID)
-
-    # create model_group variable
-    auc$model_group <- paste(auc$patient.id, auc$drug, sep = "_")
-    mre$model_group <- paste(mre$patient.id, mre$drug, sep = "_")
-    bar$model_group <- paste(bar$patient.id, bar$drug, sep = "_")
-
-    # create new dataframe
-    pairs <- unique(c(auc$model_group, mre$model_group, bar$model_group))
-    xeva2 <- data.frame(
-        model_group = pairs,
-        patient.id =  gsub("_.*", "", pairs),
-        drug = gsub(".*_", "", pairs)
-    )
-    xeva2$AUC <- auc$AUC[match(xeva2$model_group, auc$model_group)]
-    xeva2$mRECIST <- mre$mRECIST[match(xeva2$model_group, mre$model_group)]
-    xeva2$BR_median <- bar$BR_median[match(xeva2$model_group, bar$model_group)]
-    xeva2$BAR_median <- bar$BAR_median[match(xeva2$model_group, bar$model_group)]
-
-    # bar has same mRECIST as above but new mRECIST for paclitaxol (not in above)
-    xeva2$mRECIST[xeva2$drug == "PACLITAXEL"] <- bar$mRECIST[match(xeva2$model_group[xeva2$drug == "PACLITAXEL"], bar$model_group)]
-    return(xeva2)
-}
 
 #' Get CpG sites from 450k array in each ARCHE
 #' 

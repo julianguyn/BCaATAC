@@ -190,7 +190,7 @@ Includes all data from `data/rawdata/`
 ```
 
 ```markdown
-## auc.xlsx (Internal)
+## auc.xlsx (Internal - no longer used)
 
 - **Name**: PDX drug response data (AUC)
 - **Creation Date**: 2025-07-23
@@ -198,7 +198,7 @@ Includes all data from `data/rawdata/`
 ```
 
 ```markdown
-## mRECIST.xlsx (Internal)
+## mRECIST.xlsx (Internal - no longer used)
 
 - **Name**: PDX drug response data (mRECIST)
 - **Creation Date**: 2025-07-23
@@ -206,7 +206,7 @@ Includes all data from `data/rawdata/`
 ```
 
 ```markdown
-## PDX_BR_BAR_grouped_Julia_8205_TAX_selectedmodels.xlsx (Internal)
+## PDX_BR_BAR_grouped_Julia_8205_TAX_selectedmodels.xlsx (Internal - no longer used)
 
 - **Name**: PDX drug response data (BR and BAR)
 - **Creation Date**: 2025-07-23
@@ -214,7 +214,7 @@ Includes all data from `data/rawdata/`
 ```
 
 ```markdown
-## DrugResponse_PDX.xlsx (Internal)
+## DrugResponse_PDX.xlsx (Internal - no longer used)
 
 - **Name**: PDX drug response data 
 - **Creation Date**: 

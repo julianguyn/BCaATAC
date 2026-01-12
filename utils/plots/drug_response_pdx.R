@@ -14,16 +14,17 @@ assess_ARCHE_mRECIST <- function(subset_df, arche, drug, combinations, i, plot.i
     subset_df <- subset_df[,which(colnames(subset_df) %in% c("model_group", "mRECIST", arche))]
     subset_df$mRECIST <- factor(subset_df$mRECIST, levels = c("CR", "PR", "SD", "PD"))
     subset_df <- subset_df[complete.cases(subset_df),]
-    combinations$N.mre[i] <- nrow(subset_df)
+    #combinations$N.mre[i] <- nrow(subset_df)
 
     # get plots
     p1 <- waterfall_mRECIST(subset_df, arche, drug)
     p2 <- avg_ARCHE_mRECIST(subset_df, arche, drug)
     p3 <- waterfall_mRECIST_accuracy(subset_df, arche, drug, combinations, i)
     p4 <- ROC_mRECIST(subset_df, arche, drug)
-    p <- arrangeGrob(p1, p2, p3, p4, ncol = 5, nrow = 2,
-        layout_matrix = rbind(c(1,1,1,2,2), 
-                              c(3,3,3,4,4)))
+    p <- arrangeGrob(
+        p1, p2, p3, p4, ncol = 4, nrow = 2,
+        layout_matrix = rbind(c(1,1,2,2), c(3,3,4,4))
+    )
 
     # print out plot if needed
     if (plot.indiv == TRUE) {
@@ -54,12 +55,10 @@ assess_ARCHE_TR <- function(subset_df, arche, drug, TR, combinations, i, plot.in
     subset_df <- subset_df[complete.cases(subset_df),]
 
     # save number of TR experiments
-    if (TR == "AUC") {combinations$N.auc[i] <- nrow(subset_df)}
-    if (TR == "slope") {combinations$N.slope[i] <- nrow(subset_df)}
-    if (TR == "BR_median") {combinations$N.BR_median[i] <- nrow(subset_df)}
-    if (TR == "BAR_median") {combinations$N.BAR_median[i] <- nrow(subset_df)}
+    #if (TR == "BR_median") {combinations$N.BR_median[i] <- nrow(subset_df)}
+    #if (TR == "BAR_median") {combinations$N.BAR_median[i] <- nrow(subset_df)}
 
-    if (nrow(subset_df) > 0) {
+    if (nrow(subset_df) > 2) {
         # get plots
         p1 <- waterfall_TR(subset_df, arche, drug, TR)
         p2 <- scatter_TR(subset_df, arche, drug, TR, combinations, i)
@@ -82,94 +81,60 @@ assess_ARCHE_TR <- function(subset_df, arche, drug, TR, combinations, i, plot.in
 #'
 #' Combine outputs of assess_ARCHE_mRECIST() and assess_ARCHE_TR()
 #' Possible treatment responses (column names):
-#' *** AUC
 #' *** mRECIST
-#' *** slope
 #' *** BR_median
 #' *** BAR_median
 #' @param df dataframe. Treatment response dataframe with ARCHE scores concatenated
-#' @param xeva string. Label of xeva version
+#' @param label string. Label of ARCHE scores (PDX20k, PDX50k, or PDXall)
 #' @export Panel of plots.
 #' 
-assess_ARCHE_PDX <- function(df, xeva) {
-
-    # initialize TR variables
-    auc <- ifelse("AUC" %in% colnames(df), TRUE, FALSE)
-    mre <- ifelse("mRECIST" %in% colnames(df), TRUE, FALSE)
-    slp <- ifelse("slope" %in% colnames(df), TRUE, FALSE)
-    br <- ifelse("BR_median" %in% colnames(df), TRUE, FALSE)
-    bar <- ifelse("BAR_median" %in% colnames(df), TRUE, FALSE)
+assess_ARCHE_PDX <- function(df, label) {
 
     # initialize dataframe to store results
-    combinations <- matrix(data = NA, nrow = length(unique(df$drug)) * 6, ncol = 18) |> as.data.frame()
+    combinations <- matrix(data = NA, nrow = length(unique(df$drug)) * 6, ncol = 12) |> as.data.frame()
     colnames(combinations) <- c(
-        "ARCHE", "drug", "pair", "N", 
-        "PC.auc", "p.auc", "N.auc",
+        "ARCHE", "drug", "pair", "N",
         "AC.mre", "N.mre",
-        "PC.slope", "p.slope", "N.slope",
-        "PC.BR_median", "p.BR_median", "N.BR_median",
-        "PC.BAR_median", "p.BAR_median", "N.BAR_median"
+        "PC.BR_median", "se.BR_median", "N.BR_median",
+        "PC.BAR_median", "se.BAR_median", "N.BAR_median"
     )
     combinations$ARCHE <- rep(paste0("ARCHE", 1:6), length(unique(df$drug)))
     combinations$drug <- rep(unique(df$drug), each = 6)
     combinations$pair <- paste(combinations$ARCHE, combinations$drug, sep = "_")
 
     # assess ARCHE associations for all available TR
-    #for (i in seq_len(nrow(combinations))) {
-    for (i in c(1:3)) {
-        print(i)
+    print(paste("Total number of combinations:", nrow(combinations)))
+    for (i in seq_len(nrow(combinations))) {
+    #for (i in c(1:3)) {
+    #    print(i)
         arche <- combinations$ARCHE[i]
         drug <- combinations$drug[i]
+        print(paste(arche, drug))
 
         subset_df <- df[df$drug == drug,]
         combinations$N[i] <- nrow(subset_df)
 
-        # AUC
-        if (auc == TRUE) {
-            print("auc")
-            p1 <- assess_ARCHE_TR(subset_df, arche, drug, "AUC", combinations, i)
-        }
         # mRECIST
-        if (mre == TRUE) {
-            print("mre")
-            p2 <- assess_ARCHE_mRECIST(subset_df, arche, drug, combinations, i)
-        }
-        # Slope
-        if (slp == TRUE) {
-            print("slp")
-            p3 <- assess_ARCHE_TR(subset_df, arche, drug, "slope", combinations, i)
-            if (is.na(p3)) {slp <- FALSE}
-        }
-        # BR Median
-        if (br == TRUE) {
-            #print("br")
-            p4 <- assess_ARCHE_TR(subset_df, arche, drug, "BR_median", combinations, i)
-            if (is.na(p4)) {br <- FALSE}
-        }
-        # BAR Median
-        if (bar == TRUE) {
-            #print("bar")
-            p5 <- assess_ARCHE_TR(subset_df, arche, drug, "BAR_median", combinations, i)
-            if (is.na(p5)) {bar <- FALSE}
-        }
+        p1 <- assess_ARCHE_mRECIST(subset_df, arche, drug, combinations, i)
 
-        # compile plots into panels (currently 3 possible combinations)
-        if (auc == TRUE & mre == TRUE & slp == FALSE & br == FALSE & bar == FALSE) {
-            path = paste0("data/results/figures/4-DrugResponse/PDX/", xeva, "/", arche, "_", drug, ".png")
-            png(path, width=10, height=6, units='in', res = 600, pointsize=80)
-            print(grid::grid.draw(arrangeGrob(p1, p2, ncol = 3, nrow = 2,
-                              layout_matrix = rbind(c(1,2,2), c(1,2,2)))))
+        # BR Median
+        p2 <- assess_ARCHE_TR(subset_df, arche, drug, "BR_median", combinations, i)
+
+        # BAR Median
+        p3 <- assess_ARCHE_TR(subset_df, arche, drug, "BAR_median", combinations, i)
+
+        # compile plots into panels
+        if (!is.na(p2) && !is.na(p3)) {
+            filepath <- paste0("data/results/figures/4-DrugResponse/PDX/", label, "/", arche, "_", drug, ".png")
+            png(filepath, width=12, height=5, units='in', res = 600, pointsize=80)
+            print(grid::grid.draw(
+                arrangeGrob(
+                    p1, p2, p3, ncol = 4, nrow = 2,
+                    layout_matrix = rbind(c(1,1,2,3), c(1,1,2,3))
+                ))) # TODO:: prints NULL here, remove somehow
             dev.off()
-        } else if (auc == TRUE & mre == TRUE & slp == TRUE & br == FALSE & bar == FALSE) {
-            path = paste0("data/results/figures/4-DrugResponse/PDX/", xeva, "/", arche, "_", drug, ".png")
-            png(path, width=13, height=6, units='in', res = 600, pointsize=80)
-            print(grid::grid.draw(arrangeGrob(p1, p2, p3, ncol = 4, nrow = 2,
-                              layout_matrix = rbind(c(1,2,2,3), c(1,2,2,3)))))
-            dev.off()
-        } else if (auc == TRUE & mre == TRUE & slp == FALSE & br == TRUE & bar == TRUE) {
-            
         } else {
-            message("New combination, need to add!")
+            print("Not enough observations")
         }
     }
     return(combinations)

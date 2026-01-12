@@ -38,16 +38,11 @@ dups <- meta$sampleid[duplicated(meta$sampleid)]
 meta <- meta[!(meta$sampleid %in% dups & meta$tech == "komal"), ]
 
 c_meta <- meta[meta$type == "cell_line", ]
-p_meta <- meta[meta$type == "PDX", ]
 
 # load in arche scores
 cells_20k <- get_arche_scores("cells", "k20", c_meta)
 cells_50k <- get_arche_scores("cells", "k50", c_meta)
 cells_all <- get_arche_scores("cells", "all", c_meta)
-
-pdxs_20k <- get_arche_scores("pdxs", "k20", p_meta)
-pdxs_50k <- get_arche_scores("pdxs", "k50", p_meta)
-pdxs_all <- get_arche_scores("pdxs", "all", p_meta)
 
 # get drug sensitivity data
 load("data/procdata/CCLs/sensitivity_data.RData")
