@@ -71,15 +71,13 @@ plot_coverage <- function(cov, meta, group, label) {
     toPlot$TF <- meta$metrics_tf[match(toPlot$sample, meta$sample_id)]
     toPlot$variable <- as.numeric(as.character(toPlot$variable))
 
-    message(paste("Using the scales:", min(toPlot$value), max(toPlot$value)))
-
     p <- ggplot(toPlot, aes(x = variable, y = value, color = TF)) +
       geom_line(alpha = 0.65) +
       facet_wrap(~ site_name, scales = "fixed", nrow = 2) +
-      coord_cartesian(ylim = c(min(toPlot$value), max(toPlot$value))) +
+      coord_cartesian(ylim = c(0.3, 1.1)) +
       theme_classic() +
       theme(
-        panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
         legend.key.size = unit(0.5, 'cm')
       ) +
       labs(
