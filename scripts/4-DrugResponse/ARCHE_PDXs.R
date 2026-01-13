@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
     library(ggh4x)
     library(grid)
     library(gridExtra)
+    library(matrixStats)
 })
 
 source("utils/plots/drug_response_pdx.R")
@@ -16,6 +17,7 @@ source("utils/plots/drug_response_pdx_indivplots.R")
 source("utils/palettes.R")
 source("utils/get_data.R")
 source("utils/mappings.R")
+source("utils/plots/ARCHE_scores_heatmap.R")
 
 ###########################################################
 # Load in data
@@ -41,6 +43,14 @@ pdxs_all <- get_arche_scores("pdxs", "all", p_meta)
 
 # pdx drug response data
 xeva <- get_xeva()
+
+###########################################################
+# Normalize ARCHE scores
+###########################################################
+
+norm_20k <- znorm(pdxs_20k)
+norm_50k <- znorm(pdxs_50k)
+norm_all <- znorm(pdxs_all)
 
 ###########################################################
 # Assign ARCHE scores
@@ -69,6 +79,10 @@ xeva_20k <- format_ARCHE(xeva, pdxs_20k)
 xeva_50k <- format_ARCHE(xeva, pdxs_50k)
 xeva_all <- format_ARCHE(xeva, pdxs_all)
 
+xeva_norm_20k <- format_ARCHE(xeva, norm_20k)
+xeva_norm_50k <- format_ARCHE(xeva, norm_50k)
+xeva_norm_all <- format_ARCHE(xeva, norm_all)
+
 ###########################################################
 # Assess ARCHE drug response associations
 ###########################################################
@@ -76,5 +90,9 @@ xeva_all <- format_ARCHE(xeva, pdxs_all)
 x1 <- assess_ARCHE_PDX(xeva_20k, "PDX20k") |> suppressWarnings()
 x2 <- assess_ARCHE_PDX(xeva_50k, "PDX50k") |> suppressWarnings()
 x3 <- assess_ARCHE_PDX(xeva_all, "PDXall") |> suppressWarnings()
+
+n1 <- assess_ARCHE_PDX(xeva_norm_20k, "PDX20k_norm") |> suppressWarnings()
+n2 <- assess_ARCHE_PDX(xeva_norm_50k, "PDX50k_norm") |> suppressWarnings()
+n3 <- assess_ARCHE_PDX(xeva_norm_all, "PDXall_norm") |> suppressWarnings()
 
 ##todo: why does it keep printing NULL out
