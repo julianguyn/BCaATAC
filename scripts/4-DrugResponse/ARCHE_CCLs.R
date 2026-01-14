@@ -140,7 +140,7 @@ pcnorm_all <- arche_pc(norm_all)
 
 # save results
 save(pc_20k, pc_50k, pc_all, pcnorm_20k, pcnorm_50k, pcnorm_all,
-     file = "data/results/data/4-DrugResponse/ARCHE_CCLs_associations.RData")
+     file = "data/results/data/4-DrugResponse/CCLs/ARCHE_CCLs_associations.RData")
 
 ###########################################################
 # Identify Class A Biomarkers
@@ -159,9 +159,9 @@ get_classA <- function(PC_res, label) {
     toPlot <- toPlot[toPlot$pair %in% keep,]
 
     # save Class A biomarkers
-    filepath <- paste0("data/results/data/4-DrugResponse/ClassA_Biomarkers_", label, ".csv")
+    filepath <- paste0("data/results/data/4-DrugResponse/CCLs/ClassA_Biomarkers_", label, ".csv")
     write.csv(ClassA, file = filepath, quote = FALSE, row.names = FALSE)
-    filepath <- paste0("data/results/data/4-Drugresponse/ClassA_allAssociations_", label, ".csv")
+    filepath <- paste0("data/results/data/4-Drugresponse/CCLs/ClassA_allAssociations_", label, ".csv")
     write.csv(toPlot, file = filepath, quote = FALSE, row.names = FALSE)
 
     # plot Class A heatmap (drug in >1 PSet)
@@ -212,7 +212,7 @@ indiv_plots("ARCHE2_Olaparib")
 indiv_plots("ARCHE2_Topotecan")
 indiv_plots("ARCHE2_SN-38")
 
-write.csv(pcc, file = "data/results/data/4-DrugResponse/indiv_PCC.csv", quote = FALSE, row.names = FALSE)
+write.csv(pcc, file = "data/results/data/4-DrugResponse/CCLs/indiv_PCC.csv", quote = FALSE, row.names = FALSE)
 
 ###########################################################
 # Identify Class B Biomarkers
@@ -223,7 +223,7 @@ get_classB <- function(PC_res, label) {
 
     # perform meta analysis and save results
     estimates <- compute_meta(PC_res)
-    filepath <- paste0("data/results/data/4-DrugResponse/meta_estimates", label, ".csv")
+    filepath <- paste0("data/results/data/4-DrugResponse/CCLs/meta_estimates", label, ".csv")
     write.csv(estimates, file = filepath, quote = FALSE, row.names = FALSE)
 
     #ClassB biomarkers: abs(TE > 0.4) & FDR < 0.05

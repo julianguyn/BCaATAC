@@ -98,3 +98,18 @@ n2 <- assess_ARCHE_PDX(xeva_norm_50k, "PDX50k_norm", dir) |> suppressWarnings()
 n3 <- assess_ARCHE_PDX(xeva_norm_all, "PDXall_norm", dir) |> suppressWarnings()
 
 ##todo: why does it keep printing NULL out
+
+###########################################################
+# Subset for significant associations
+###########################################################
+
+# compile results
+compile <- rbind(x1, x2, x3, n1, n2, n3)
+
+# set thresholds
+pc <- 0.4
+pval <- 0.1
+
+# plot bubble plots
+plot_PDX_bubbles(compile, "BR", dir)
+plot_PDX_bubbles(compile, "BAR", dir)
