@@ -104,7 +104,7 @@ avg_ARCHE_mRECIST <- function(df, arche, drug, plot.indiv = F) {
 #' @param plot.indiv boolean. TRUE if waterfall plot should be saved as an individual file.
 #' @return ggplot object of waterfall plot.
 #' 
-waterfall_mRECIST_accuracy <- function(df, arche, drug, combinations, i, plot.indiv = F) {
+waterfall_mRECIST_accuracy <- function(df, arche, drug, plot.indiv = F) {
 
     # create ranking order
     df <- df[order(df[[arche]], decreasing = T),]
@@ -116,7 +116,6 @@ waterfall_mRECIST_accuracy <- function(df, arche, drug, combinations, i, plot.in
 
     # determine incorrect predictions
     df$accuracy <- ifelse(df$predicted == df$outcome, 'Correct', 'Incorrect')
-    #combinations$AC.mre[i] <- nrow(df[df$accuracy == 'Correct',])/nrow(df) * 100
 
     # obtain min and max values
     y <- max(abs(min(df[[arche]])), max(df[[arche]])) |> ceiling()
@@ -259,7 +258,7 @@ waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
 #' @param plot.indiv boolean. TRUE if scatter plot should be saved as an individual file.
 #' @return ggplot object of scatter plot.
 #' 
-scatter_TR <- function(df, arche, drug, TR, combinations, i, plot.indiv = F) {
+scatter_TR <- function(df, arche, drug, TR, plot.indiv = F) {
 
     # get label
     label <- switch(
@@ -272,16 +271,6 @@ scatter_TR <- function(df, arche, drug, TR, combinations, i, plot.indiv = F) {
     pc <- cor.test(df[[arche]], df[[TR]], method = "pearson", alternative = "two.sided")
     cor <- round(pc$estimate, 4)
     pval <- round(pc$p.value, 4)
-
-    # save PCC and pvalue
-    #if (TR == "BR_median") {
-    #    combinations$PC.BR_median[i] <- cor
-    #    combinations$p.BR_median[i] <- pval
-    #}
-    #if (TR == "BAR_median") {
-    #    combinations$PC.BAR_median[i] <- cor
-    #    combinations$p.BAR_median[i] <- pval
-    #}
 
     # create plot
     p <- ggplot(df, aes(x = .data[[arche]], y = .data[[TR]])) +

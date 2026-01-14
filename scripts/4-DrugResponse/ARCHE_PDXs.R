@@ -87,12 +87,14 @@ xeva_norm_all <- format_ARCHE(xeva, norm_all)
 # Assess ARCHE drug response associations
 ###########################################################
 
-x1 <- assess_ARCHE_PDX(xeva_20k, "PDX20k") |> suppressWarnings()
-x2 <- assess_ARCHE_PDX(xeva_50k, "PDX50k") |> suppressWarnings()
-x3 <- assess_ARCHE_PDX(xeva_all, "PDXall") |> suppressWarnings()
+dir <- "rmNergizKomal"
 
-n1 <- assess_ARCHE_PDX(xeva_norm_20k, "PDX20k_norm") |> suppressWarnings()
-n2 <- assess_ARCHE_PDX(xeva_norm_50k, "PDX50k_norm") |> suppressWarnings()
-n3 <- assess_ARCHE_PDX(xeva_norm_all, "PDXall_norm") |> suppressWarnings()
+x1 <- assess_ARCHE_PDX(xeva_20k, "PDX20k", dir) |> suppressWarnings()
+x2 <- assess_ARCHE_PDX(xeva_50k, "PDX50k", dir) |> suppressWarnings()
+x3 <- assess_ARCHE_PDX(xeva_all, "PDXall", dir) |> suppressWarnings()
+
+n1 <- assess_ARCHE_PDX(xeva_norm_20k, "PDX20k_norm", dir) |> suppressWarnings()
+n2 <- assess_ARCHE_PDX(xeva_norm_50k, "PDX50k_norm", dir) |> suppressWarnings()
+n3 <- assess_ARCHE_PDX(xeva_norm_all, "PDXall_norm", dir) |> suppressWarnings()
 
 ##todo: why does it keep printing NULL out
