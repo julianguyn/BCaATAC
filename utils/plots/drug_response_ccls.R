@@ -1,5 +1,9 @@
 #' Plot individual associations across PSets
 #' 
+#' @param pair string. In format "<ARCHE>_<Drug>"
+#' @param signature_scores data.frame.
+#' @param label string.
+#' 
 plot_indivPlot <- function(pair, signature_scores, label) {
 
     arche <- gsub("_.*", "", pair)
@@ -29,6 +33,21 @@ plot_indivPlot <- function(pair, signature_scores, label) {
     all_drug_sen$Score <- NA
     for (i in 1:nrow(all_drug_sen)) { 
         all_drug_sen$Score[i] <-  signature_scores[,colnames(signature_scores) == all_drug_sen$Sample[i]]
+    }
+
+    # print PCC
+    for (pset in unique(all_drug_sen$PSet)) {
+        subset <- all_drug_sen[all_drug_sen$PSet == pset,]
+        pc <- cor.test(subset$Score, subset$AAC, method = "pearson", alternative = "two.sided")
+
+        # update the global pcc dataframe
+        pcc <<- rbind(pcc, data.frame(
+            ARCHE_Drug = pair,
+            Label = label,
+            PSet = pset,
+            PCC = round(pc$estimate, 4),
+            pvalue = round(pc$p.value, 4)
+        ))
     }
 
     # get x axis limits for plotting

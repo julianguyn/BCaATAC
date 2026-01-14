@@ -21,6 +21,7 @@ source("utils/compute_drug_response.R")
 source("utils/plots/drug_response_ccls.R")
 source("utils/palettes.R")
 source("utils/bca_drugs.R")
+source("utils/plots/ARCHE_scores_heatmap.R")
 
 ###########################################################
 # Load in data
@@ -49,6 +50,14 @@ load("data/procdata/CCLs/sensitivity_data.RData")
 
 # get tdxd response data
 tdxd <- get_tdxd()
+
+###########################################################
+# Normalize ARCHE scores
+###########################################################
+
+norm_20k <- znorm(cells_20k)
+norm_50k <- znorm(cells_50k)
+norm_all <- znorm(cells_all)
 
 ###########################################################
 # Format TDXd response data
@@ -125,8 +134,12 @@ pc_20k <- arche_pc(cells_20k)
 pc_50k <- arche_pc(cells_50k)
 pc_all <- arche_pc(cells_all)
 
+pcnorm_20k <- arche_pc(norm_20k)
+pcnorm_50k <- arche_pc(norm_50k)
+pcnorm_all <- arche_pc(norm_all)
+
 # save results
-save(pc_20k, pc_50k, pc_all,
+save(pc_20k, pc_50k, pc_all, pcnorm_20k, pcnorm_50k, pcnorm_all,
      file = "data/results/data/4-DrugResponse/ARCHE_CCLs_associations.RData")
 
 ###########################################################
@@ -166,35 +179,40 @@ classA_20k <- get_classA(pc_20k, "20k")
 classA_50k <- get_classA(pc_50k, "50k")
 classA_all <- get_classA(pc_all, "all")
 
+classA_norm20k <- get_classA(pcnorm_20k, "norm_20k")
+classA_norm50k <- get_classA(pcnorm_50k, "norm_50k")
+classA_normall <- get_classA(pcnorm_all, "norm_all")
+
 ###########################################################
 # Indiv plots for associations of interest
 ###########################################################
 
-# ARCHE5 and Paclitaxel
-plot_indivPlot("ARCHE5_Paclitaxel", cells_20k, "cells_20k")
-plot_indivPlot("ARCHE5_Paclitaxel", cells_50k, "cells_50k")
-plot_indivPlot("ARCHE5_Paclitaxel", cells_all, "cells_all")
+# helper function to plot individual plots
+indiv_plots <- function(pair, pcc) {
 
-# ARCHE1 and Olaparib
-plot_indivPlot("ARCHE1_Olaparib", cells_20k, "cells_20k")
-plot_indivPlot("ARCHE1_Olaparib", cells_50k, "cells_50k")
-plot_indivPlot("ARCHE1_Olaparib", cells_all, "cells_all")
+    # unnormalized ARCHE scores
+    plot_indivPlot(pair, cells_20k, "cells_20k")
+    plot_indivPlot(pair, cells_50k, "cells_50k")
+    plot_indivPlot(pair, cells_all, "cells_all")
 
-# ARCHE2 and Olaparib
-plot_indivPlot("ARCHE2_Olaparib", cells_20k, "cells_20k")
-plot_indivPlot("ARCHE2_Olaparib", cells_50k, "cells_50k")
-plot_indivPlot("ARCHE2_Olaparib", cells_all, "cells_all")
+    # normalized ARCHE scores
+    plot_indivPlot(pair, norm_20k, "cells_norm20k")
+    plot_indivPlot(pair, norm_50k, "cells_norm50k")
+    plot_indivPlot(pair, norm_all, "cells_normall")
+}
 
-# ARCHE2 and Topotecan
-plot_indivPlot("ARCHE2_Topotecan", cells_20k, "cells_20k")
-plot_indivPlot("ARCHE2_Topotecan", cells_50k, "cells_50k")
-plot_indivPlot("ARCHE2_Topotecan", cells_all, "cells_all")
+# create dataframe to store results
+pcc <- data.frame(matrix(nrow=0, ncol=5))
+colnames(pcc) <- c("ARCHE_Drug", "Label", "PSet", "PCC", "pvalue")
 
-# ARCHE2 and SN-38
-plot_indivPlot("ARCHE2_SN-38", cells_20k, "cells_20k")
-plot_indivPlot("ARCHE2_SN-38", cells_50k, "cells_50k")
-plot_indivPlot("ARCHE2_SN-38", cells_all, "cells_all")
+# plot for pairs of interest
+indiv_plots("ARCHE5_Paclitaxel")
+indiv_plots("ARCHE1_Olaparib")
+indiv_plots("ARCHE2_Olaparib")
+indiv_plots("ARCHE2_Topotecan")
+indiv_plots("ARCHE2_SN-38")
 
+write.csv(pcc, file = "data/results/data/4-DrugResponse/indiv_PCC.csv", quote = FALSE, row.names = FALSE)
 
 ###########################################################
 # Identify Class B Biomarkers
@@ -241,6 +259,10 @@ get_classB <- function(PC_res, label) {
 classB_20k <- get_classB(pc_20k, "20k")
 classB_50k <- get_classB(pc_50k, "50k")
 classB_all <- get_classB(pc_all, "all")
+
+classB_norm20k <- get_classB(pcnorm_20k, "norm20k")
+classB_norm50k <- get_classB(pcnorm_50k, "norm50k")
+classB_normall <- get_classB(pcnorm_all, "normall")
 
 
 ###########################################################
