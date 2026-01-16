@@ -98,30 +98,3 @@ compiled <- compiled[order(compiled$overlap_bp, decreasing = TRUE),]
 compiled <- unique(compiled)
 
 write.csv(compiled, file = "/cluster/projects/bhklab/projects/BCaATAC/Misc/data/results/BCa_UGT1A6_overlap.csv", quote = FALSE, row.names = FALSE)
-
-
-# send to Mitchell:
-compiled[compiled$overlap_bp == 1200, c(1:3)]
-                                            sample   gene        transcript
-73    66684_P1_S6_peaks.filtered.merged.narrowPeak UGT1A6   ENSG00000167165
-74    66684_P1_S6_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000373424.5
-77    66684_P1_S6_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000441351.1
-111       BT20_1_S1_L001_peaks.filtered.narrowPeak UGT1A6   ENSG00000167165
-117       BT20_1_S1_L001_peaks.filtered.narrowPeak UGT1A6 ENST00000373424.5
-122       BT20_1_S1_L001_peaks.filtered.narrowPeak UGT1A6 ENST00000441351.1
-125     BT20_1_S1_peaks.filtered.merged.narrowPeak UGT1A6   ENSG00000167165
-127     BT20_1_S1_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000373424.5
-129     BT20_1_S1_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000441351.1
-262   HCC1806_2_S21_L002_peaks.filtered.narrowPeak UGT1A6   ENSG00000167165
-268   HCC1806_2_S21_L002_peaks.filtered.narrowPeak UGT1A6 ENST00000373424.5
-274   HCC1806_2_S21_L002_peaks.filtered.narrowPeak UGT1A6 ENST00000441351.1
-279 HCC1806_2_S21_peaks.filtered.merged.narrowPeak UGT1A6   ENSG00000167165
-282 HCC1806_2_S21_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000373424.5
-285 HCC1806_2_S21_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000441351.1
-310    HCC1954_1_S9_L001_peaks.filtered.narrowPeak UGT1A6   ENSG00000167165
-312    HCC1954_1_S9_L001_peaks.filtered.narrowPeak UGT1A6 ENST00000373424.5
-317    HCC1954_1_S9_L001_peaks.filtered.narrowPeak UGT1A6 ENST00000441351.1
-319  HCC1954_1_S9_peaks.filtered.merged.narrowPeak UGT1A6   ENSG00000167165
-320  HCC1954_1_S9_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000373424.5
-322  HCC1954_1_S9_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000441351.1
-507    REF024_S17_peaks.filtered.merged.narrowPeak UGT1A6 ENST00000406651.1

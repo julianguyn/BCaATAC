@@ -305,3 +305,19 @@ Includes all data from `data/rawdata/`
 - **Creation Date**: 2025-10-22
 - **Source**: Penn Lab (P.L.)
 ```
+
+### data/rawdata/tracks
+
+```markdown
+## Oth.Brs.05.NFE2L2.AllCell.bed
+
+- **Name**: NRF2 (NFE2L2) TF binding sites
+- **Download Date**: 2026-01-16
+- **URL**: https://chip-atlas.org/peak_browser
+- **Species**: H. sapiens (hg38)
+- **Track type class**: ChIP: TFs and others
+- **Cell tyle Class**: Breast
+- **Threshold for Significance**: 50
+- **Track type**: NFE2L2
+- **Cell type**: All
+```
