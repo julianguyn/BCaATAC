@@ -182,7 +182,7 @@ Includes all data from `data/rawdata/`
 ```
 
 ```markdown
-## chromvar-Nov132025/ (Internal)
+## chromvar-Nov132025/ (Internal - no longer used)
 
 - **Name**: PDX ARCHE scoring outputs on 20k sites
 - **Creation Date**: 2025-11-13
@@ -227,6 +227,13 @@ Includes all data from `data/rawdata/`
 - **Name**: PDX drug response data 
 - **Creation Date**: 2025-09-??
 - **Source**: Cescon Lab (M.E.)
+```
+
+```markdown
+## PDX_BR_BAR_grouped.csv (Internal - CANNOT PUBLISH)
+
+- **Name**: PDX drug response data with all drugs
+- **Source**: Cescon Lab (M.E. on Jan 15, 2026)
 ```
 
 ### data/rawdata/cfdna

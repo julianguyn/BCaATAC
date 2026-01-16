@@ -107,6 +107,10 @@ assess_ARCHE_PDX <- function(df, label, dir) {
         print(paste(arche, drug))
 
         subset_df <- df[df$drug == drug,]
+        subset_df <- subset_df[
+            complete.cases(subset_df[, c("BR_median", "BAR_median")]),
+        ]
+
         combinations$N[i] <- nrow(subset_df)
 
         # mRECIST

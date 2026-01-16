@@ -42,7 +42,7 @@ pdxs_50k <- get_arche_scores("pdxs", "k50", p_meta)
 pdxs_all <- get_arche_scores("pdxs", "all", p_meta)
 
 # pdx drug response data
-xeva <- get_xeva()
+xeva <- get_xeva("full")
 
 ###########################################################
 # Normalize ARCHE scores
@@ -87,7 +87,22 @@ xeva_norm_all <- format_ARCHE(xeva, norm_all)
 # Assess ARCHE drug response associations
 ###########################################################
 
-dir <- "rmNergizKomal"
+dir <- "rmNergizKomal-fullXEVA"
+
+# create the data dir
+path <- paste0("data/results/data/4-DrugResponse/PDX/", dir)
+if (!dir.exists(path)) {
+    dir.create(path, recursive = TRUE)
+}
+# create the figure dirs
+to_create <- c("PDX20k", "PDX20K_norm", "PDX50k", "PDX50k_norm", "PDXall", "PDXall_norm")
+for (subfolder in to_create) {
+    path <- paste0("data/results/figures/4-DrugResponse/PDX/", dir, "/", subfolder)
+    if (!dir.exists(path)) {
+        dir.create(path, recursive = TRUE)
+    }
+}
+
 
 x1 <- assess_ARCHE_PDX(xeva_20k, "PDX20k", dir) |> suppressWarnings()
 x2 <- assess_ARCHE_PDX(xeva_50k, "PDX50k", dir) |> suppressWarnings()

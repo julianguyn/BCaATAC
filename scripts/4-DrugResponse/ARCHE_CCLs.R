@@ -206,13 +206,52 @@ pcc <- data.frame(matrix(nrow=0, ncol=5))
 colnames(pcc) <- c("ARCHE_Drug", "Label", "PSet", "PCC", "pvalue")
 
 # plot for pairs of interest
-indiv_plots("ARCHE5_Paclitaxel")
 indiv_plots("ARCHE1_Olaparib")
+indiv_plots("ARCHE1_Topotecan")
+indiv_plots("ARCHE1_SN-38")
+indiv_plots("ARCHE1_Paclitaxel")
+indiv_plots("ARCHE1_Everolimus")
+indiv_plots("ARCHE1_Eribulin")
+
 indiv_plots("ARCHE2_Olaparib")
 indiv_plots("ARCHE2_Topotecan")
 indiv_plots("ARCHE2_SN-38")
+indiv_plots("ARCHE2_Paclitaxel")
+indiv_plots("ARCHE2_Everolimus")
+indiv_plots("ARCHE2_Eribulin")
+
+indiv_plots("ARCHE3_Olaparib")
+indiv_plots("ARCHE3_Topotecan")
+indiv_plots("ARCHE3_SN-38")
+indiv_plots("ARCHE3_Paclitaxel")
+indiv_plots("ARCHE3_Everolimus")
+indiv_plots("ARCHE3_Eribulin")
+
+indiv_plots("ARCHE4_Olaparib")
+indiv_plots("ARCHE4_Topotecan")
+indiv_plots("ARCHE4_SN-38")
+indiv_plots("ARCHE4_Paclitaxel")
+indiv_plots("ARCHE4_Everolimus")
+indiv_plots("ARCHE4_Eribulin")
+
+indiv_plots("ARCHE5_Olaparib")
+indiv_plots("ARCHE5_Topotecan")
+indiv_plots("ARCHE5_SN-38")
+indiv_plots("ARCHE5_Paclitaxel")
+indiv_plots("ARCHE5_Everolimus")
+indiv_plots("ARCHE5_Eribulin")
+
+indiv_plots("ARCHE6_Olaparib")
+indiv_plots("ARCHE6_Topotecan")
+indiv_plots("ARCHE6_SN-38")
+indiv_plots("ARCHE6_Paclitaxel")
+indiv_plots("ARCHE6_Everolimus")
+indiv_plots("ARCHE6_Eribulin")
 
 write.csv(pcc, file = "data/results/data/4-DrugResponse/CCLs/indiv_PCC.csv", quote = FALSE, row.names = FALSE)
+
+sig <- pcc[abs(pcc$PCC) > 0.4 & pcc$pvalue < 0.1,]
+write.csv(sig, file = "data/results/data/4-DrugResponse/CCLs/indiv_PCC_sig.csv", quote = FALSE, row.names = FALSE)
 
 ###########################################################
 # Identify Class B Biomarkers

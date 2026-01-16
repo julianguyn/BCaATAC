@@ -214,10 +214,17 @@ get_arche_pdx <- function() {
 
 #' Load in XEVA drug response spreadsheets
 #' 
-get_xeva <- function() {
+get_xeva <- function(type) {
+
+    file <- switch(
+        type,
+        limited = "data/rawdata/pdx/PDX_Response_Sept2025.csv",
+        full = "data/rawdata/pdx/PDX_BR_BAR_grouped.csv"
+    )
 
     # read in file
-    xeva <- read.csv("data/rawdata/pdx/PDX_Response_Sept2025.csv")
+    xeva <- read.csv(file)
+    
 
     # create patient.id and standardize
     xeva$patient.id <- map_pdx(xeva$PDX_ID)
