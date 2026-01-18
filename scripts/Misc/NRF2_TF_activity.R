@@ -91,7 +91,7 @@ scores <- scores[-which(rownames(scores) == "NRF2_50_sites"),]
 #' @param label string. Label for figure filename
 #' @param h int. Image height for figure
 #' 
-ARCHE_scores_heatmap <- function(scores, label, h) {
+TF_scores_heatmap <- function(scores, label, h) {
 
     # set colours for plotting
     lim <- max(c(abs(min(scores)), max(scores)))
@@ -111,9 +111,9 @@ ARCHE_scores_heatmap <- function(scores, label, h) {
 }
 
 # plot across all sites
-ARCHE_scores_heatmap(scores, "NRF2_all_sites", 3.5)
+TF_scores_heatmap(scores, "NRF2_all_sites", 3.5)
 
 # plot for individual sites
 for (i in 1:nrow(scores)) {
-    ARCHE_scores_heatmap(scores[i,], rownames(scores)[i], 2.75)
+    TF_scores_heatmap(scores[i,], rownames(scores)[i], 2.75)
 }
