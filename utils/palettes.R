@@ -102,6 +102,12 @@ two_pal <- c(
     "#BFB0AB"
 )
 
+tech_pal <- c(
+    "nergiz" = "#474056",
+    "tina" = "#8A95A5",
+    "komal" = "#B4C4C6"
+)
+
 random_blue <- "#3E517A"
 random_lightblue <- "#88A0A8"
 na_value <- "#eFeBF7"

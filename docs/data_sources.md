@@ -80,6 +80,14 @@ Includes all data from `data/rawdata/`
 - **Processing Scripts**: todo
 ```
 
+```markdown
+## cells_50k.consensus.Binarymat.rds
+
+- **Name**: Binary peak matrix from BCa cell lines
+- **Creation Date**: Dec2025
+- **Creation Method**: Lupien Lab binary matrix pipeline
+```
+
 ### data/rawdata/psets
 
 ```markdown
@@ -234,6 +242,14 @@ Includes all data from `data/rawdata/`
 
 - **Name**: PDX drug response data with all drugs
 - **Source**: Cescon Lab (M.E. on Jan 15, 2026)
+```
+
+```markdown
+## PDXs_50k.consensus.Binarymat.rds
+
+- **Name**: Binary peak matrix from BCa PDXs
+- **Creation Date**: Dec2025
+- **Creation Method**: Lupien Lab binary matrix pipeline
 ```
 
 ### data/rawdata/cfdna
