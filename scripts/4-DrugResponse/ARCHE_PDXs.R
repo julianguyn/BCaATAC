@@ -126,5 +126,5 @@ pc <- 0.4
 pval <- 0.1
 
 # plot bubble plots
-plot_PDX_bubbles(compile, "BR", dir)
-plot_PDX_bubbles(compile, "BAR", dir)
+plot_PDX_bubbles(compile, "BR", dir, "full")
+plot_PDX_bubbles(compile, "BAR", dir, "full")

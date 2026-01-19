@@ -160,8 +160,9 @@ assess_ARCHE_PDX <- function(df, label, dir) {
 #' @param compile data.frame. Compiled from assess_ARCHE_PDX()
 #' @param TR string. 'BR' or 'BAR'
 #' @param label string. ARCHE label for figure filepath
+#' @param type string. Drug collection used ("subset" or "full")
 #' 
-plot_PDX_bubbles <- function(compile, TR, label) {
+plot_PDX_bubbles <- function(compile, TR, label, type = "subset") {
 
     # get columns for needed treatment response
     pc_col <- switch(
@@ -174,6 +175,11 @@ plot_PDX_bubbles <- function(compile, TR, label) {
         BR = "pval.BR_median",
         BAR = "pval.BAR_median"
     )
+
+    # figure specifications
+    h <- ifelse(type == "subset", 7, 25)
+    w <- ifelse(type == "subset", 7, 8)
+    lim <- ifelse(type == "subset", 0.8, 1)
 
     # subset and format dataframe
     sig <- compile[which(abs(compile[[pc_col]]) > pc & compile[[pval_col]] < pval),]
@@ -198,8 +204,9 @@ plot_PDX_bubbles <- function(compile, TR, label) {
             low = "#BC4749",
             high = "#689CB0",
             mid = "#C2BBC9",
-            limits = c(-0.8, 0.8)
+            limits = c(-lim, lim)
         ) +
+        scale_y_discrete(labels = function(x) sub(".*_", "", x)) +
         theme_minimal() +
         theme(
             panel.border = element_rect(color = "black", fill = NA, size = 0.5),
@@ -210,11 +217,11 @@ plot_PDX_bubbles <- function(compile, TR, label) {
         ggtitle(sub("PC.", "", sub("_median", "", pc_col)))
 
     filepath <- paste0("data/results/figures/4-DrugResponse/PDX/bubbleplots/", label, "_", TR, ".png")
-    png(filepath, width=7, height=7, units='in', res = 600, pointsize=80)
+    png(filepath, width=w, height=h, units='in', res = 600, pointsize=80)
     print(p)
     dev.off()
 
     # save sig associations
-    filepath <- paste0("data/results/data/4-DrugResponse/PDX/SigAssociations/", label, ".csv")
+    filepath <- paste0("data/results/data/4-DrugResponse/PDX/SigAssociations/", label, "_", TR, ".csv")
     write.csv(toPlot, file = filepath, quote = FALSE, row.names = FALSE)
 }
