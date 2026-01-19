@@ -105,7 +105,7 @@ two_pal <- c(
 tech_pal <- c(
     "nergiz" = "#474056",
     "tina" = "#8A95A5",
-    "komal" = "#B4C4C6"
+    "komal" = "#BAC4D0"
 )
 
 random_blue <- "#3E517A"
