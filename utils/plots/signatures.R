@@ -446,3 +446,35 @@ plot_motifs <- function(arche, analysis) {
     print(p)
     dev.off()
 }
+
+#' Plot correlation plots of ARCHE scores and clinical variables
+#' 
+plot_corr_arche_cv <- function(mat, pheno) {
+
+    arches <- paste0("ARCHE", 1:6)
+    vars <- c("years_to_birth", "Tumor_purity", "overall_survival")
+
+    for (arche in arches) {
+        scores <- mat[mat$ARCHE == arche,]
+        for (var in vars) {
+
+            scores$p <- as.numeric(pheno[match(scores$variable, rownames(pheno)),][[var]])
+            corr <- cor.test(scores$value, scores$p)
+            pval <- round(corr$p.value, 4)
+            pcc <- round(corr$estimate, 4)
+
+            filename <- paste0("data/results/figures/1-Signatures/clinicalvars/", arche, "_", var, ".png")
+            png(filename, width=5, height=4, units='in', res = 600, pointsize=80)
+            print(ggplot(scores, aes(x = value, y = p)) +
+                geom_point() +
+                geom_smooth(method = "lm", se = FALSE) +
+                theme_classic() + 
+                theme(
+                    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+                    plot.title = element_text(size = 12)
+                ) +
+                labs(x = paste(arche, "Score"), y = var, title = paste0("PCC: ", pcc, "; pval: ", pval)))
+            dev.off()
+        }  
+    }
+}

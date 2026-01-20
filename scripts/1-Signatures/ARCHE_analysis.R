@@ -118,9 +118,13 @@ sig_tukey <- tukey[tukey$"p adj" < 0.05,]
 
 sig_codes <- round(sig_tukey$"p adj", 4)
 
+# box plots
 plot_clinical(toPlot, "age")
 plot_clinical(toPlot, "OS")
 plot_clinical(toPlot, "t_purity")
+
+# correlate ARCHEs with clinical variables
+plot_corr_arche_cv(mat, pheno)
 
 ###########################################################
 # Load in BEDs
