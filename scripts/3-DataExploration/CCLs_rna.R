@@ -68,17 +68,17 @@ ccle <- apply(ccle, 2, scale_rna) |> as.data.frame()
 # Melt for correlations
 ###########################################################
 
-# add gene column
-ubr2$Gene <- rownames(ubr2)
-gray$Gene <- rownames(gray)
-gcsi$Gene <- rownames(gcsi)
-ccle$Gene <- rownames(ccle)
+# helper function to format for correlations
+format_rna <- function(pset) {
+    pset$Gene <- rownames(pset)
+    pset_m <- reshape2::melt(pset)
+    return(pset_m)
+}
 
-# melt
-ubr2_m <- reshape2::melt(ubr2)
-gray_m <- reshape2::melt(gray)
-gcsi_m <- reshape2::melt(gcsi)
-ccle_m <- reshape2::melt(ccle)
+ubr2_m <- format_rna(ubr2)
+gray_m <- format_rna(gray)
+gcsi_m <- format_rna(gcsi)
+ccle_m <- format_rna(ccle)
 
 ###########################################################
 # Correlate RNA-seq expression
@@ -117,8 +117,6 @@ plot_rna_corr(p1, p2, p3, p4, p5, p6, "Pearson_unlog")
 # Compute subtyping model scores
 ###########################################################
 
-### TODO: everything here onwards is broken since refactor
-
 # PAM50
 ubr2_pam50 <- score_bca_subtype(ubr2, meta, model = "pam50")
 ccle_pam50 <- score_bca_subtype(ccle, meta, model = "pam50")
@@ -134,7 +132,7 @@ ubr2_scmod2 <- score_bca_subtype(ubr2, meta, model = "scmod2")
 save(
     ubr2_pam50, ubr2_scmgene, ubr2_scmod2,
     ccle_pam50, gcsi_pam50, gray_pam50,
-    file = "data/results/data/3-DataExploration/subtyping_scores.RData"
+    file = "data/results/data/3-DataExploration/ccls_subtyping_scores.RData"
 )
 
 ###########################################################

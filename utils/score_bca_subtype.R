@@ -15,7 +15,9 @@ score_bca_subtype <- function(rna, meta, model) {
 
     if (do.mapping == TRUE) {   # if not PAM50
         subset_meta <- meta[-which(is.na(meta$EntrezGene.ID)),]
-        rna <- rna[,match(subset_meta$Ensembl, colnames(rna))]
+        keep <- intersect(subset_meta$Ensembl, colnames(rna))
+        rna <- rna[,keep]
+        subset_meta <- subset_meta[subset_meta$Ensembl %in% keep,]
         colnames(rna) <- subset_meta$EntrezGene.ID[match(subset_meta$Ensembl, colnames(rna))]
 
         # average across duplicates
