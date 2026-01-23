@@ -206,47 +206,36 @@ pcc <- data.frame(matrix(nrow=0, ncol=5))
 colnames(pcc) <- c("ARCHE_Drug", "Label", "PSet", "PCC", "pvalue")
 
 # plot for pairs of interest
-indiv_plots("ARCHE1_Olaparib")
-indiv_plots("ARCHE1_Topotecan")
-indiv_plots("ARCHE1_SN-38")
-indiv_plots("ARCHE1_Paclitaxel")
-indiv_plots("ARCHE1_Everolimus")
-indiv_plots("ARCHE1_Eribulin")
+indiv_plots("ARCHE4_Etoposide")
+indiv_plots("ARCHE6_Etoposide")
 
-indiv_plots("ARCHE2_Olaparib")
-indiv_plots("ARCHE2_Topotecan")
-indiv_plots("ARCHE2_SN-38")
 indiv_plots("ARCHE2_Paclitaxel")
-indiv_plots("ARCHE2_Everolimus")
-indiv_plots("ARCHE2_Eribulin")
-
-indiv_plots("ARCHE3_Olaparib")
-indiv_plots("ARCHE3_Topotecan")
-indiv_plots("ARCHE3_SN-38")
-indiv_plots("ARCHE3_Paclitaxel")
-indiv_plots("ARCHE3_Everolimus")
-indiv_plots("ARCHE3_Eribulin")
-
-indiv_plots("ARCHE4_Olaparib")
-indiv_plots("ARCHE4_Topotecan")
-indiv_plots("ARCHE4_SN-38")
-indiv_plots("ARCHE4_Paclitaxel")
-indiv_plots("ARCHE4_Everolimus")
-indiv_plots("ARCHE4_Eribulin")
-
-indiv_plots("ARCHE5_Olaparib")
-indiv_plots("ARCHE5_Topotecan")
-indiv_plots("ARCHE5_SN-38")
 indiv_plots("ARCHE5_Paclitaxel")
-indiv_plots("ARCHE5_Everolimus")
-indiv_plots("ARCHE5_Eribulin")
-
-indiv_plots("ARCHE6_Olaparib")
-indiv_plots("ARCHE6_Topotecan")
-indiv_plots("ARCHE6_SN-38")
 indiv_plots("ARCHE6_Paclitaxel")
-indiv_plots("ARCHE6_Everolimus")
-indiv_plots("ARCHE6_Eribulin")
+
+bcl2 <- c(
+    "decitabine:navitoclax (2:1 mol/mol)",
+    "doxorubicin:navitoclax (2:1 mol/mol)",
+    "alisertib:navitoclax (2:1 mol/mol)",
+    "navitoclax:MST-312 (1:1 mol/mol)",
+    "selumetinib:navitoclax (8:1 mol/mol)"
+)
+pairs <- paste0("ARCHE2_", bcl2)
+for (pair in pairs) {
+    indiv_plots(pair)
+}
+indiv_plots("ARCHE5_navitoclax:birinapant (1:1 mol/mol)")
+
+indiv_plots("ARCHE1_Olaparib")
+
+indiv_plots("ARCHE5_Simvastatin")
+indiv_plots("ARCHE4_Simvastatin")
+indiv_plots("ARCHE6_Simvastatin")
+indiv_plots("ARCHE6_Lovastatin")
+indiv_plots("ARCHE2_Simvastatin")
+indiv_plots("ARCHE2_Lovastatin")
+indiv_plots("ARCHE3_Simvastatin")
+
 
 write.csv(pcc, file = "data/results/data/4-DrugResponse/CCLs/indiv_PCC.csv", quote = FALSE, row.names = FALSE)
 
