@@ -23,7 +23,30 @@ meta <- read.csv("metadata/lupien_metadata.csv")
 # label dups
 dups <- meta$sampleid[duplicated(meta$sampleid)]
 meta$dup <- ifelse(meta$sampleid %in% dups, meta$sampleid, "unique")
+
+# load in pdx subtypes
+load("data/results/data/3-DataExploration/pdxs_subtyping_scores.RData")
+
+###########################################################
+# Format metadata files
+###########################################################
+
+# keep only sampleid and subtype
+pdx_meta <- data.frame(
+    sampleid = rownames(pdx_pam50),
+    subtype = pdx_pam50$Subtype
+)
+
+# get necessary variables
+pdx_meta <- pdx_meta[pdx_meta$sampleid %in% meta$sampleid,]
+pdx_meta$tech <- meta$tech[match(pdx_meta$sampleid, meta$sampleid)]
+pdx_meta$dup <- meta$dup[match(pdx_meta$sampleid, meta$sampleid)]
+pdx_meta$filename <- meta$filename[match(pdx_meta$sampleid, meta$sampleid)]
+
+# label dups
 meta$sampleid[meta$sampleid %in% dups] <- paste0(meta$sampleid[meta$sampleid %in% dups], " (", meta$tech[meta$sampleid %in% dups], ")")
+pdx_meta$sampleid[pdx_meta$sampleid %in% dups] <- paste0(pdx_meta$sampleid[pdx_meta$sampleid %in% dups], " (", pdx_meta$tech[pdx_meta$sampleid %in% dups], ")")
+
 
 ###########################################################
 # Format peaks for correlation
@@ -42,7 +65,7 @@ format_mats <- function(df, meta) {
 }
 
 df_cells <- format_mats(df_cells, meta)
-df_pdxs <- format_mats(df_pdxs, meta)
+df_pdxs <- format_mats(df_pdxs, pdx_meta)
 
 
 ###########################################################
@@ -57,7 +80,7 @@ corr_pdxs <- cor(df_pdxs, use = "complete.obs")
 ###########################################################
 
 # helper function to plot heatmap
-plot_heatmap <- function(corr_df, label) {
+plot_heatmap <- function(corr_df, label, meta) {
 
     # set colours for plotting
     score_pal <- colorRamp2(seq(min(corr_df), max(corr_df), length = 3), c("#BBCDE5", "#5189BD", "#49516F"))
@@ -75,7 +98,8 @@ plot_heatmap <- function(corr_df, label) {
         Subtype = meta$subtype[match(colnames(corr_df), meta$sampleid)],
         Tech = meta$tech[match(colnames(corr_df), meta$sampleid)],
         Dup = meta$dup[match(colnames(corr_df), meta$sampleid)],
-        col = list(Subtype = subtype_pal, Tech = tech_pal, Dup = pal)
+        col = list(Subtype = subtype_pal, Tech = tech_pal, Dup = pal),
+        na_col = "white"
     )
 
     # plot heatmap
@@ -99,5 +123,5 @@ plot_heatmap <- function(corr_df, label) {
     dev.off()
 }
 
-plot_heatmap(corr_cells, "cells")
-plot_heatmap(corr_pdxs, "pdxs")
+plot_heatmap(corr_cells, "cells", meta)
+plot_heatmap(corr_pdxs, "pdxs", pdx_meta)
