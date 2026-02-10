@@ -303,6 +303,14 @@ Includes all data from `data/rawdata/`
 - **url**: in log.txt
 ```
 
+```markdown
+## REFLECT-6B_metadata.xlsx (Internal)
+
+- **Name**: REFLECT-6B_metadata.xlsx
+- **Source**: Bratman Lab (S.M.)
+- **Date**: Feb 10, 2026
+```
+
 ### data/rawdata/gmt
 
 ```markdown
