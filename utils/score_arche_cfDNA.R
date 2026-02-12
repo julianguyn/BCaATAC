@@ -3,7 +3,7 @@
 #' @param dir filepath. Directory of Griffin outputs
 #' @param meta metadata file
 #' 
-score_arche_cfDNA <- function(dir, meta) {
+score_arche_cfDNA <- function(dir, meta = FALSE) {
 
     dir <- paste0("data/rawdata/cfDNA/", dir)
 
@@ -31,10 +31,12 @@ score_arche_cfDNA <- function(dir, meta) {
     res$Subset <- sub(".*_", "", res$Label)
 
     # add metadata variables
-    res$label <- meta$time_id[match(res$Sample, meta$sample_id)]
-    res$TF <- meta$metrics_tf[match(res$Sample, meta$sample_id)]
-    res$pheno <- meta$pheno_id[match(res$Sample, meta$sample_id)]
-    res$TF_group <- ifelse(res$TF > 10, "TF>10", "TF<10")
+    if (meta != FALSE) {
+        res$label <- meta$time_id[match(res$Sample, meta$sample_id)]
+        res$TF <- meta$metrics_tf[match(res$Sample, meta$sample_id)]
+        res$pheno <- meta$pheno_id[match(res$Sample, meta$sample_id)]
+        res$TF_group <- ifelse(res$TF > 10, "TF>10", "TF<10")
+    }
 
     return(res)
 }

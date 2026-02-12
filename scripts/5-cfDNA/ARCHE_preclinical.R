@@ -15,8 +15,9 @@ source("utils/mappings.R")
 # Get ARCHE scores
 ###########################################################
 
-dir <- "data/rawdata/cfDNA/preclinical-ARCHE"
+dir <- "preclinical-ARCHE"
 scores <- score_arche_cfDNA(dir)
+scores$ARCHE <- sub("sig", "ARCHE", scores$ARCHE)
 
 ###########################################################
 # Map sample names
@@ -33,3 +34,7 @@ scores$Sample <- factor(
 ###########################################################
 
 plot_ARCHE_score_preclinical(scores)
+
+###########################################################
+# Plot ARCHE scores of matched ATAC-Seq
+###########################################################
