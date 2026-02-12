@@ -311,6 +311,17 @@ Includes all data from `data/rawdata/`
 - **Date**: Feb 10, 2026
 ```
 
+### data/rawdata/cfDNA-ATAC
+
+```markdown
+## chromvar-samplesOnly
+
+- **Source**: BHK Lab (J.N.)
+- **Name**: ARCHE 20k scores on samples only
+- **Creation Date**: Feb 11, 2026
+```
+
+
 ### data/rawdata/gmt
 
 ```markdown
