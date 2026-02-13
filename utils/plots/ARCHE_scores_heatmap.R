@@ -12,7 +12,7 @@ znorm <- function(df) {
 
 #' Plot ARCHE scores per ARCHE ~ sample
 #' 
-plot_ARCHE_scores_heatmap <- function(df, label, meta) {
+plot_ARCHE_scores_heatmap <- function(df, label, meta, folder = "3-DataExploration") {
 
     # unnormalized
 
@@ -20,12 +20,14 @@ plot_ARCHE_scores_heatmap <- function(df, label, meta) {
     lim <- max(c(abs(min(df)), max(df)))
     score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
 
-    ha = HeatmapAnnotation(Subtype = meta[match(colnames(df), meta$sampleid),]$subtype, 
-                       col = list(Subtype = subtype_pal))
+    ha <- HeatmapAnnotation(
+        Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
+        Tech = meta[match(colnames(df), meta$sampleid),]$tech,
+        col = list(Subtype = subtype_pal, Tech = tech_pal))
 
-    filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
-    png(filename, width = 10, height = 4, res = 600, units = "in")
-    #png(filename, width = 11, height = 4, res = 600, units = "in")
+    filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
+    #png(filename, width = 10, height = 4, res = 600, units = "in")
+    png(filename, width = 11, height = 4, res = 600, units = "in")
     print(
         Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
             column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
@@ -40,12 +42,14 @@ plot_ARCHE_scores_heatmap <- function(df, label, meta) {
     lim <- max(c(abs(min(df)), max(df)))
     score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
 
-    ha = HeatmapAnnotation(Subtype = meta[match(colnames(df), meta$sampleid),]$subtype, 
-                       col = list(Subtype = subtype_pal))
+    ha <- HeatmapAnnotation(
+        Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
+        Tech = meta[match(colnames(df), meta$sampleid),]$tech,
+        col = list(Subtype = subtype_pal, Tech = tech_pal))
 
-    filename <- paste0("data/results/figures/3-DataExploration/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")
-    png(filename, width = 10, height = 4, res = 600, units = "in")
-    #png(filename, width = 11, height = 4, res = 600, units = "in")
+    filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")
+    #png(filename, width = 10, height = 4, res = 600, units = "in")
+    png(filename, width = 11, height = 4, res = 600, units = "in")
     print(
         Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
             column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
