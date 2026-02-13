@@ -37,25 +37,63 @@ rownames(gcsi@sample[gcsi@sample$tissueid == "Prostate",])
 # LNCaP clone FGC, DU145, PC-3, LNCaP, 22Rv1
 
 ###########################################################
-# Get RNA
-###########################################################
-
-# this gives you a summarized experiment with metadata
-rna <- summarizeMolecularProfiles(
-    gdsc, # replace with pset name
-    mDataType = "Kallisto_0.46.1.rnaseq.counts"
-)
-
-# this gives you just the rna counts matrix
-rna_counts <- assay(rna)
-
-###########################################################
 # Get drug response
 ###########################################################
 
 # this gives you a drug response matrix (values are AAC)
-sensitivity <- summarizeSensitivityProfiles(
+gdsc_sen <- summarizeSensitivityProfiles(
     gdsc, # replace with pset name
     sensitivity.measure = "aac_recomputed",
     summary.stat = "median"
 )
+ctrp_sen <- summarizeSensitivityProfiles(
+    ctrp, # replace with pset name
+    sensitivity.measure = "aac_recomputed",
+    summary.stat = "median"
+)
+gcsi_sen <- summarizeSensitivityProfiles(
+    gcsi, # replace with pset name
+    sensitivity.measure = "aac_recomputed",
+    summary.stat = "median"
+)
+
+save(gdsc_sen, ctrp_sen, gcsi_sen, file = "temp/toLisanne.RData")
+
+###########################################################
+# Check for drugs in drug names
+###########################################################
+
+drugs_of_interest <- c(
+    "Tazemetostat",
+    "Valemetostat",
+    "Tulmimetostat",
+    "CPI-0209",
+    "Igermetostat",
+    "XNW5004",
+    "TR115",
+    "Mevrometostat",
+    "GSK126",
+    "EED226",
+    "UNC1999",
+    "Azacitidine",
+    "Decitabine",
+    "Cedazuridine",
+    "Guadecitabine",
+    "CC-486",
+    "Zebularine",
+    "GSK3685032"
+)
+
+drugs_of_interest[drugs_of_interest %in% rownames(ctrp_sen)]
+drugs_of_interest[drugs_of_interest %in% rownames(gcsi_sen)]
+
+ctrp_sen[
+    drugs_of_interest[drugs_of_interest %in% rownames(ctrp_sen)],
+    which(colnames(ctrp_sen) %in% rownames(ccle@sample[ccle@sample$tissueid == "Prostate",]))
+]
+
+gcsi_sen[
+    drugs_of_interest[drugs_of_interest %in% rownames(gcsi_sen)],
+    which(colnames(gcsi_sen) %in% rownames(gcsi@sample[gcsi@sample$tissueid == "Prostate",])),
+    drop = FALSE
+]
