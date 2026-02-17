@@ -101,7 +101,8 @@ plot_ARCHE_scores_heatmap_cfDNA <- function(df, meta, label) {
     Sample = meta[match(colnames(df), meta$SampleID),]$Sample,
     Model = meta[match(colnames(df), meta$SampleID),]$Model,
     Res = meta[match(colnames(df), meta$SampleID),]$Res,
-    Rep = meta[match(colnames(df), meta$SampleID),]$Rep
+    Rep = meta[match(colnames(df), meta$SampleID),]$Rep,
+    col = list(Sample = sample_pal, Model = model_pal, Res = res_pal, Rep = rep_pal)
     )
 
     filename <- paste0("data/results/figures/5-cfDNA/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")

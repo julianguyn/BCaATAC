@@ -113,3 +113,32 @@ random_blue <- "#3E517A"
 random_lightblue <- "#88A0A8"
 na_value <- "#eFeBF7"
 na_stage <- "#FAF8F3"
+
+# cfDNA-ATAC pals:
+
+res_pal <- c(
+    "Parental" = "#978897",
+    "Resistant" = "#494850"
+)
+
+model_pal <- c(
+    "CCL" = "#554971",
+    "PDO" = "#63768D",
+    "PDX" = "#8AC6D0"
+)
+
+rep_pal <- c(
+    "Rep1" = "#8B575C",
+    "Rep2" = "#C98986",
+    "NA" = na_value
+)
+
+sample_pal <- c(
+    "BPTO95" = "#A63A50",
+    "CAMA1" = "#A1674A",
+    "DCBXTO66" = "#BA6E6E",
+    "HCC1428" = "#AB9B96",
+    "MCF7" = "#604C55",
+    "T47D" = "#EEDAD8",
+    "ZR751" = "#93908B"
+)

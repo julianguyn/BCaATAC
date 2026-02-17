@@ -321,6 +321,13 @@ Includes all data from `data/rawdata/`
 - **Creation Date**: Feb 11, 2026
 ```
 
+## chromvar-allSamples
+
+- **Source**: BHK Lab (J.N.)
+- **Name**: ARCHE 20k scores on all CCLs + cfDNA samples
+- **Creation Date**: Feb 12, 2026
+```
+
 
 ### data/rawdata/gmt
 
