@@ -117,28 +117,29 @@ na_stage <- "#FAF8F3"
 # cfDNA-ATAC pals:
 
 res_pal <- c(
-    "Parental" = "#978897",
-    "Resistant" = "#494850"
+    "Parental" = "#626878",
+    "Resistant" = "#999FB0"
 )
 
 model_pal <- c(
-    "CCL" = "#554971",
-    "PDO" = "#63768D",
-    "PDX" = "#8AC6D0"
+    "CCL" = "#494F70",
+    "PDO" = "#7D8CA3",
+    "PDX" = "#94B7D3"
 )
 
-rep_pal <- c(
-    "Rep1" = "#8B575C",
-    "Rep2" = "#C98986",
-    "NA" = na_value
-)
-
-sample_pal <- c(
-    "BPTO95" = "#A63A50",
-    "CAMA1" = "#A1674A",
-    "DCBXTO66" = "#BA6E6E",
-    "HCC1428" = "#AB9B96",
-    "MCF7" = "#604C55",
-    "T47D" = "#EEDAD8",
-    "ZR751" = "#93908B"
+preclinical_pal2 <- c( 
+  "BPTO95" = "#4B4E6D",
+  "DCBXTO66" = "#6A8D92",
+  "CAMA1_xeno-Rep1" = "#493548",
+  "CAMA1_xeno-Rep2" = "#806B80",
+  "CAMA1-Rep1" = "#B2A1C2",
+  "CAMA1-Rep2" = "#D6CBE1",
+  "HCC1428-Rep1" = "#E0A458",
+  "HCC1428-Rep2" = "#FFDBB5",
+  "MCF7-Rep1" = "#CF5C36",
+  "MCF7-Rep2" = "#D08E78",
+  "T47D-Rep1" = "#8E3847",
+  "T47D-Rep2" = "#A7636F",
+  "ZR751-Rep1" = "#DA627D",
+  "ZR751-Rep2" = "#FFA5AB"
 )
