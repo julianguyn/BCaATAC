@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
   library(reshape2)
   library(readxl)
   library(ggplot2)
+  library(ggpubr)
   library(data.table)
   library(tidyverse)
   library(umap)
@@ -147,6 +148,59 @@ for (file in files) {
 plot_coverage(cov, meta, "10k")
 plot_coverage(cov, meta, "20k")
 plot_coverage(cov, meta, "50k")
+
+###########################################################
+# Plot ranking by subtype
+###########################################################
+
+group = "10k"
+arche = "ARCHE2"
+df = toPlot
+
+# helper function to plot tiles
+plot_tiles <- function(df, arche) {
+
+  toPlot <- df[df$ARCHE == arche,]
+  toPlot <- toPlot[order(toPlot$Score, decreasing = TRUE),]
+  toPlot$Rank <- 1:nrow(toPlot)
+
+  p <- ggplot(toPlot, aes(x = Rank, y = 1, fill = Subtype)) +
+    geom_tile() +
+    scale_fill_manual(values = cfDNA_subtype_pal) +
+    theme_void() +
+    theme(
+      axis.title.y = element_text(hjust = 1)
+    ) +
+    labs(y = arche)
+  return(p)
+}
+
+# helper function to plot ranking tiles
+plot_rank_scores <- function(group) {
+  
+  toPlot <- reflect[reflect$Subset == group,]
+  
+  a1 <- plot_tiles(toPlot, "ARCHE1")
+  a2 <- plot_tiles(toPlot, "ARCHE2")
+  a3 <- plot_tiles(toPlot, "ARCHE3")
+  a4 <- plot_tiles(toPlot, "ARCHE4")
+  a5 <- plot_tiles(toPlot, "ARCHE5")
+  a6 <- plot_tiles(toPlot, "ARCHE6")
+
+  p <- ggarrange(
+    a1, a2, a3, a4, a5, a6,
+    ncol = 1, nrow = 6,
+    common.legend = TRUE
+  )
+  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/rank/", group,"_Subtype.png")
+  png(filename, width=5, height=3, units='in', res = 600, pointsize=80)
+  print(p)
+  dev.off()
+}
+
+plot_rank_scores("10k")
+plot_rank_scores("20k")
+plot_rank_scores("50k")
 
 ###########################################################
 # Plot batch effects
