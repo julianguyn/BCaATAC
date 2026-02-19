@@ -33,6 +33,12 @@ subtype_pal <- c(
     "TPBC" = "#6365AF"
 )
 
+cfDNA_subtype_pal <- c(
+    "TNBC" = "#E4ABAB",
+    "ER" = "#71B1C6",
+    "HER2" = "#3E673D"
+)
+
 binary_pal <- c(
     "#899DA4", 
     "#BC4749"

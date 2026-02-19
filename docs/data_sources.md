@@ -294,6 +294,20 @@ Includes all data from `data/rawdata/`
 ```
 
 ```markdown
+## REFLECT-unfiltered/ (Internal)
+
+- **Name**: REFLECT ARCHE scores
+- **Creation Date**: 2026-02-18
+- **Creation Method**: Bratman Lab 6Base-Seq Griffin pipeline (J.N.)
+- **Input Data**: 6Base-seq bam files
+- **Processing Scripts**: /cluster/projects/bhklab/projects/BCaATAC/Griffin/REFLECT
+
+Includes: REFLECT-6B_metadata.xlsx
+- **Source**: Bratman Lab (S.M.)
+- **Date**: Feb 10, 2026
+```
+
+```markdown
 ## Collaboration_w_Tina_Griffin_Reference/ (Internal)
 
 - **Name**: 
@@ -301,14 +315,6 @@ Includes all data from `data/rawdata/`
 - **Creation Method**: Lupien & Bratman Lab (T.K. and S.M.)
 - **Access Date**: Downloaded 2025-10-09
 - **url**: in log.txt
-```
-
-```markdown
-## REFLECT-6B_metadata.xlsx (Internal)
-
-- **Name**: REFLECT-6B_metadata.xlsx
-- **Source**: Bratman Lab (S.M.)
-- **Date**: Feb 10, 2026
 ```
 
 ### data/rawdata/cfDNA-ATAC

@@ -1,9 +1,10 @@
 #' Function to score ARCHEs from Griffin outputs
 #' 
 #' @param dir filepath. Directory of Griffin outputs
+#' @param metric string. 'central_coverage' or 'mean_coverage'
 #' @param meta metadata file
 #' 
-score_arche_cfDNA <- function(dir, meta = FALSE) {
+score_arche_cfDNA <- function(dir, metric = "central_coverage", meta = FALSE) {
 
     dir <- paste0("data/rawdata/cfDNA/", dir)
 
@@ -23,7 +24,7 @@ score_arche_cfDNA <- function(dir, meta = FALSE) {
         df <- fread(paste0(dir, "/", file))
         df  <- data.frame(Sample = df$sample,
                           Label = df$site_name,
-                          Score = 1-df$central_coverage)
+                          Score = 1-df[[metric]])
         res <- rbind(res, df)
     }
 
