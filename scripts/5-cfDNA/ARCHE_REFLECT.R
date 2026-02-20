@@ -7,6 +7,8 @@ suppressPackageStartupMessages({
   library(data.table)
   library(tidyverse)
   library(umap)
+  library(ComplexHeatmap)
+  library(circlize)
 })
 
 source("utils/score_arche_cfDNA.R")
@@ -54,6 +56,51 @@ missing <- c(
   "REFLECT-0037-03", "REFLECT-0043-01", "REFLECT-0044-01",
   "REFLECT-0050-03", "REFLECT-0055-01", "REFLECT-0056-03",
   "REFLECT-0062-03")
+
+###########################################################
+# Plot heatmap
+###########################################################
+
+scores <- reflect
+group = "10k"
+
+# helper function
+plot_heatmap <- function(scores, group) {
+
+  scores <- scores[scores$Subset == group,]
+
+  df <- scores %>%
+    select(Sample, Label, Score) %>%
+    pivot_wider(
+      names_from = Label,
+      values_from = Score
+    ) %>%
+    column_to_rownames("Sample") %>%
+    t() %>% as.data.frame()
+
+  # set colours for plotting
+  lim <- max(c(abs(min(df)), max(df)))
+  score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+  
+  ha <- HeatmapAnnotation(
+      Subtype = meta$Subtype_final[match(colnames(df), meta$id_6b)],
+      SeqBatch = meta$batch_num[match(colnames(df), meta$id_6b)],
+      PipelineBatch = meta$Pipeline_batch[match(colnames(df), meta$id_6b)],
+      col = list(Subtype = cfDNA_subtype_pal))
+
+    filename <- paste0("data/results/figures/5-cfDNA/REFLECT/scores/", group, "_heatmap.png")
+    png(filename, width = 9, height = 4, res = 600, units = "in")
+    print(
+        Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
+            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
+            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
+    )
+    dev.off()
+}
+
+plot_heatmap(reflect, "10k")
+plot_heatmap(reflect, "20k")
+plot_heatmap(reflect, "50k")
 
 ###########################################################
 # Plot scores
@@ -152,10 +199,6 @@ plot_coverage(cov, meta, "50k")
 ###########################################################
 # Plot ranking by subtype
 ###########################################################
-
-group = "10k"
-arche = "ARCHE2"
-df = toPlot
 
 # helper function to plot tiles
 plot_tiles <- function(df, arche) {
