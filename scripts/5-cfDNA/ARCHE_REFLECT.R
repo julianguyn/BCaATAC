@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
   library(umap)
   library(ComplexHeatmap)
   library(circlize)
+  library(matrixStats)
 })
 
 source("utils/score_arche_cfDNA.R")
@@ -50,19 +51,11 @@ all_samples <- list.files(dir)
 table(all_samples %in% reflect$Sample)
 all_samples[-which(all_samples %in% reflect$Sample)]
 
-missing <- c(
-  "REFLECT-0005-03","REFLECT-0007-03","REFLECT-0016-03",
-  "REFLECT-0021-03", "REFLECT-0025-03", "REFLECT-0027-01",
-  "REFLECT-0037-03", "REFLECT-0043-01", "REFLECT-0044-01",
-  "REFLECT-0050-03", "REFLECT-0055-01", "REFLECT-0056-03",
-  "REFLECT-0062-03")
+missing <- c("REFLECT-0016-03", "REFLECT-0037-03", "REFLECT-0055-01", "REFLECT-0056-03")
 
 ###########################################################
 # Plot heatmap
 ###########################################################
-
-scores <- reflect
-group = "10k"
 
 # helper function
 plot_heatmap <- function(scores, group) {
@@ -147,13 +140,20 @@ plot_scores(reflect, "50k")
 # modify from utils/plots/cfdna.R
 ###########################################################
 
-plot_coverage <- function(cov, meta, group) {
+plot_coverage <- function(cov, meta, group, subset = FALSE) {
     toPlot <- cov[grep(group, cov$site_name), ]
     toPlot <- reshape2::melt(toPlot)
     toPlot$subtype <- meta$Subtype_final[match(toPlot$sample, meta$id_6b)]
     toPlot$variable <- as.numeric(as.character(toPlot$variable))
 
+    if (subset == TRUE) {
+      toPlot$site_name <- sub("_.*", "", toPlot$site_name)
+      toPlot <- toPlot[toPlot$subtype != "HER2",]
+      toPlot$subtype[toPlot$subtype == "ER"] <- "ER+"
+    }
+
     p <- ggplot(toPlot, aes(x = variable, y = value, color = subtype)) +
+      geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
       geom_line(alpha = 0.65) +
       facet_wrap(~ site_name, scales = "fixed", nrow = 2) +
       scale_color_manual("Subtype", values = cfDNA_subtype_pal) +
@@ -168,7 +168,12 @@ plot_coverage <- function(cov, meta, group) {
         x = "Position relative to site (bp)"
       )
 
-    png(paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_coverage.png"), width=9, height=6, units='in', res = 600, pointsize=80)
+    filename <- ifelse(
+      subset == TRUE,
+      paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_subset_coverage.png"),
+      paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_coverage.png")
+    )
+    png(filename, width=8, height=5, units='in', res = 600, pointsize=80)
     print(p)
     dev.off()
 }
@@ -195,6 +200,11 @@ for (file in files) {
 plot_coverage(cov, meta, "10k")
 plot_coverage(cov, meta, "20k")
 plot_coverage(cov, meta, "50k")
+
+#-- plot coverage for figure
+plot_coverage(cov, meta, "10k", subset = TRUE)
+plot_coverage(cov, meta, "20k", subset = TRUE)
+plot_coverage(cov, meta, "50k", subset = TRUE)
 
 ###########################################################
 # Plot ranking by subtype

@@ -35,7 +35,7 @@ subtype_pal <- c(
 
 cfDNA_subtype_pal <- c(
     "TNBC" = "#E4ABAB",
-    "ER" = "#71B1C6",
+    "ER+" = "#71B1C6",
     "HER2" = "#3E673D"
 )
 
