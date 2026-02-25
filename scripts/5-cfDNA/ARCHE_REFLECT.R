@@ -34,7 +34,7 @@ meta$Subtype_final[meta$Subtype_final == "ER+/HER2-"] <- "ER+"
 meta$Subtype_final[meta$Subtype_final == "TBNC"] <- "TNBC"
 meta$id_6b <- gsub("_", "-", gsub("_LB.*", "", meta$library_id))
 
-meta$Subtype_final[meta$Subtype_final == "ER+"] <- "ER"
+#meta$Subtype_final[meta$Subtype_final == "ER+"] <- "ER"
 meta$Subtype_final[meta$Subtype_final == "HER2+"] <- "HER2"
 
 ###########################################################
@@ -51,7 +51,7 @@ all_samples <- list.files(dir)
 table(all_samples %in% reflect$Sample)
 all_samples[-which(all_samples %in% reflect$Sample)]
 
-missing <- c("REFLECT-0016-03", "REFLECT-0037-03", "REFLECT-0055-01", "REFLECT-0056-03")
+missing <- c("REFLECT-0037-03")
 
 ###########################################################
 # Plot heatmap
@@ -149,7 +149,7 @@ plot_coverage <- function(cov, meta, group, subset = FALSE) {
     if (subset == TRUE) {
       toPlot$site_name <- sub("_.*", "", toPlot$site_name)
       toPlot <- toPlot[toPlot$subtype != "HER2",]
-      toPlot$subtype[toPlot$subtype == "ER"] <- "ER+"
+      #toPlot$subtype[toPlot$subtype == "ER"] <- "ER+"
     }
 
     p <- ggplot(toPlot, aes(x = variable, y = value, color = subtype)) +

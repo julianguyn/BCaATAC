@@ -62,10 +62,19 @@ cohort_pal2 <- c(
 )
 
 preclinical_pal <- c(
-    "CCL (CAMA-1)" = "#635380", 
-    "CCL (MCF-7)" = "#90708C",
-    "Organoid" = "#9A534A",
-    "Xenograft" = "#EBBDB4"
+    # organoids
+    "BPTO95" = "#4B4E6D",
+    "DCBTO66" = "#6A8D92",
+    "BXTO64" = "#9AB2BF",
+    # xenograft
+    "CAMA1_xeno" = "#493548",
+    # BCa cell lines
+    "CAMA1" = "#A7636F",
+    "MCF7" = "#FFA5AB",
+    # other cell lines
+    "A549" = "#8C775F", # lung
+    "HCT116" = "#BB816D", # colorectal
+    "SUDHL6" = "#E1B48D" # lymphoma
 )
 
 genfeat_pal <- c(

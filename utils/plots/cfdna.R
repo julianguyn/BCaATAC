@@ -1,7 +1,8 @@
 #' Plot preclinical ARCHE scores
 #' 
-plot_ARCHE_score_preclinical <- function(toPlot) {
-    png("data/results/figures/5-cfDNA/ARCHE_score_preclinical.png", width=150, height=100, units='mm', res = 600, pointsize=80)
+plot_ARCHE_score_preclinical <- function(toPlot, label) {
+    filename <- paste0("data/results/figures/5-cfDNA/ARCHE_score_preclinical", label, ".png")
+    png(filename, width=150, height=100, units='mm', res = 600, pointsize=80)
     print(ggplot(toPlot, aes(x = ARCHE, y = Score, fill = Sample)) + 
         geom_bar(stat = "identity", position = position_dodge(), color = "black") + 
         theme_classic() + 

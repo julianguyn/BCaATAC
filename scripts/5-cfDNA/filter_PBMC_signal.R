@@ -44,10 +44,14 @@ removed_er <- filter_PBMC_signal(blood_er, "BloodvsER")
 removed_basal <- filter_PBMC_signal(blood_basal, "BloodvsBasal")
 removed_her2 <- filter_PBMC_signal(blood_her2, "BloodvsHer2")
 
+# combine ER+ and BASAL
+blood_reflect <- rbind(blood_er, blood_basal)
+remove_reflect <- filter_PBMC_signal(blood_reflect, "Blood_REFLECT")
+
 ###########################################################
 # Compare sites filtered across different cases
 ###########################################################
-
+.
 plot_sites_UPSET("ARCHE1", arche_list = TRUE)
 plot_sites_UPSET("ARCHE2", arche_list = TRUE)
 plot_sites_UPSET("ARCHE3", arche_list = TRUE)

@@ -15,22 +15,16 @@ source("utils/mappings.R")
 # Get cfDNA ARCHE scores
 ###########################################################
 
-dir <- "preclinical-ARCHE"
+dir <- "preclinical-ARCHE-2026"
 scores <- score_arche_cfDNA(dir)
 scores$ARCHE <- sub("sig", "ARCHE", scores$ARCHE)
-
-###########################################################
-# Map sample names
-###########################################################
-
-scores$Sample <- factor(
-  scores$Sample, 
-  levels = c("CAMA1_30", "MCF7_merged", "BPTO95", "CAMA1_mouse_ctDNA_merged"),
-  labels = c("CCL (CAMA-1)", "CCL (MCF-7)", "Organoid", "Xenograft")
-)
+scores$Sample <- sub("_merged", "", sub("_30", "", scores$Sample))
+scores$Sample[scores$Sample == "CAMA1_mouse_ctDNA"] <- "CAMA1_xeno"
 
 ###########################################################
 # Plot ARCHE scores
 ###########################################################
 
-plot_ARCHE_score_preclinical(scores)
+plot_ARCHE_score_preclinical(scores, "2026")
+plot_ARCHE_score_preclinical(scores, "2026")
+plot_ARCHE_score_preclinical(scores, "2026")
