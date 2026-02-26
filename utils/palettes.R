@@ -124,6 +124,13 @@ tech_pal <- c(
     "sasha" = "#596D80"
 )
 
+replicate_pal <- c(
+    "technical replicate" = "#596D80",
+    "paired-end replicate" = "#8A95A5",
+    "single-end replicate" = "#474056",
+    "biological replicate" = "#BAC4D0"
+)
+
 random_blue <- "#3E517A"
 random_lightblue <- "#88A0A8"
 na_value <- "#eFeBF7"
