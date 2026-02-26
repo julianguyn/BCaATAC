@@ -308,6 +308,15 @@ Includes: REFLECT-6B_metadata.xlsx
 ```
 
 ```markdown
+## REFLECT-filtered/ (Internal)
+
+- **Name**: REFLECT ARCHE scores (filtered for ER and TNBC PBMC peaks)
+- **Creation Date**: 2026-02-26
+- **Creation Method**: Bratman Lab 6Base-Seq Griffin pipeline (J.N.)
+- **Input Data**: 6Base-seq bam files
+- **Processing Scripts**: /cluster/projects/bhklab/projects/BCaATAC/Griffin/REFLECT
+
+```markdown
 ## Collaboration_w_Tina_Griffin_Reference/ (Internal)
 
 - **Name**: 

@@ -17,14 +17,20 @@ source("utils/palettes.R")
 
 set.seed(101)
 
+# TODO: split script to run on both
+
+#dir <- "data/rawdata/cfDNA/REFLECT-unfiltered"
+#analysis <- "REFLECT-unfiltered"
+
+dir <- "data/rawdata/cfDNA/REFLECT-filtered"
+analysis <- "REFLECT-filtered"
+
 ###########################################################
 # Load in data
 ###########################################################
 
-dir <- "data/rawdata/cfDNA/REFLECT-unfiltered"
-
 # load in metadata
-meta <- read_excel(paste0(dir, "/REFLECT-6B_metadata.xlsx"), sheet = 1) |> as.data.frame()
+meta <- read_excel("data/rawdata/cfDNA/REFLECT-unfiltered/REFLECT-6B_metadata.xlsx", sheet = 1) |> as.data.frame()
 
 ###########################################################
 # Format metadata
@@ -41,7 +47,7 @@ meta$Subtype_final[meta$Subtype_final == "HER2+"] <- "HER2"
 # Get ARCHE scores
 ###########################################################
 
-reflect <- score_arche_cfDNA("REFLECT-unfiltered")
+reflect <- score_arche_cfDNA(analysis)
 reflect$Subtype <- meta$Subtype_final[match(reflect$Sample, meta$id_6b)]
 reflect$SeqBatch <- meta$batch_num[match(reflect$Sample, meta$id_6b)]
 reflect$PipelineBatch <- meta$Pipeline_batch[match(reflect$Sample, meta$id_6b)]
@@ -81,7 +87,7 @@ plot_heatmap <- function(scores, group) {
       PipelineBatch = meta$Pipeline_batch[match(colnames(df), meta$id_6b)],
       col = list(Subtype = cfDNA_subtype_pal))
 
-    filename <- paste0("data/results/figures/5-cfDNA/REFLECT/scores/", group, "_heatmap.png")
+    filename <- paste0("data/results/figures/5-cfDNA/REFLECT/scores/", group, "_", analysis, "_heatmap.png")
     png(filename, width = 9, height = 4, res = 600, units = "in")
     print(
         Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
@@ -125,7 +131,7 @@ plot_scores <- function(scores, group, metric = "cc") {
       legend.key.size = unit(0.5, 'cm')
     ) + labs(y = paste0("Score (1 - ", label, ")"))
 
-  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/scores/", group, "_", metric, "_scores.png")
+  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/scores/", group, "_", metric, "_", analysis, "_scores.png")
   png(filename, width=6, height=4, units='in', res = 600, pointsize=80)
   print(p)
   dev.off()
@@ -170,10 +176,10 @@ plot_coverage <- function(cov, meta, group, subset = FALSE) {
 
     filename <- ifelse(
       subset == TRUE,
-      paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_subset_coverage.png"),
-      paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_coverage.png")
+      paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_", analysis, "_subset_coverage.png"),
+      paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_", analysis, "_coverage.png")
     )
-    png(filename, width=8, height=5, units='in', res = 600, pointsize=80)
+    png(filename, width=8, height=4, units='in', res = 600, pointsize=80)
     print(p)
     dev.off()
 }
@@ -245,7 +251,7 @@ plot_rank_scores <- function(group) {
     ncol = 1, nrow = 6,
     common.legend = TRUE
   )
-  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/rank/", group,"_Subtype.png")
+  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/rank/", group,"_", analysis, "_Subtype.png")
   png(filename, width=5, height=3, units='in', res = 600, pointsize=80)
   print(p)
   dev.off()
@@ -280,7 +286,7 @@ plot_batch_effects <- function(group) {
   umap_scores$PipelineBatch <- factor(umap_scores$PipelineBatch)
   umap_scores$SeqBatch <- factor(umap_scores$SeqBatch)
 
-  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/batches/", group,"_Subtype.png")
+  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/batches/", group,"_", analysis, "_Subtype.png")
   png(filename, width=4, height=3, units='in', res = 600, pointsize=80)
   print(ggplot(umap_scores, aes(x = UMAP1, y = UMAP2, fill = Subtype)) +
     geom_point(shape = 21, size = 2) +
@@ -292,7 +298,7 @@ plot_batch_effects <- function(group) {
         ))
   dev.off()
 
-  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/batches/", group,"_PipelineBatch.png")
+  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/batches/", group,"_", analysis, "_PipelineBatch.png")
   png(filename, width=4, height=3, units='in', res = 600, pointsize=80)
   print(ggplot(umap_scores, aes(x = UMAP1, y = UMAP2, fill = PipelineBatch)) +
     geom_point(shape = 21, size = 2) +
@@ -304,7 +310,7 @@ plot_batch_effects <- function(group) {
         ))
   dev.off()
 
-  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/batches/", group,"_SeqBatch.png")
+  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/batches/", group,"_", analysis, "_SeqBatch.png")
   png(filename, width=4, height=3, units='in', res = 600, pointsize=80)
   print(ggplot(umap_scores, aes(x = UMAP1, y = UMAP2, fill = SeqBatch)) +
     geom_point(shape = 21, size = 2) +
