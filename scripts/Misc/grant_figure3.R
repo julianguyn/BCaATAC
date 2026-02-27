@@ -146,3 +146,101 @@ p2 <- plot_association(toPlot, "Etoposide", "ARCHE4")
 png("data/results/figures/Misc/drugresponse/etoposide.png", width=7, height=2.5, units='in', res = 600, pointsize=80)
 ggarrange(p1, p2, common.legend = TRUE, legend = "right")
 dev.off()
+
+
+#####################################################################################
+#####################################################################################
+# Make PDX plots smaller to fit on page lol
+#####################################################################################
+#####################################################################################
+
+source("utils/plots/drug_response_pdx_indivplots.R")
+source("utils/plots/drug_response_pdx.R")
+
+###########################################################
+# Load in data
+###########################################################
+
+# pdx drug response data
+xeva <- get_xeva("full")
+
+# ------ get NK
+
+# read in cell metadata
+meta <- read.csv("metadata/lupien_metadata.csv")
+
+# remove dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "komal"), ]
+
+p_meta <- meta[meta$type == "PDX", ]
+
+# load in arche scores
+nk_pdxs_50k <- get_arche_scores("pdxs", "k50", p_meta) |> znorm()
+
+# ------ get NT
+
+# read in cell metadata
+meta <- read.csv("metadata/lupien_metadata.csv")
+
+# remove dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "tina"), ]
+
+p_meta <- meta[meta$type == "PDX", ]
+
+# load in arche scores
+nt_pdxs_20k <- get_arche_scores("pdxs", "k20", p_meta) |> znorm()
+nt_pdxs_50k <- get_arche_scores("pdxs", "k50", p_meta) |> znorm()
+
+###########################################################
+# Assign ARCHE scores
+###########################################################
+
+# helper function
+format_ARCHE <- function(xeva, scores) {
+    scores <- t(scores) |> as.data.frame()
+    df <- xeva[xeva$patient.id %in% rownames(scores),]
+    df$ARCHE6 <- df$ARCHE5 <- df$ARCHE4 <- df$ARCHE3 <- df$ARCHE2 <- df$ARCHE1 <- NA
+    for (i in 1:nrow(df)) {
+        sample <- df$patient.id[i]
+        df$ARCHE1[i] <- scores[rownames(scores) == sample,]$ARCHE1
+        df$ARCHE2[i] <- scores[rownames(scores) == sample,]$ARCHE2
+        df$ARCHE3[i] <- scores[rownames(scores) == sample,]$ARCHE3
+        df$ARCHE4[i] <- scores[rownames(scores) == sample,]$ARCHE4
+        df$ARCHE5[i] <- scores[rownames(scores) == sample,]$ARCHE5
+        df$ARCHE6[i] <- scores[rownames(scores) == sample,]$ARCHE6
+        
+    }
+    return(df)
+}
+
+# get ARCHE scores
+xeva_nk_pdxs_50k <- format_ARCHE(xeva, nk_pdxs_50k)
+xeva_nt_pdxs_20k <- format_ARCHE(xeva, nt_pdxs_20k)
+xeva_nt_pdxs_50k <- format_ARCHE(xeva, nt_pdxs_50k)
+
+###########################################################
+# Plot BAR
+###########################################################
+
+get_plot <- function(df, arche, drug) {
+
+        subset_df <- df[df$drug == drug,]
+        subset_df <- subset_df[
+            complete.cases(subset_df[, c("BR_median", "BAR_median")]),
+        ]
+        p <- assess_ARCHE_TR(subset_df, arche, drug, "BAR_median", plot.indiv = TRUE)
+
+}
+
+get_plot(xeva_nk_pdxs_50k, "ARCHE4", "DATOPOTAMAB-CONTROL")
+get_plot(xeva_nt_pdxs_50k, "ARCHE4", "SACITUZAMAB-GOVITECAN")
+get_plot(xeva_nt_pdxs_50k, "ARCHE4", "AZD-8205")
+get_plot(xeva_nt_pdxs_20k, "ARCHE4", "PACLITAXEL-15DAILY")
+get_plot(xeva_nt_pdxs_20k, "ARCHE5", "CFI-400945-41.6WEEKLY")
+get_plot(xeva_nt_pdxs_20k, "ARCHE5", "PACLITAXEL-15DAILY")

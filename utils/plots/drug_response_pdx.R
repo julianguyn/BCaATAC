@@ -58,8 +58,8 @@ assess_ARCHE_TR <- function(subset_df, arche, drug, TR, plot.indiv = FALSE) {
 
         # print out plot if needed
         if (plot.indiv == TRUE) {
-            path <- paste0("data/results/figures/4-DrugResponse/PDX/indiv_plots/", TR, "/", arche, "_", drug, ".png")
-            png(path, width=5, height=6, units='in', res = 600, pointsize=80)
+            path <- paste0("data/results/figures/4-DrugResponse/PDX/indiv_plots/", arche, "_", drug, ".png")
+            png(path, width=3.5, height=5, units='in', res = 600, pointsize=80)
             print(p)
             dev.off()
         }

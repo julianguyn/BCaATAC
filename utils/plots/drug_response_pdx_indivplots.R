@@ -231,9 +231,9 @@ waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
             legend.position = "inside",
             legend.position.inside = c(1, 1),
             legend.justification.inside = c(1, 1),
-            legend.title = element_text(size = 8),
-            legend.text = element_text(size = 7),
-            legend.key.size = unit(0.3, 'cm'),
+            legend.title = element_text(size = 9),
+            legend.text = element_text(size = 9),
+            legend.key.size = unit(0.5, 'cm'),
             axis.text.x = element_blank(),
             axis.ticks.x = element_blank()
         ) +
@@ -274,8 +274,8 @@ scatter_TR <- function(df, arche, drug, TR, plot.indiv = F) {
 
     # create plot
     p <- ggplot(df, aes(x = .data[[arche]], y = .data[[TR]])) +
-        geom_point(size = 1) +
-        geom_smooth(method='lm', formula= y~x, color = random_blue) +
+        geom_smooth(method='lm', formula= y~x, color = "gray") +
+        geom_point(size = 3) +
         theme_classic() +
         theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
         labs(x = paste(arche, "Score"), y = paste(drug, label)) +
