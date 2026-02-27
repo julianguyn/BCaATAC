@@ -174,3 +174,102 @@ filename <- paste0("data/results/figures/Misc/survivalplots/", "all_ARCHEs", ".p
 png(filename, width=8, height=8, units='in', res = 600, pointsize=80)
 print(p)
 dev.off()
+
+
+#####################################################################################
+#####################################################################################
+# ARCHE cell line heatmap
+#####################################################################################
+#####################################################################################
+
+suppressPackageStartupMessages({
+    library(data.table)
+    library(matrixStats)
+    library(ComplexHeatmap)
+    library(circlize)
+    library(reshape2)
+    library(ggplot2)
+})
+
+set.seed(101)
+
+source("utils/get_data.R")
+source("utils/palettes.R")
+source("utils/plots/ARCHE_scores_heatmap.R")
+
+###########################################################
+# Load in data
+###########################################################
+
+# read in cell metadata
+meta <- read.csv("metadata/lupien_metadata.csv")
+
+# remove nergiz dups
+dups <- meta$sampleid[duplicated(meta$sampleid)]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
+
+c_meta <- meta[meta$type == "cell_line", ]
+
+# load in arche scores
+cells_20k <- get_arche_scores("cells", "k20", c_meta)
+cells_50k <- get_arche_scores("cells", "k50", c_meta)
+cells_all <- get_arche_scores("cells", "all", c_meta)
+
+# remove bad cells
+c_meta <- c_meta[-which(c_meta$sampleid %in% c("CAL51", "Hs 578T")),]
+cells_20k <- cells_20k[,-which(colnames(cells_20k) %in% c("CAL51", "Hs 578T"))]
+cells_50k <- cells_50k[,-which(colnames(cells_50k) %in% c("CAL51", "Hs 578T"))]
+cells_all <- cells_all[,-which(colnames(cells_all) %in% c("CAL51", "Hs 578T"))]
+
+###########################################################
+# Load in data
+###########################################################
+
+#' Plot ARCHE scores per ARCHE ~ sample
+#' 
+plot_ARCHE_scores_heatmap <- function(df, label, meta, folder = "3-DataExploration") {
+
+    # unnormalized
+
+    # set colours for plotting
+    lim <- max(c(abs(min(df)), max(df)))
+    score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+
+    ha <- HeatmapAnnotation(
+        Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
+        col = list(Subtype = subtype_pal))
+
+    filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
+    png(filename, width = 8, height = 4, res = 600, units = "in")
+    print(
+        Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
+            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
+            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
+    )
+    dev.off()
+
+    # normalize
+    df <- znorm(df)
+
+    # set colours for plotting
+    lim <- max(c(abs(min(df)), max(df)))
+    score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+
+    ha <- HeatmapAnnotation(
+        Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
+        col = list(Subtype = subtype_pal))
+
+    filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")
+    png(filename, width = 9, height = 4, res = 600, units = "in")
+    print(
+        Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
+            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
+            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
+    )
+    dev.off()
+}
+
+
+plot_ARCHE_scores_heatmap(cells_20k, "cells_20k_CIHR", c_meta)
+plot_ARCHE_scores_heatmap(cells_50k, "cells_50k_CIHR", c_meta)
+plot_ARCHE_scores_heatmap(cells_50k, "cells_all_CIHR", c_meta)
