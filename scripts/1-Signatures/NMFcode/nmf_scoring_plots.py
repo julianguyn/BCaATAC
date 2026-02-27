@@ -7,7 +7,7 @@ matplotlib.rcParams['ps.fonttype'] = 42
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import linregress
-NC_ar = list(range(1,41))
+NC_ar = list(range(2,14))
 NC_ar = np.array(NC_ar)
 
 sys.path.append('scripts/1-Signatures/NMFcode/utils')
