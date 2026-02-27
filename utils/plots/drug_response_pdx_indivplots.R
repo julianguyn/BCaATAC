@@ -275,8 +275,8 @@ scatter_TR <- function(df, arche, drug, TR, plot.indiv = F) {
     # create plot
     p <- ggplot(df, aes(x = .data[[arche]], y = .data[[TR]])) +
         geom_smooth(method='lm', formula= y~x, color = "gray") +
-        geom_point(size = 3) +
-        theme_classic() +
+        geom_point(size = 2.5) +
+        theme_minimal() +
         theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
         labs(x = paste(arche, "Score"), y = paste(drug, label)) +
         ggtitle(paste("PCC:", cor, ", pval:", pval))
