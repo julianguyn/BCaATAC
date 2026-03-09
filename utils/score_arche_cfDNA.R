@@ -3,7 +3,7 @@
 #' @param dir filepath. Directory of Griffin outputs
 #' @param meta metadata file
 #' 
-score_arche_cfDNA <- function(dir, meta = NULL) {
+score_arche_cfDNA <- function(dir, meta = NULL, noARCHE = FALSE) {
 
     dir <- paste0("data/rawdata/cfDNA/", dir)
 
@@ -26,6 +26,8 @@ score_arche_cfDNA <- function(dir, meta = NULL) {
                           Score = 1-df$central_coverage)
         res <- rbind(res, df)
     }
+
+    if (noARCHE == TRUE) return(res)
 
     res$ARCHE <- sub("_.*", "", res$Label)
     res$Subset <- sub(".*_", "", res$Label)

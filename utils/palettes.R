@@ -136,6 +136,11 @@ random_lightblue <- "#88A0A8"
 na_value <- "#eFeBF7"
 na_stage <- "#FAF8F3"
 
+REF052_pal <- c(
+    "REF052" = "#444054",
+    "Other" = "#BEBBBB"
+)
+
 # cfDNA-ATAC pals:
 
 res_pal <- c(
