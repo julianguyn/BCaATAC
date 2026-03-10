@@ -1,10 +1,17 @@
 # temporary script, formating promoter file for HOMER to search models with UGT1A6 promoter accessibility
+# two parts
+# 1 - score UGT1A6 from chromvar
+# 2 - score UGT1A6 from Griffin
 
 # load libraries
 suppressPackageStartupMessages({
   library(data.table)
   library(GenomicRanges)
 })
+
+# ---------------------------------------------------------
+# Part 1
+# ---------------------------------------------------------
 
 ###########################################################
 # Prepare promoter region data
@@ -98,3 +105,45 @@ compiled <- compiled[order(compiled$overlap_bp, decreasing = TRUE),]
 compiled <- unique(compiled)
 
 write.csv(compiled, file = "/cluster/projects/bhklab/projects/BCaATAC/Misc/data/results/BCa_UGT1A6_overlap.csv", quote = FALSE, row.names = FALSE)
+
+
+# ---------------------------------------------------------
+# Part 2
+# ---------------------------------------------------------
+
+###########################################################
+# Make Griffin bed file
+###########################################################
+
+# promoters
+bed <- fread("data/rawdata/tracks/promoter_UGT1A6.csv")
+bed <- data.frame(
+    Chrom = "chr2",
+    Start = as.numeric(gsub(",", "", bed$'Promoter Start Site')),
+    End = as.numeric(gsub(",", "", bed$'Promoter End Site'))
+)
+bed$position <- bed$End - ((bed$End - bed$Start) / 2)
+
+write.table(
+    bed,
+    file = "data/procdata/tracks/promoter_UGT1A6.txt",
+    quote = FALSE,
+    sep = "\t",
+    col.names = TRUE,
+    row.names = FALSE
+)
+
+# cCREs
+bed <- fread("data/rawdata/tracks/cCREs_UGT1A6.txt")
+bed <- bed[,c(1:3)]
+colnames(bed) <- c("Chrom", "Start", "End")
+bed$position <- bed$End - ((bed$End - bed$Start) / 2)
+
+write.table(
+    bed,
+    file = "data/procdata/tracks/cCREs_UGT1A6.txt",
+    quote = FALSE,
+    sep = "\t",
+    col.names = TRUE,
+    row.names = FALSE
+)
