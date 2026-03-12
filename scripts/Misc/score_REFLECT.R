@@ -26,7 +26,7 @@ set.seed(101)
 args <- commandArgs(trailingOnly = TRUE)
 analysis <- args[1]
 
-valid <- c("NFE2LC", "MYC", "ATF2")
+valid <- c("NFE2LC", "MYC", "ATF2", "UGT1A6")
 if (is.na(analysis) || !analysis %in% valid) {
   stop(
     sprintf("Invalid analysis argument '%s'. Must be one of: %s",
@@ -34,7 +34,7 @@ if (is.na(analysis) || !analysis %in% valid) {
     call. = FALSE
   )
 }
-dir <- paste0("TF_Scores_fullrun/", analysis)
+dir <- paste0("TF_Scores_Mitchell/", analysis)
 
 ###########################################################
 # Load in data
@@ -57,7 +57,7 @@ meta$REF052 <- ifelse(meta$sample_id == "REF052", "REF052", "Other")
 # Get TF scores
 ###########################################################
 
-scores <- score_arche_cfDNA("TF_Scores_fullrun/NFE2LC", noARCHE = TRUE)
+scores <- score_arche_cfDNA(dir, noARCHE = TRUE)
 
 ###########################################################
 # Plot heatmap
@@ -83,14 +83,14 @@ plot_heatmap <- function(scores, analysis) {
       REF052 = meta$REF052[match(colnames(df), meta$id_6b)],
       col = list(Subtype = cfDNA_subtype_pal, REF052 = REF052_pal))
 
-    filename <- paste0("data/results/figures/Misc/TF_Scoring/", analysis, "_heatmap.png")
-    png(filename, width = 9, height = 3, res = 600, units = "in")
-    print(
-        Heatmap(df, cluster_rows = FALSE, name = "TF Binding\nScore", col = score_pal,
-            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
-            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
-    )
-    dev.off()
+  filename <- paste0("data/results/figures/Misc/TF_Scoring/", analysis, "_heatmap.png")
+  png(filename, width = 9, height = 3, res = 600, units = "in")
+  print(
+      Heatmap(df, cluster_rows = FALSE, name = "TF Binding\nScore", col = score_pal,
+          column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
+          row_names_gp = gpar(fontsize = 10), top_annotation = ha)
+  )
+  dev.off()
 }
 
 plot_heatmap(scores, analysis)
@@ -101,7 +101,7 @@ plot_heatmap(scores, analysis)
 
 scores$REF052 <- ifelse(scores$Sample == "REFLECT-0052-03", "REF052", "Other")
 scores <- scores[order(scores$Score, decreasing = TRUE),]
-scores$Sample <- factor(scores$Sample, levels = scores$Sample)
+scores$Sample <- factor(scores$Sample, levels = unique(scores$Sample))
 
 p <- ggplot(scores, aes(x = Sample, y = Score, fill = REF052)) +
     geom_bar(stat = "identity", color = "black") +
@@ -112,6 +112,24 @@ p <- ggplot(scores, aes(x = Sample, y = Score, fill = REF052)) +
         panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
         legend.key.size = unit(0.5, 'cm')
     )
+
+if (analysis == "UGT1A6") {
+  p <- ggplot(scores, aes(x = Sample, y = Score, fill = Label)) +
+    geom_bar(stat = "identity", color = "black", position = position_dodge()) +
+    scale_fill_manual(values = binary_pal) +
+    theme_minimal() +
+    theme(
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+        legend.key.size = unit(0.5, 'cm')
+    ) + geom_text(
+      data = scores %>% filter(Sample == "REFLECT-0052-03"),
+      aes(label = "*"),
+      position = position_dodge(width = 0.9),
+      vjust = -0.7,
+      size = 6
+  )
+}
 
 filename <- paste0("data/results/figures/Misc/TF_Scoring/", analysis, "_scores.png")
 png(filename, width=8, height=5, units='in', res = 600, pointsize=80)
@@ -134,7 +152,7 @@ plot_coverage <- function(cov, meta, analysis) {
       geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
       geom_line(alpha = 0.65) +
       scale_color_manual("REF052", values = REF052_pal) +
-      coord_cartesian(ylim = c(0.75, 1.1)) +
+      #coord_cartesian(ylim = c(0.75, 1.1)) +
       theme_classic() +
       theme(
         panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
@@ -151,7 +169,7 @@ plot_coverage <- function(cov, meta, analysis) {
       geom_hline(yintercept = 1, linetype = "dashed", color = "gray") +
       geom_line(alpha = 0.65) +
       scale_color_manual("Subtype", values = cfDNA_subtype_pal) +
-      coord_cartesian(ylim = c(0.75, 1.1)) +
+      #coord_cartesian(ylim = c(0.75, 1.1)) +
       theme_classic() +
       theme(
         panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
@@ -173,19 +191,29 @@ plot_coverage <- function(cov, meta, analysis) {
 
 # get all griffin files
 files <- list.files(
-    dir,
+    paste0("data/rawdata/cfDNA/", dir),
     recursive = TRUE,
-    pattern = "GC_corrected.coverage.tsv"
+    pattern = "GC_corrected.coverage.tsv",
+    full.names = TRUE
 )
 samples <- gsub("/.*", "", files)
 
 # get covergage across positions
 cov <- data.frame(matrix(nrow=0, ncol=134))
 for (file in files) {
-    df <- fread(paste0(dir, "/", file), data.table = FALSE)
+    df <- fread(file, data.table = FALSE)
     df <- df[, c("sample", "site_name", names(df)[1:132])] |> as.data.frame()
     cov <- rbind(cov, df)
 }
 
 # plot coverage plots
-plot_coverage(cov, meta, analysis)
+if (analysis == "UGT1A6") {
+  # promoter
+  toPlot <- cov[cov$site_name == "UGT1A6_promoter",]
+  plot_coverage(toPlot, meta, "UGT1A6_promoter")
+  # cCREs
+  toPlot <- cov[cov$site_name == "UGT1A6_cCREs",]
+  plot_coverage(toPlot, meta, "UGT1A6_cCREs")
+} else {
+  plot_coverage(cov, meta, analysis)
+}

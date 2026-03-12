@@ -137,7 +137,7 @@ write.table(
 bed <- fread("data/rawdata/tracks/cCREs_UGT1A6.txt")
 bed <- bed[,c(1:3)]
 colnames(bed) <- c("Chrom", "Start", "End")
-bed$position <- bed$End - ((bed$End - bed$Start) / 2)
+bed$position <- bed$End - ((bed$End - bed$Start) / 2) |> round()
 
 write.table(
     bed,
