@@ -54,6 +54,8 @@ results <- results[order(results$Tumour_Fraction, decreasing = TRUE),]
 results$Sample <- factor(results$Sample, levels = results$Sample)
 results$REF052 <- ifelse(results$Sample == "REFLECT-0052-03", "REF052", "Other")
 
+# save results
+write.csv(results, file = "data/results/data/5-cfDNA/REFLECT/tumour_fractions.csv", quote = FALSE, row.names = FALSE)
 
 ###########################################################
 # Plot counts

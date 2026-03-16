@@ -40,18 +40,8 @@ dir <- paste0("TF_Scores_Mitchell/", analysis)
 # Load in data
 ###########################################################
 
-# load in metadata
-meta <- read_excel("data/rawdata/cfDNA/REFLECT-unfiltered/REFLECT-6B_metadata.xlsx", sheet = 1) |> as.data.frame()
-
-###########################################################
-# Format metadata
-###########################################################
-
-meta$id_6b <- gsub("_", "-", gsub("_LB.*", "", meta$library_id))
-meta$Subtype_final[meta$Subtype_final == "ER+/HER2-"] <- "ER+"
-meta$Subtype_final[meta$Subtype_final == "TBNC"] <- "TNBC"
-meta$Subtype_final[meta$Subtype_final == "HER2+"] <- "HER2"
-meta$REF052 <- ifelse(meta$sample_id == "REF052", "REF052", "Other")
+# load in tumour fractions and metadata
+meta <- read.csv("data/results/data/5-cfDNA/REFLECT/tumour_fractions.csv")
 
 ###########################################################
 # Get TF scores
@@ -79,8 +69,9 @@ plot_heatmap <- function(scores, analysis) {
   score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
   
   ha <- HeatmapAnnotation(
-      Subtype = meta$Subtype_final[match(colnames(df), meta$id_6b)],
-      REF052 = meta$REF052[match(colnames(df), meta$id_6b)],
+      Subtype = meta$subtype[match(colnames(df), meta$Sample)],
+      TumourFraction = meta$Tumour_Fraction[match(colnames(df), meta$Sample)],
+      REF052 = meta$REF052[match(colnames(df), meta$Sample)],
       col = list(Subtype = cfDNA_subtype_pal, REF052 = REF052_pal))
 
   filename <- paste0("data/results/figures/Misc/TF_Scoring/", analysis, "_heatmap.png")
@@ -102,21 +93,14 @@ plot_heatmap(scores, analysis)
 scores$REF052 <- ifelse(scores$Sample == "REFLECT-0052-03", "REF052", "Other")
 scores <- scores[order(scores$Score, decreasing = TRUE),]
 scores$Sample <- factor(scores$Sample, levels = unique(scores$Sample))
+scores$TF <- meta$Tumour_Fraction[match(scores$Sample, meta$Sample)]
 
-p <- ggplot(scores, aes(x = Sample, y = Score, fill = REF052)) +
-    geom_bar(stat = "identity", color = "black") +
-    scale_fill_manual(values = REF052_pal) +
-    theme_minimal() +
-    theme(
-        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
-        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
-        legend.key.size = unit(0.5, 'cm')
-    )
 
 if (analysis == "UGT1A6") {
-  p <- ggplot(scores, aes(x = Sample, y = Score, fill = Label)) +
+  p <- ggplot(scores, aes(x = Sample, y = Score, fill = TF)) +
     geom_bar(stat = "identity", color = "black", position = position_dodge()) +
-    scale_fill_manual(values = binary_pal) +
+    facet_wrap(~Label) +
+    scale_fill_gradient(low = "white", high = random_blue) +
     theme_minimal() +
     theme(
         axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
@@ -129,10 +113,28 @@ if (analysis == "UGT1A6") {
       vjust = -0.7,
       size = 6
   )
+  w <- 12
+} else {
+  p <- ggplot(scores, aes(x = Sample, y = Score, fill = TF)) +
+      geom_bar(stat = "identity", color = "black") +
+      scale_fill_gradient(low = "white", high = random_blue) +
+      theme_minimal() +
+      theme(
+          axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+          legend.key.size = unit(0.5, 'cm')
+      ) + geom_text(
+        data = scores %>% filter(Sample == "REFLECT-0052-03"),
+        aes(label = "*"),
+        position = position_dodge(width = 0.9),
+        vjust = -0.7,
+        size = 6
+    )
+  w <- 8
 }
 
 filename <- paste0("data/results/figures/Misc/TF_Scoring/", analysis, "_scores.png")
-png(filename, width=8, height=5, units='in', res = 600, pointsize=80)
+png(filename, width=w, height=5, units='in', res = 600, pointsize=80)
 p
 dev.off()
 
