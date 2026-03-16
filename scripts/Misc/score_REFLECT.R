@@ -47,9 +47,9 @@ meta <- read_excel("data/rawdata/cfDNA/REFLECT-unfiltered/REFLECT-6B_metadata.xl
 # Format metadata
 ###########################################################
 
+meta$id_6b <- gsub("_", "-", gsub("_LB.*", "", meta$library_id))
 meta$Subtype_final[meta$Subtype_final == "ER+/HER2-"] <- "ER+"
 meta$Subtype_final[meta$Subtype_final == "TBNC"] <- "TNBC"
-meta$id_6b <- gsub("_", "-", gsub("_LB.*", "", meta$library_id))
 meta$Subtype_final[meta$Subtype_final == "HER2+"] <- "HER2"
 meta$REF052 <- ifelse(meta$sample_id == "REF052", "REF052", "Other")
 

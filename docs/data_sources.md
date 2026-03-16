@@ -378,3 +378,13 @@ Includes: REFLECT-6B_metadata.xlsx
 - **Track type**: NFE2L2
 - **Cell type**: All
 ```
+
+### data/rawdata/cfdna-ichorCNA
+
+```markdown
+## TF
+
+- **Name**: Tumour Fraction parameters for REFLECT
+- **Download Date**: 2026-03-13
+- **Source**: Bratman lab cluster (S.M.)
+```
