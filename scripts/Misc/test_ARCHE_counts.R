@@ -30,8 +30,10 @@ meta <- read.csv("metadata/lupien_metadata.csv")
 dups <- meta$sampleid[duplicated(meta$sampleid)]
 meta$sampleid[meta$sampleid %in% dups] <- paste0(meta$sampleid[meta$sampleid %in% dups], " (", meta$tech[meta$sampleid %in% dups], ")")
 
-c_meta <- meta[meta$type == "cell_line", ]
-p_meta <- meta[meta$type == "PDX", ]
+# load in sample ARCHE deviation scores
+arche_dev <- read.table(paste0("data/rawdata/ARCHE_counts/", samples, ".Deviations.txt"))
+colnames(arche_dev) <- sub("^X", "", gsub("\\.(?!$)", "-", colnames(arche_dev), perl = TRUE))
+colnames(arche_dev) <- meta$sampleid[match(colnames(arche_dev), meta$filename)]
 
 # load in ARCHE counts
 counts <- paste0("data/rawdata/ARCHE_counts/", samples, ".counts_filtered.Rdata")
@@ -45,7 +47,7 @@ rownames(arche_mat) <- paste(arche_mat$seqnames, arche_mat$start, arche_mat$end,
 arche_mat <- arche_mat[,-which(colnames(arche_mat) %in% c("seqnames", "start", "end"))]
 
 ###########################################################
-# Get ARCHE scores
+# Get ARCHE scores from counts and consensus matrices
 ###########################################################
 
 arche_scores <- data.frame(matrix(nrow=0, ncol=ncol(counts)))
@@ -64,75 +66,43 @@ colnames(arche_scores) <- colnames(counts)
 colnames(arche_scores) <- meta$sampleid[match(colnames(arche_scores), meta$filename)]
 
 ###########################################################
-# Get ARCHE scores
+# Plot heatmaps
 ###########################################################
 
 # helper function to make heatmap
-plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, folder) {
+plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, znorm = FALSE) {
+
+    # normalize
+    if (znorm == TRUE) {
+        cat("Normalizing\n")
+        toPlot <- znorm(df)
+    } else {
+        toPlot <- df
+    }
     
-    score_pal = colorRamp2(seq(min(df), max(df), length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+    score_pal <- colorRamp2(seq(min(toPlot), max(toPlot), length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+    count_pal <- colorRamp2(seq(min(colSums(df)), max(colSums(df)), length = 3), c("#E8D6CB", "#AD6A6C", "#5D2E46"))
 
     ha <- HeatmapAnnotation(
         Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
         Tech = meta[match(colnames(df), meta$sampleid),]$tech,
         PeakCount = colSums(df),
-        col = list(Subtype = subtype_pal, Tech = tech_pal))
+        col = list(Subtype = subtype_pal, Tech = tech_pal, PeakCount = count_pal))
 
-    filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
-    #png(filename, width = 10, height = 4, res = 600, units = "in")
+    filename <- paste0("data/results/figures/Misc/ARCHE_counts/", label, "_ARCHE_scores.png")
     png(filename, width = 11, height = 4, res = 600, units = "in")
     print(
-        Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
+        Heatmap(toPlot, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
             column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
             row_names_gp = gpar(fontsize = 10), top_annotation = ha)
     )
     dev.off()
 }
 
-#' Plot ARCHE scores per ARCHE ~ sample
-#' 
-plot_ARCHE_scores_heatmap <- function(df, label, meta, folder = "3-DataExploration") {
+# plot heatmap of deviation scores
+plot_ARCHE_scores_heatmap_counts(arche_dev, paste0(samples, "_deviations"), meta)
+plot_ARCHE_scores_heatmap_counts(arche_dev, paste0(samples, "_znorm_deviations") , meta, znorm = TRUE)
 
-    # unnormalized
-
-    # set colours for plotting
-    lim <- max(c(abs(min(df)), max(df)))
-    score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
-
-    ha <- HeatmapAnnotation(
-        Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
-        Tech = meta[match(colnames(df), meta$sampleid),]$tech,
-        col = list(Subtype = subtype_pal, Tech = tech_pal))
-
-    filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
-    #png(filename, width = 10, height = 4, res = 600, units = "in")
-    png(filename, width = 11, height = 4, res = 600, units = "in")
-    print(
-        Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
-            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
-            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
-    )
-    dev.off()
-
-    # normalize
-    df <- znorm(df)
-
-    # set colours for plotting
-    lim <- max(c(abs(min(df)), max(df)))
-    score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
-
-    ha <- HeatmapAnnotation(
-        Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
-        Tech = meta[match(colnames(df), meta$sampleid),]$tech,
-        col = list(Subtype = subtype_pal, Tech = tech_pal))
-
-    filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")
-    #png(filename, width = 10, height = 4, res = 600, units = "in")
-    png(filename, width = 11, height = 4, res = 600, units = "in")
-    print(
-        Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
-            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
-            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
-    )
-    dev.off()
-}
+# plot heatmap of count matrix scores
+plot_ARCHE_scores_heatmap_counts(arche_scores, paste0(samples, "_countmat"), meta)
+plot_ARCHE_scores_heatmap_counts(arche_scores, paste0(samples, "_znorm_countmat") , meta, znorm = TRUE)
