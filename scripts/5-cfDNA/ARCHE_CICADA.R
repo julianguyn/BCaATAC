@@ -144,10 +144,20 @@ plot_score_progression <- function(df, label) {
 
   p <- ggplot(df, aes(x = label, y = Score, fill = pheno, group = patientid)) +
     geom_line(color = "grey50", alpha = 0.6) +
-    geom_point(shape = 21) +
+    geom_point(shape = 21, size = 3) +
     scale_fill_manual(values = binary_pal) +
     facet_wrap(~ARCHE, scales = "free") +
     theme_bw() +
     labs(x = "", y = "ARCHE Score", fill = "Phenotype")
+  filename <- paste0("data/results/figures/5-cfDNA/CICADA/", label, "_sample_progression.png")
+  ggsave(filename, p, width = 7, height = 5)
 
 }
+
+plot_score_progression(c_unfiltered_10k, "CICADA-unfiltered_10k")
+plot_score_progression(c_unfiltered_20k, "CICADA-unfiltered_20k")
+plot_score_progression(c_unfiltered_50k, "CICADA-unfiltered_50k")
+
+plot_score_progression(c_bloodvser_10k, "CICADA-BloodvsER-25_10k")
+plot_score_progression(c_bloodvser_20k, "CICADA-BloodvsER-25_20k")
+plot_score_progression(c_bloodvser_50k, "CICADA-BloodvsER-25_50k")
