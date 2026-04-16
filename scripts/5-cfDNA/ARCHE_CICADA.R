@@ -122,3 +122,32 @@ coverage_panel <- function(folder, meta) {
 
 coverage_panel("CICADA-unfiltered", meta)
 coverage_panel("CICADA-BloodvsER-25", meta)
+
+###########################################################
+# Compare matched baseline and progression samples
+###########################################################
+
+df <- c_bloodvser_10k
+
+# helper function to compare baseline and progression
+plot_score_progression <- function(df, label) {
+
+  df$patientid <- sub("^([^-]+-[^-]+)-.*$", "\\1", df$Sample)
+
+  # remove TF < 3% (including on treatment controls)
+  low_TF <- df$patientid[df$TF < 3] # remove 9 patients
+  df <- df[-which(df$patientid %in% low_TF),]
+
+  # keep samples with both baseline and progression
+  matched <- intersect(df$patientid[df$label == "Baseline"], df$patientid[df$label == "Progression"]) # 12 samples
+  df <- df[df$patientid %in% matched,]
+
+  p <- ggplot(df, aes(x = label, y = Score, fill = pheno, group = patientid)) +
+    geom_line(color = "grey50", alpha = 0.6) +
+    geom_point(shape = 21) +
+    scale_fill_manual(values = binary_pal) +
+    facet_wrap(~ARCHE, scales = "free") +
+    theme_bw() +
+    labs(x = "", y = "ARCHE Score", fill = "Phenotype")
+
+}
