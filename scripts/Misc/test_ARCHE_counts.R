@@ -57,6 +57,7 @@ arche_zscores <- get_arche_scores(tolower(sub("_.*", "", samples)), arche_thres,
 arche_dev <- read.table(paste0("data/rawdata/ARCHE_counts/", samples, ".Deviations.txt"))
 colnames(arche_dev) <- sub("^X", "", gsub("\\.(?!$)", "-", colnames(arche_dev), perl = TRUE))
 colnames(arche_dev) <- meta$sampleid[match(colnames(arche_dev), meta$filename)]
+arche_dev <- arche_dev[,-which(colnames(arche_dev) == "104987")]
 
 # load in ARCHE counts
 counts <- paste0("data/rawdata/ARCHE_counts/", samples, ".counts_filtered.Rdata")
@@ -99,6 +100,8 @@ plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, znorm = FALSE) {
     if (znorm == TRUE) {
         cat("Normalizing\n")
         toPlot <- znorm(df)
+        toPlot <- toPlot[, colSums(is.na(toPlot)) == 0]
+        df <- df[,colnames(df) %in% colnames(toPlot)]
     } else {
         toPlot <- df
     }
@@ -195,7 +198,12 @@ plot_ordered_arche_scores <- function(arche, order) {
         )
 
     filename <- paste0("data/results/figures/Misc/ARCHE_counts/", samples, "_", arche, "_", order, ".png")
-    ggsave(filename, p1+p2+plot_layout(heights = c(1, 2)), width = 9, height = 2.25)
+    
+    if (sub("_.*", "", samples) == "cells") {
+        ggsave(filename, p1+p2+plot_layout(heights = c(1, 2)), width = 9, height = 2.25)
+    } else {
+        ggsave(filename, p1+p2+plot_layout(heights = c(1, 2)), width = 10, height = 2)
+    }
 }
 
 for (arche in paste0("ARCHE", 1:6)) {
