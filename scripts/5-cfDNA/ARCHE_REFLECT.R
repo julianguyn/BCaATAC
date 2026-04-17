@@ -32,6 +32,9 @@ analysis <- "REFLECT-filtered"
 # load in metadata
 meta <- read_excel("data/rawdata/cfDNA/REFLECT-unfiltered/REFLECT-6B_metadata.xlsx", sheet = 1) |> as.data.frame()
 
+# load in tumour fractions (from Misc/TF_REFLECT.R)
+tf <- read.csv("data/results/data/5-cfDNA/REFLECT/tumour_fractions.csv")
+
 ###########################################################
 # Format metadata
 ###########################################################
@@ -52,12 +55,9 @@ reflect$Subtype <- meta$Subtype_final[match(reflect$Sample, meta$id_6b)]
 reflect$SeqBatch <- meta$batch_num[match(reflect$Sample, meta$id_6b)]
 reflect$PipelineBatch <- meta$Pipeline_batch[match(reflect$Sample, meta$id_6b)]
 
-# check incomplete files
-all_samples <- list.files(dir)
-table(all_samples %in% reflect$Sample)
-all_samples[-which(all_samples %in% reflect$Sample)]
-
-missing <- c("REFLECT-0037-03")
+# remove low tumour fraction
+low_TF <- tf$Sample[tf$Tumour_Fraction < 0.05] #24 out of 58
+reflect <- reflect[-which(reflect$Sample %in% low_TF),] #34 samples left
 
 ###########################################################
 # Plot heatmap
@@ -179,7 +179,7 @@ plot_coverage <- function(cov, meta, group, subset = FALSE) {
       paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_", analysis, "_subset_coverage.png"),
       paste0("data/results/figures/5-cfDNA/REFLECT/coverage/", group,"_", analysis, "_coverage.png")
     )
-    png(filename, width=8, height=4, units='in', res = 600, pointsize=80)
+    png(filename, width=6, height=4, units='in', res = 600, pointsize=80)
     print(p)
     dev.off()
 }
@@ -202,15 +202,13 @@ for (file in files) {
     cov <- rbind(cov, df)
 }
 
+# remove low TF samples
+cov <- cov[-which(cov$sample %in% low_TF),]
+
 # plot coverage plots
 plot_coverage(cov, meta, "10k")
 plot_coverage(cov, meta, "20k")
 plot_coverage(cov, meta, "50k")
-
-#-- plot coverage for figure
-plot_coverage(cov, meta, "10k", subset = TRUE)
-plot_coverage(cov, meta, "20k", subset = TRUE)
-plot_coverage(cov, meta, "50k", subset = TRUE)
 
 ###########################################################
 # Plot ranking by subtype
