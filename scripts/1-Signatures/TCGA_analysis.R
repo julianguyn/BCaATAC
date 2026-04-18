@@ -44,7 +44,7 @@ meta$ARCHE <- factor(meta$ARCHE, levels = rev(names(ARCHE_pal)))
 meta$Tumor_purity <- as.numeric(meta$Tumor_purity)
 meta$years_to_birth <- as.numeric(meta$years_to_birth)
 meta$overall_survival <- as.numeric(meta$overall_survival)
-meta$pathologic_stage <- factor(meta$pathologic_stage, levels = names(stage_pal))
+meta$pathologic_stage <- factor(meta$pathologic_stage, levels = rev(names(stage_pal)))
 
 ###########################################################
 # Plot subtype/ARCHE
@@ -69,7 +69,7 @@ p <- ggplot(meta, aes(y = .data[[ref]], fill = .data[[ref]])) +
     axis.title.x = element_text(size = 10)) +
   labs(x = "Tumour Sample Count")
 
-ggsave(paste0(OUTDIR, ref, ".png"), p, width = 3, height = 2.5, bg = "transparent")
+ggsave(paste0(OUTDIR, ".png"), p, width = 3, height = 2.5, bg = "transparent")
 
 ###########################################################
 # Plot stage and ARCHE score
@@ -86,11 +86,12 @@ plot_prop <- function(column_name, legend_title, pal, filename) {
             axis.title.y = element_blank(),
             axis.text.y = element_blank(),
             axis.ticks.y = element_blank(),
-            axis.title.x = element_text(size = 10)
+            axis.title.x = element_text(size = 10),
+            legend.position = "none"
         ) +
         labs(x = "Proportion", fill = legend_title)
 
-    ggsave(paste0(OUTDIR, filename), p, width = 3, height = 2.5, bg = "transparent")
+    ggsave(paste0(OUTDIR, filename), p, width = 2, height = 2.5, bg = "transparent")
 }
 
 plot_prop("pathologic_stage", "Stage", stage_pal, "stage.png")
@@ -107,10 +108,10 @@ if (ref == "Subtype") {
 # helper function to plot boxplots
 plot_boxplot <- function(column_name, axis_name, filename) {
 
-    p <- ggplot(meta, aes(y = Subtype, x = .data[[column_name]], fill = Subtype)) +
+    p <- ggplot(meta, aes(y = .data[[ref]], x = .data[[column_name]], fill = .data[[ref]])) +
         geom_boxplot() +
         geom_jitter(height = 0.1) +
-        scale_fill_manual(values = subtype_pal) +
+        scale_fill_manual(values = main_pal) +
         theme_bw() +
         theme(
             legend.position = "none",
