@@ -9,7 +9,13 @@ source("utils/palettes.R")
 
 set.seed(123)
 
-OUTDIR <- "data/results/figures/1-Signatures/TCGA_ARCHE_vars/"
+# set variables based on analysis
+args <- commandArgs(trailingOnly = TRUE)
+ref <- args[1] # either "Subtype" or "ARCHE"
+
+OUTDIR <- paste0("data/results/figures/1-Signatures/TCGA_ARCHE_vars/", ref, "_")
+main_pal <- switch(ref, Subtype = subtype_pal, ARCHE = ARCHE_pal)
+comp_pal <- switch(ref, Subtype = ARCHE_pal, ARCHE = subtype_pal)
 
 ###########################################################
 # Load in data
@@ -34,26 +40,27 @@ for (column in colnames(pheno)) {
 
 # format clinical vars
 meta$Subtype <- factor(meta$Subtype, levels = rev(names(subtype_pal)))
+meta$ARCHE <- factor(meta$ARCHE, levels = rev(names(ARCHE_pal)))
 meta$Tumor_purity <- as.numeric(meta$Tumor_purity)
 meta$years_to_birth <- as.numeric(meta$years_to_birth)
 meta$overall_survival <- as.numeric(meta$overall_survival)
 meta$pathologic_stage <- factor(meta$pathologic_stage, levels = names(stage_pal))
 
 ###########################################################
-# Plot subtype
+# Plot subtype/ARCHE
 ###########################################################
 
-p <- ggplot(meta, aes(y = Subtype, fill = Subtype)) +
+p <- ggplot(meta, aes(y = .data[[ref]], fill = .data[[ref]])) +
   geom_bar(color = "black", width = 0.95, linewidth = 0.3) +
   geom_text(
     stat = "count",
-    aes(label = after_stat(count), colour = Subtype %in% c("Basal", "LumB")),
+    aes(label = after_stat(count), colour = .data[[ref]] %in% c("Basal", "LumB")),
     x = 1.25,
     hjust = 0,
     vjust = 0.5,
     size = 3
   ) +
-  scale_fill_manual(values = subtype_pal) +
+  scale_fill_manual(values = main_pal) +
   scale_colour_manual(values = c("FALSE" = "black", "TRUE" = "white"), guide = "none") +
   theme_bw() +
   theme(
@@ -62,7 +69,7 @@ p <- ggplot(meta, aes(y = Subtype, fill = Subtype)) +
     axis.title.x = element_text(size = 10)) +
   labs(x = "Tumour Sample Count")
 
-ggsave(paste0(OUTDIR, "subtype.png"), p, width = 3, height = 2.5, bg = "transparent")
+ggsave(paste0(OUTDIR, ref, ".png"), p, width = 3, height = 2.5, bg = "transparent")
 
 ###########################################################
 # Plot stage and ARCHE score
@@ -70,7 +77,7 @@ ggsave(paste0(OUTDIR, "subtype.png"), p, width = 3, height = 2.5, bg = "transpar
 
 # helper function to plot proportions
 plot_prop <- function(column_name, legend_title, pal, filename) {
-    p <- ggplot(meta, aes(y = Subtype, fill = .data[[column_name]])) +
+    p <- ggplot(meta, aes(y = .data[[ref]], fill = .data[[column_name]])) +
         geom_bar(position = "fill", color = "black", width = 0.95, linewidth = 0.3) +
         scale_x_continuous(labels = scales::percent, limits = c(-0.05, 1.05)) +
         scale_fill_manual(values = pal) +
@@ -87,7 +94,11 @@ plot_prop <- function(column_name, legend_title, pal, filename) {
 }
 
 plot_prop("pathologic_stage", "Stage", stage_pal, "stage.png")
-plot_prop("ARCHE", "ARCHE", ARCHE_pal, "ARCHE.png")
+if (ref == "Subtype") {
+    plot_prop("ARCHE", "ARCHE", comp_pal, "ARCHE.png")
+} else {
+    plot_prop("Subtype", "Subtype", comp_pal, "subtype.png")
+}
 
 ###########################################################
 # Plot distribution of other clinical variables
