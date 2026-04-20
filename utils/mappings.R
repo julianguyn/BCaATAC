@@ -43,7 +43,8 @@ mapping_cells <- c( "AU665" = "AU565",      # misspelt in tdxd
                     "X600MPE" = "600MPE",
                     "ZR751" = "ZR-75-1")
 
-mapping_drugs <- c("carboplatin" = "Carboplatinum", 
+mapping_drugs <- c("945" = "CFI-400945",
+                    "carboplatin" = "Carboplatinum", 
                     "dipyridamole" = "Dipyridamole", 
                     "epirubicin" = "Epirubicin", 
                     "eribulin" = "Eribulin", 

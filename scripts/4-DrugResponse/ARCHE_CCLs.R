@@ -36,7 +36,7 @@ meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
 
 # remove komal dups
 dups <- meta$sampleid[duplicated(meta$sampleid)]
-meta <- meta[!(meta$sampleid %in% dups & meta$tech == "komal"), ]
+meta <- meta[!(meta$sampleid %in% dups & meta$tech == "tina"), ]
 
 c_meta <- meta[meta$type == "cell_line", ]
 
@@ -212,6 +212,8 @@ indiv_plots("ARCHE6_Etoposide")
 indiv_plots("ARCHE2_Paclitaxel")
 indiv_plots("ARCHE5_Paclitaxel")
 indiv_plots("ARCHE6_Paclitaxel")
+
+indiv_plots("ARCHE4_945")
 
 bcl2 <- c(
     "decitabine:navitoclax (2:1 mol/mol)",
