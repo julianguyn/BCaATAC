@@ -245,11 +245,14 @@ plot_clinical <- function(toPlot, var) {
 plot_ATAC_Upset <- function(m, label) {
 
     # set filter
-    filter <- ifelse(label == "all", 2000000, 100000)
+    filter <- ifelse(label %in% c("50k", "all"), 1500000, 100000)
     m = m[comb_size(m) > filter]
 
     if (label == "20k") {
         w = 7
+        h = 4
+    } else if (label == "50k") {
+        w = 8
         h = 4
     } else {
         w = 11
@@ -259,9 +262,13 @@ plot_ATAC_Upset <- function(m, label) {
     filename <- paste0("data/results/figures/1-Signatures/ATAC_Upset_", label, ".png")
     png(filename, width = w, height = h, res = 600, units = "in")
     print(
-        UpSet(m, set_order = c(paste0("ARCHE", 1:6)), comb_order = order(-comb_size(m)),
-        bg_col = "gray", 
-        right_annotation = upset_right_annotation(m))
+        UpSet(
+            m, set_order = c(paste0("ARCHE", 1:6)),
+            comb_order = order(-comb_size(m)),
+            bg_col = "gray", 
+            right_annotation = upset_right_annotation(m),
+            top_annotation = upset_top_annotation(m, add_numbers = TRUE)
+        )
     )
     dev.off()
 }
@@ -271,12 +278,13 @@ plot_ATAC_Upset <- function(m, label) {
 plot_annotatePeak <- function(toPlot, label) {
 
     filename <- paste0("data/results/figures/1-Signatures/annotatePeak_", label, ".png")
-    png(filename, width = 7, height = 5, res = 600, units = "in")
+    png(filename, width = 7, height = 4, res = 600, units = "in")
     print(
         ggplot(toPlot, aes(fill=Feature, y=Frequency, x=ARCHE)) + 
             geom_bar(position="fill", stat="identity", color = "black", size = 0.1) +
             scale_fill_manual(values = genfeat_pal) +
             theme_minimal() + 
+            theme(axis.title.x = element_blank()) +
             labs(y = "Percentage (%)")
         )
     dev.off()

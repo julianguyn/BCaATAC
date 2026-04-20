@@ -28,8 +28,8 @@ set.seed(123)
 
 #' For now, using the 20k sites
 #' May be worth assessing with 10k?
-# analysis = c("20k", "all") 
-analysis <- "20k"
+# analysis = c("20k", "50k", "all") 
+analysis <- "50k"
 
 ###########################################################
 # Load in data
