@@ -58,6 +58,33 @@ get_arche_scores <- function(sample, arche, meta) {
     return(scores)
 }
 
+# - load in deviations
+#' Get ARCHE deviation scores for samples
+#'
+#' @param sample string. "cells" or "PDXs"
+#' @param arche string. "20k", "50k", or "all"
+#' @return ARCHE deviation scores for requested samples.
+#' 
+get_arche_devs <- function(sample, arche, meta) {
+
+    filename <- paste0("data/rawdata/ARCHE_counts/", sample, "_", arche, ".Deviations.txt")
+    scores <- fread(filename, data.table = FALSE) |> suppressWarnings()
+    scores$V1 <- NULL
+    rownames(scores) <- paste0("ARCHE", 1:6)
+    print(dim(scores))
+    print(scores[1:5,1:5])
+
+    # standardize sample names of cell lines
+    colnames(scores) <- sub("^X", "", gsub("\\.(?!$)", "-", colnames(scores), perl = TRUE))
+    scores <- scores[, colnames(scores) %in% meta$filename]
+    colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
+    scores <- scores[, order(colnames(scores))]
+    if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]
+    if (sample == "PDXs") colnames(scores) <- map_pdx(colnames(scores))
+
+    return(scores)
+}
+
 #' Extract AAC for drug of interest
 #'
 #' Helper function for plot_CCLs().
