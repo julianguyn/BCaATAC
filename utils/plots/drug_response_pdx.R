@@ -81,7 +81,7 @@ assess_ARCHE_TR <- function(subset_df, arche, drug, TR, plot.indiv = FALSE) {
 #' @param dir string. Parent directory to save results
 #' @export Panel of plots.
 #' 
-assess_ARCHE_PDX <- function(df, label, dir) {
+assess_ARCHE_PDX <- function(df, label, dir, plot = TRUE) {
 
     # initialize dataframe to store results
     combinations <- matrix(data = NA, nrow = length(unique(df$drug)) * 6, ncol = 10) |> as.data.frame()
@@ -104,7 +104,7 @@ assess_ARCHE_PDX <- function(df, label, dir) {
     #    print(i)
         arche <- combinations$ARCHE[i]
         drug <- combinations$drug[i]
-        print(paste(arche, drug))
+        #print(paste(arche, drug))
 
         subset_df <- df[df$drug == drug,]
         subset_df <- subset_df[
@@ -113,14 +113,16 @@ assess_ARCHE_PDX <- function(df, label, dir) {
 
         combinations$N[i] <- nrow(subset_df)
 
-        # mRECIST
-        p1 <- assess_ARCHE_mRECIST(subset_df, arche, drug)
+        if (plot == TRUE) {
+            # mRECIST
+            p1 <- assess_ARCHE_mRECIST(subset_df, arche, drug)
 
-        # BR Median
-        p2 <- assess_ARCHE_TR(subset_df, arche, drug, "BR_median")
+            # BR Median
+            p2 <- assess_ARCHE_TR(subset_df, arche, drug, "BR_median")
 
-        # BAR Median
-        p3 <- assess_ARCHE_TR(subset_df, arche, drug, "BAR_median")
+            # BAR Median
+            p3 <- assess_ARCHE_TR(subset_df, arche, drug, "BAR_median")
+        }
 
         if (nrow(subset_df) > 2) {
             # compute BR pearson's correlation
@@ -134,24 +136,28 @@ assess_ARCHE_PDX <- function(df, label, dir) {
             combinations$pval.BAR_median[i] <- round(pc$p.value, 4)
         }
 
-        # compile plots into panels
-        if (!is.na(p2) && !is.na(p3)) {
-            filepath <- paste0("data/results/figures/4-DrugResponse/PDX/", dir, "/", label, "/", arche, "_", drug, ".png")
-            png(filepath, width=12, height=5, units='in', res = 600, pointsize=80)
-            print(grid::grid.draw(
-                arrangeGrob(
-                    p1, p2, p3, ncol = 4, nrow = 2,
-                    layout_matrix = rbind(c(1,1,2,3), c(1,1,2,3))
-                ))) # TODO:: prints NULL here, remove somehow
-            dev.off()
-        } else {
-            print("Not enough observations")
+        if (plot == TRUE) {
+            # compile plots into panels
+            if (!is.na(p2) && !is.na(p3)) {
+                filepath <- paste0("data/results/figures/4-DrugResponse/PDX/", dir, "/", label, "/", arche, "_", drug, ".png")
+                png(filepath, width=12, height=5, units='in', res = 600, pointsize=80)
+                print(grid::grid.draw(
+                    arrangeGrob(
+                        p1, p2, p3, ncol = 4, nrow = 2,
+                        layout_matrix = rbind(c(1,1,2,3), c(1,1,2,3))
+                    ))) # TODO:: prints NULL here, remove somehow
+                dev.off()
+            } else {
+                print("Not enough observations")
+            }
         }
     }
 
-    # write out combinations
-    filepath <- paste0("data/results/data/4-DrugResponse/PDX/", dir, "/", label, ".csv")
-    write.csv(combinations, file = filepath, quote = FALSE, row.names = FALSE)
+    if (plot == TRUE) {
+        # write out combinations
+        filepath <- paste0("data/results/data/4-DrugResponse/PDX/", dir, "/", label, ".csv")
+        write.csv(combinations, file = filepath, quote = FALSE, row.names = FALSE)
+    }
     return(combinations)
 }
 
