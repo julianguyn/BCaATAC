@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
     library(dplyr)
     library(readxl)
     library(data.table)
+    library(patchwork)
 })
 
 source("utils/get_data.R")
@@ -193,47 +194,97 @@ pdx_toPlot <- rbind(
     x_deviat_k, x_normdv_k
 )
 colnames(pdx_toPlot)[colnames(pdx_toPlot) == "ARCHE_label"] <- "Label"
-colnames(pdx_toPlot)[colnames(pdx_toPlot) == "pairs"] <- "pair"
+colnames(pdx_toPlot)[colnames(pdx_toPlot) == "pair"] <- "pairs"
 
 save(cell_toPlot, pdx_toPlot, file = "data/results/data/Misc/ARCHE_drug_response_testing.RData")
 
 ###########################################################
-# Plot results
+# Plot PDX results
 ###########################################################
 
-pair <- "ARCHE5_Paclitaxel"
+for (arche in paste0("ARCHE", 1:6)) {
+    compile <- pdx_toPlot
+    sig <- compile[which(abs(compile$PC.BAR_median) > 0.4 & compile$pval.BAR_median < 0.1),]
+    sig_pairs <- sig$pair
+    toPlot <- compile[compile$pair %in% sig_pairs,]
+    toPlot$sig <- ifelse(toPlot$pval.BAR_median < 0.1, 'pval < 0.1', 'pval >= 0.1')
+
+    toPlot$Label <- factor(toPlot$Label, levels = c(
+        "zscore_T", "zscore_K", "deviat_T", "deviat_K",
+        "normzscr_T", "normzscr_K", "normdev_T", "normdev_K")
+    )
+
+    subset <- toPlot[toPlot$ARCHE == arche,]
+
+    p1 <- ggplot(subset, aes(x = drug, y = "No. Samples", fill = N)) +
+        geom_tile() +
+        geom_text(data = subset, aes(label = N)) +
+        scale_fill_gradient(high = "#B6B8D6", low = "#BBDBD1") +
+        theme_void() +
+        theme(
+            legend.position = "none") +
+        ggtitle(arche)
+
+    p2 <- ggplot(subset, aes(x = drug, y = Label, fill = PC.BAR_median, size = -log(pval.BAR_median), shape = sig)) +
+        geom_point() +
+        geom_text(data = subset(subset, sig == 'pval < 0.1'), aes(label = round(PC.BAR_median, 2)), color = "black", size = 2.5) +
+        scale_shape_manual(values = c(21, 24)) +
+        scale_size(range = c(2, 12)) +
+        scale_fill_gradient2(
+            low = "#BC4749",
+            high = "#689CB0",
+            mid = "#C2BBC9",
+            limits = c(-1, 1)
+        ) +
+        theme_bw() +
+        theme(
+            legend.key.size = unit(0.3, 'cm'),
+            axis.text.x = element_text(size=6, angle=45, hjust=1, vjust=1, margin = margin(t = 3))
+        ) 
+    
+    p <- p1 / p2 + plot_layout(heights = c(1, 6))
+    filename <- paste0("data/results/figures/Misc/ARCHE_dr_test/PDXs_", arche, ".png")
+    ggsave(filename, p, w = 10, h = 5)
+}
+
+###########################################################
+# Plot cell results
+###########################################################
 
 # plot cells
-subset <- cell_toPlot[cell_toPlot$pairs == pair,]
-subset$sig <- ifelse(
-    subset$FDR < 0.1,
-    ifelse(subset$FDR < 0.05, 'FDR < 0.05', 'FDR < 0.1'),
-    'FDR >= 0.1')
-subset$text <- ifelse(
-    subset$FDR < 0.1, subset$pc, NA
-)
+plot_cells <- function(pair) {
+    subset <- cell_toPlot[cell_toPlot$pairs == pair,]
+    subset$sig <- ifelse(
+        subset$FDR < 0.1,
+        ifelse(subset$FDR < 0.05, 'FDR < 0.05', 'FDR < 0.1'),
+        'FDR >= 0.1')
+    subset$text <- ifelse(
+        subset$FDR < 0.1, subset$pc, NA
+    )
 
-subset$Label <- factor(subset$Label, levels = c(
-    "zscore_T", "zscore_K", "deviat_T", "deviat_K",
-    "normzscr_T", "normzscr_K", "normdev_T", "normdev_K"
-    ))
+    subset$Label <- factor(subset$Label, levels = c(
+        "zscore_T", "zscore_K", "deviat_T", "deviat_K",
+        "normzscr_T", "normzscr_K", "normdev_T", "normdev_K"
+        ))
 
-p <- ggplot(subset, aes(x = pset, y = Label, fill = pc, shape = sig, size = -log(FDR))) +
-    geom_point() +
-    geom_text(aes(label = round(text, 2)), color = "black", size = 2.5) +
-    scale_shape_manual(values = c(21, 22, 23)) +
-    scale_size(range = c(2, 12)) +
-    scale_fill_gradient2(
-        low = "#BC4749",
-        high = "#689CB0",
-        mid = "#C2BBC9",
-        limits = c(-0.8, 0.8)
-    ) +
-    theme_bw() +
-    theme(legend.key.size = unit(0.3, 'cm'),
-        legend.title = element_text(size = 10)) +
-    ggtitle(pair)
+    p <- ggplot(subset, aes(x = pset, y = Label, fill = pc, shape = sig, size = -log(FDR))) +
+        geom_point() +
+        geom_text(aes(label = round(text, 2)), color = "black", size = 2.5) +
+        scale_shape_manual(values = c(21, 22, 23)) +
+        scale_size(range = c(2, 12)) +
+        scale_fill_gradient2(
+            low = "#BC4749",
+            high = "#689CB0",
+            mid = "#C2BBC9",
+            limits = c(-0.8, 0.8)
+        ) +
+        theme_bw() +
+        theme(legend.key.size = unit(0.3, 'cm'),
+            legend.title = element_text(size = 10)) +
+        ggtitle(pair)
 
-filename <- paste0("data/results/figures/Misc/ARCHE_dr_test/cells_", pair, ".png")
-ggsave(filename, p, w = 6, h = 4)
+    filename <- paste0("data/results/figures/Misc/ARCHE_dr_test/cells_", pair, ".png")
+    ggsave(filename, p, w = 6, h = 4)
+}
 
+plot_cells("ARCHE5_Paclitaxel")
