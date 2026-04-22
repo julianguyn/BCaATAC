@@ -61,6 +61,37 @@ normdv_50k_k <- znorm(deviat_50k_k)
 load("data/procdata/CCLs/sensitivity_data.RData")
 
 ###########################################################
+# Try removing low deviation samples
+###########################################################
+
+# helper function to get sum of magnitude deviations
+get_devs <- function(df, label, lim1, lim2) {
+
+    devs <- colSums(abs(df)) |> as.data.frame()
+    colnames(devs) <- "Sum"
+    n1 <- paste0(as.character(length(devs[devs$Sum > lim1,])), "/", nrow(devs))
+    n2 <- paste0(as.character(length(devs[devs$Sum > lim2,])), "/", nrow(devs))
+
+    p <- ggplot(devs, aes(x = Sum)) +
+        geom_histogram(fill = random_lightblue, color = "black", linewidth = 0.3) +
+        geom_text(stat = "bin",
+            aes(label = after_stat(count)),
+            vjust = -0.5, size = 3) +
+        theme_bw() +
+        ggtitle(paste0(label, ";  n >", lim1, ":", n1, ";  n >", lim2, ":", n2))
+    filename <- paste0("data/results/figures/Misc/sumdevs/", label, ".png")
+    ggsave(filename, p, w=5, h=4)
+
+    to_keep <- rownames(devs[devs$Sum > lim1,])
+    return(to_keep)
+}
+
+zscore_50k_t_samples <- get_devs(zscore_50k_t, "zscore_T", 150, 200)
+zscore_50k_k_samples <- get_devs(zscore_50k_k, "zscore_K", 150, 200)
+deviat_50k_t_samples <- get_devs(deviat_50k_t, "deviat_T", 0.5, 0.6)
+get_devs(deviat_50k_k, "deviat_K", 0.5, 0.6)
+
+###########################################################
 # Compute PC of ARCHE-drug associations in cell lines
 ###########################################################
 
