@@ -37,6 +37,28 @@ arche_thres <- switch(
     group_all = "all"
 )
 
+# ---------------------------------------------------------
+# sumdev
+zscore_sumdev <- switch(
+    samples,
+    cells_50k = 150,
+    PDXs_50k = 100
+)
+deviat_sumdev <- switch(
+    samples,
+    cells_50k = 0.5,
+    PDXs_50k = 0.3
+)
+
+# helper function to subset for low deviation samples
+subset_sumdev <- function(df, lim) {
+    devs <- colSums(abs(df)) |> as.data.frame()
+    colnames(devs) <- "Sum"
+    to_keep <- rownames(devs[devs$Sum > lim,,drop=FALSE])
+    cat("Keeping", length(to_keep), "samples\n")
+    df <- df[,to_keep]
+}
+
 ###########################################################
 # Load in data
 ###########################################################
@@ -64,7 +86,7 @@ if ("104987" %in% colnames(arche_dev)) arche_dev <- arche_dev[,-which(colnames(a
 ###########################################################
 
 # helper function to make heatmap
-plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, znorm = FALSE) {
+plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, znorm = FALSE, subset_dev = FALSE, lim = NULL) {
 
     # normalize
     if (znorm == TRUE) {
@@ -101,10 +123,14 @@ cat("Making plots\n")
 # plot heatmap of zscore deviations (chromvar)
 plot_ARCHE_scores_heatmap_counts(arche_zscores, paste0(samples, "_zscores"), meta)
 plot_ARCHE_scores_heatmap_counts(arche_zscores, paste0(samples, "_znorm_zscores") , meta, znorm = TRUE)
+plot_ARCHE_scores_heatmap_counts(subset_sumdev(arche_zscores, zscore_sumdev), paste0(samples, "_zscores_sumdev"), meta)
+plot_ARCHE_scores_heatmap_counts(subset_sumdev(arche_zscores, zscore_sumdev), paste0(samples, "_znorm_zscores_sumdev") , meta, znorm = TRUE)
 
 # plot heatmap of deviation scores
 plot_ARCHE_scores_heatmap_counts(arche_dev, paste0(samples, "_deviations"), meta)
 plot_ARCHE_scores_heatmap_counts(arche_dev, paste0(samples, "_znorm_deviations") , meta, znorm = TRUE)
+plot_ARCHE_scores_heatmap_counts(subset_sumdev(arche_dev, deviat_sumdev), paste0(samples, "_deviations_sumdev"), meta)
+plot_ARCHE_scores_heatmap_counts(subset_sumdev(arche_dev, deviat_sumdev), paste0(samples, "_znorm_deviations_sumdev") , meta, znorm = TRUE)
 
 ###########################################################
 # Compare rank of ARCHE scoring
@@ -114,7 +140,8 @@ order_samples <- colnames(arche_zscores) # already ordered
 
 # helper function to prepare data for merge
 format_arche_scores <- function(df, label, norm = FALSE) {
-    df <- df[,match(order_samples, colnames(df))]
+    to_keep <- order_samples[order_samples %in% colnames(df)]
+    df <- df[,match(to_keep, colnames(df))]
     if (norm == TRUE) df <- znorm(df)
     df$ARCHE <- paste0("ARCHE", 1:6)
     to_merge <- reshape2::melt(df)
@@ -127,7 +154,11 @@ toPlot <- rbind(
     format_arche_scores(arche_zscores, "ZScores"),
     format_arche_scores(arche_dev, "Deviations"),
     format_arche_scores(arche_zscores, "znormZScores", norm = TRUE),
-    format_arche_scores(arche_dev, "znormDeviations", norm = TRUE)
+    format_arche_scores(arche_dev, "znormDeviations", norm = TRUE),
+    format_arche_scores(subset_sumdev(arche_zscores, zscore_sumdev), "Zscores_sumdev"),
+    format_arche_scores(subset_sumdev(arche_dev, deviat_sumdev),"Deviations_sumdev" ),
+    format_arche_scores(subset_sumdev(arche_zscores, zscore_sumdev), "znormZScores_sumdev", norm = TRUE),
+    format_arche_scores(subset_sumdev(arche_dev, deviat_sumdev), "znormDeviations_sumdev", norm = TRUE)
 )
 
 plot_order <- function(arche, label) {
@@ -150,7 +181,10 @@ plot_order <- function(arche, label) {
     return(p)
 }
 
-scores_list <- c("ZScores", "Deviations", "znormZScores", "znormDeviations")
+scores_list <- c(
+    "ZScores", "Deviations", "znormZScores", "znormDeviations",
+    "ZScores_sumdev", "Deviations_sumdev", "znormZScores_sumdev", "znormDeviations_sumdev"
+)
 for (score_type in scores_list) {
     p1 <- plot_order("ARCHE1", score_type)
     p2 <- plot_order("ARCHE2", score_type)
