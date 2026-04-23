@@ -155,7 +155,7 @@ toPlot <- rbind(
     format_arche_scores(arche_dev, "Deviations"),
     format_arche_scores(arche_zscores, "znormZScores", norm = TRUE),
     format_arche_scores(arche_dev, "znormDeviations", norm = TRUE),
-    format_arche_scores(subset_sumdev(arche_zscores, zscore_sumdev), "Zscores_sumdev"),
+    format_arche_scores(subset_sumdev(arche_zscores, zscore_sumdev), "ZScores_sumdev"),
     format_arche_scores(subset_sumdev(arche_dev, deviat_sumdev),"Deviations_sumdev" ),
     format_arche_scores(subset_sumdev(arche_zscores, zscore_sumdev), "znormZScores_sumdev", norm = TRUE),
     format_arche_scores(subset_sumdev(arche_dev, deviat_sumdev), "znormDeviations_sumdev", norm = TRUE)
