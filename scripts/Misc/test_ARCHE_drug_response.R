@@ -375,6 +375,209 @@ plot_cells("ARCHE3_KU-55933")
 
 
 # ----------------- ARCHE4 -----------------
+# ABT-263: Bcl-2 inhibitor
+plot_cells("ARCHE4_WEHI-539")
+plot_cells("ARCHE4_navitoclax:birinapant (1:1 mol/mol)")
+plot_cells("ARCHE4_navitoclax:pluripotin (1:1 mol/mol)")
+plot_cells("ARCHE4_selumetinib:navitoclax (8:1 mol/mol)")
+plot_cells("ARCHE4_navitoclax:gemcitabine (1:1 mol/mol)")
+plot_cells("ARCHE4_navitoclax:PLX-4032 (1:1 mol/mol)")
+plot_cells("ARCHE4_AZD5991") # Mcl-1 inhibitor
+
+# AZD8205 & Dato-DXd/SG/T-DXd: TOPIi (no B7-H4 or TROP-2/HER2 targeting agents)
+plot_cells("ARCHE4_Irinotecan")
+plot_cells("ARCHE4_Topotecan")
+
+# CFI-402257: Mps1/TTK inhibitor
+plot_cells("ARCHE4_AZ-3146")
+
+# Paclitaxel: MT stabilizer
+plot_cells("ARCHE4_Paclitaxel")
+plot_cells("ARCHE4_Docetaxel")
+plot_cells("ARCHE4_Ixabepilone")
+
+# Fluvastatin: HMG-CoA reductase inhibitor / statin
+plot_cells("ARCHE4_Fluvastatin")
+plot_cells("ARCHE4_Lovastatin")
+plot_cells("ARCHE4_Simvastatin")
+
+# Chemotherapies (no PDX match)
+plot_cells("ARCHE4_Epirubicin")
+plot_cells("ARCHE4_Cyclophosphamide")
+plot_cells("ARCHE4_Gemcitabine")
+plot_cells("ARCHE4_Vinorelbine")
+plot_cells("ARCHE4_Vincristine")
+
+# Platinum (no PDX match)
+plot_cells("ARCHE4_Carboplatinum")
+plot_cells("ARCHE4_Cisplatin")
+plot_cells("ARCHE4_Oxaliplatin")
+
+# HDACi (no PDX match)
+plot_cells("ARCHE4_Panobinostat")
+plot_cells("ARCHE4_Vorinostat")
+
+# AKTi (no PDX match)
+plot_cells("ARCHE4_Ipatasertib")
+plot_cells("ARCHE4_Afuresertib")
+plot_cells("ARCHE4_Uprosertib")
+plot_cells("ARCHE4_MK-2206")
+
+# PI3Ki (no PDX match)
+plot_cells("ARCHE4_Alpelisib")
+plot_cells("ARCHE4_BYL719")
+plot_cells("ARCHE4_Taselisib")
+
+# MEK inhibitors (no PDX match)
+plot_cells("ARCHE4_Trametinib")
+plot_cells("ARCHE4_Selumetinib")
+plot_cells("ARCHE4_AZD6244")
+plot_cells("ARCHE4_PD-0325901")
+plot_cells("ARCHE4_CI-1040")
+
+# mTORi (no PDX everolimus match)
+plot_cells("ARCHE4_Temsirolimus")
+plot_cells("ARCHE4_Ku-0063794")
+
+# SERD (no PDX match)
+plot_cells("ARCHE4_Fulvestrant")
+
+# PARPi (no PDX match)
+plot_cells("ARCHE4_Veliparib dihydrochloride")
+
+# ----------------- ARCHE5 -----------------
+# Paclitaxel: MT stabilizer
+plot_cells("ARCHE5_Paclitaxel")
+plot_cells("ARCHE5_Docetaxel")
+plot_cells("ARCHE5_Ixabepilone")
+
+# Eribulin: MT destabilizer
+plot_cells("ARCHE5_Vinorelbine")
+plot_cells("ARCHE5_Mebendazole")
+
+# Dato-DXd: TOPIi (no TROP2i)
+plot_cells("ARCHE5_Irinotecan")
+
+# Fluvastatin: HMG-CoA reductase inhibitor / statin
+plot_cells("ARCHE5_Fluvastatin")
+plot_cells("ARCHE5_Lovastatin")
+plot_cells("ARCHE5_Simvastatin")
+
+# Chemotherapies (no PDX match)
+plot_cells("ARCHE5_Epirubicin")
+plot_cells("ARCHE5_Cyclophosphamide")
+plot_cells("ARCHE5_Gemcitabine")
+plot_cells("ARCHE5_Ixabepilone")
+
+# Platinum (no PDX match)
+plot_cells("ARCHE5_Carboplatinum")
+plot_cells("ARCHE5_Cisplatin")
+plot_cells("ARCHE5_Oxaliplatin")
+
+# HDACi (no PDX match)
+plot_cells("ARCHE5_Panobinostat")
+plot_cells("ARCHE5_Vorinostat")
+
+# PI3Ki (no PDX match)
+plot_cells("ARCHE5_Alpelisib")
+plot_cells("ARCHE5_BYL719")
+plot_cells("ARCHE5_Pictilisib")
+plot_cells("ARCHE5_Taselisib")
+plot_cells("ARCHE5_AZD6482")
+
+# MEK inhibitors (no PDX match)
+plot_cells("ARCHE5_Trametinib")
+plot_cells("ARCHE5_Selumetinib")
+plot_cells("ARCHE5_AZD6244")
+plot_cells("ARCHE5_PD-0325901")
+plot_cells("ARCHE5_CI-1040")
+
+# mTORi (no PDX everolimus match)
+plot_cells("ARCHE5_Sirolimus")
+plot_cells("ARCHE5_Temsirolimus")
+plot_cells("ARCHE5_Ku-0063794")
+
+# PARPi (no PDX match)
+plot_cells("ARCHE5_Veliparib dihydrochloride")
+
+# SERDs (no PDX match)
+plot_cells("ARCHE5_Fulvestrant")
+plot_cells("ARCHE5_GDC0810")
+
+# Lapatinib for some reason (no PDX match)
+plot_cells("ARCHE5_Lapatinib")
+
+# Under investigation (no PDX match)
+plot_cells("ARCHE5_Adavosertib")
+plot_cells("ARCHE5_AZD7762")
+plot_cells("ARCHE5_AZD6738")
+plot_cells("ARCHE5_KU-55933")
+
+# ----------------- ARCHE6 -----------------
+# AZD5305 (PARPi)
+plot_cells("ARCHE6_Veliparib dihydrochloride")
+
+# AZD8205 (TOPIi, no B7-H4 targeting agents)
+plot_cells("ARCHE6_Irinotecan")
+plot_cells("ARCHE6_TPT")
+
+# Paclitaxel: MT stabilizer
+plot_cells("ARCHE6_Paclitaxel")
+plot_cells("ARCHE6_Docetaxel")
+plot_cells("ARCHE6_Ixabepilone")
+
+# Fluvastatin: HMG-CoA reductase inhibitor / statin
+plot_cells("ARCHE6_Lovastatin")
+plot_cells("ARCHE6_Simvastatin")
+
+# Chemotherapies (no PDX match)
+plot_cells("ARCHE6_Epirubicin")
+plot_cells("ARCHE6_Cyclophosphamide")
+plot_cells("ARCHE6_Gemcitabine")
+plot_cells("ARCHE6_Ixabepilone")
+
+# Platinum (no PDX match)
+plot_cells("ARCHE6_Carboplatinum")
+plot_cells("ARCHE6_Cisplatin")
+plot_cells("ARCHE6_Oxaliplatin")
+
+# SERDs (no PDX match)
+plot_cells("ARCHE6_Fulvestrant")
+plot_cells("ARCHE6_GDC0810")
+
+# AKTi (no PDX match)
+plot_cells("ARCHE6_Ipatasertib")
+plot_cells("ARCHE6_Afuresertib")
+plot_cells("ARCHE6_Uprosertib")
+plot_cells("ARCHE6_MK-2206")
+plot_cells("ARCHE6_AZD5363")
+
+# mTORi (no PDX everolimus match)
+plot_cells("ARCHE6_Sirolimus")
+plot_cells("ARCHE6_Temsirolimus")
+plot_cells("ARCHE6_Ku-0063794")
+
+# PI3Ki (no PDX match)
+plot_cells("ARCHE6_Alpelisib")
+plot_cells("ARCHE6_BYL719")
+plot_cells("ARCHE6_Pictilisib")
+plot_cells("ARCHE6_Taselisib")
+
+# MEK inhibitors (no PDX match)
+plot_cells("ARCHE6_Trametinib")
+plot_cells("ARCHE6_Selumetinib")
+plot_cells("ARCHE6_AZD6244")
+plot_cells("ARCHE6_PD-0325901")
+
+# HDACi (no PDX match)
+plot_cells("ARCHE6_Panobinostat")
+plot_cells("ARCHE6_Vorinostat")
+
+# Under investigation (no PDX match)
+plot_cells("ARCHE6_Adavosertib")
+plot_cells("ARCHE6_AZD7762")
+plot_cells("ARCHE6_AZD6738")
+plot_cells("ARCHE6_KU-55933")
 
 
 # todo: individual CFI-400945 plots
