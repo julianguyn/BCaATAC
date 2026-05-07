@@ -217,7 +217,7 @@ plot_cells <- function(pair) {
         ggtitle(pair)
 
     pair <- sub(" .*", "", pair)
-    filename <- paste0("data/results/figures/Misc/TCGA_bg/cells_", pair, ".png")
+    filename <- paste0("data/results/figures/Misc/TCGA_bg/cells/", pair, ".png")
     ggsave(filename, p, w = 6, h = 4)
 }
 
