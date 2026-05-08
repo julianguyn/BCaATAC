@@ -351,7 +351,11 @@ plot_cells("ARCHE3_Paclitaxel")
 plot_cells("ARCHE3_Docetaxel")
 plot_cells("ARCHE3_Ixabepilone")
 plot_cells("ARCHE3_Vinorelbine")
-plot_cells("ARCHE2_Mebendazole")
+plot_cells("ARCHE3_Mebendazole")
+
+# AZD5305 (PARPi)
+plot_cells("ARCHE3_Veliparib dihydrochloride")
+plot_cells("ARCHE3_Olaparib")
 
 # Everolimus: mTORi
 plot_cells("ARCHE3_Sirolimus")
@@ -536,8 +540,9 @@ plot_cells("ARCHE5_Sirolimus")
 plot_cells("ARCHE5_Temsirolimus")
 plot_cells("ARCHE5_Ku-0063794")
 
-# PARPi (no PDX match)
+# PARPi (AZD-5305)
 plot_cells("ARCHE5_Veliparib dihydrochloride")
+plot_cells("ARCHE5_Olaparib")
 
 # SERDs (no PDX match)
 plot_cells("ARCHE5_Fulvestrant")
@@ -555,6 +560,7 @@ plot_cells("ARCHE5_KU-55933")
 # ----------------- ARCHE6 -----------------
 # AZD5305 (PARPi)
 plot_cells("ARCHE6_Veliparib dihydrochloride")
+plot_cells("ARCHE6_Olaparib")
 
 # AZD8205 (TOPIi, no B7-H4 targeting agents)
 plot_cells("ARCHE6_Irinotecan")
@@ -564,6 +570,11 @@ plot_cells("ARCHE6_TPT")
 plot_cells("ARCHE6_Paclitaxel")
 plot_cells("ARCHE6_Docetaxel")
 plot_cells("ARCHE6_Ixabepilone")
+
+# Eribulin: MT destabilizer
+plot_cells("ARCHE6_Vinorelbine")
+plot_cells("ARCHE6_Mebendazole")
+plot_cells("ARCHE6_Eribulin")
 
 # Fluvastatin: HMG-CoA reductase inhibitor / statin
 plot_cells("ARCHE6_Lovastatin")
