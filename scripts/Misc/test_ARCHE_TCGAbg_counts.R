@@ -71,31 +71,28 @@ get_arche_devs <- function(sample, filename, meta) {
 # read in cell metadata
 meta <- read.csv("metadata/lupien_metadata.csv")
 
-# remove nergiz dups
-dups <- meta$sampleid[duplicated(meta$sampleid)]
-meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
-
-# remove second dups
-dups <- meta$sampleid[duplicated(meta$sampleid)] # only PDXs have dups
-meta_t <- meta[!(meta$sampleid %in% dups & meta$tech == "tina"), ]
-meta_k <- meta[!(meta$sampleid %in% dups & meta$tech == "komal"), ]
+c_meta <- meta[meta$type == "cell_line", ]
+p_meta <- meta[meta$type == "PDX", ]
 
 ###########################################################
 # Load in cell line data
 ###########################################################
 
-c_meta <- meta[meta$type == "cell_line", ]
-
-# load in arche zscores and normalize
+# load in arche zscores
 zscore_cells <- get_arche_scores("cells", "data/rawdata/TCGA_bg/cells_50k.Zscore.txt", c_meta)
-normzs_cells <- znorm(zscore_cells)
 
-# load in arche deviations and normalize
+# load in arche deviations
 deviat_cells <- get_arche_devs("cells", "data/rawdata/TCGA_bg/cells_50k.Deviations.txt", c_meta)
-normdv_cells <- znorm(deviat_cells)
 
-# get drug sensitivity data
-load("data/procdata/CCLs/sensitivity_data.RData")
+###########################################################
+# Load in PDX data
+###########################################################
+
+# load in arche zscores
+zscore_pdx <- get_arche_scores("pdxs", "data/rawdata/TCGA_bg/PDXs_50k.Zscore.txt", p_meta)
+
+# load in arche deviations
+deviat_pdx <- get_arche_devs("PDXs", "data/rawdata/TCGA_bg/PDXs_50k.Deviations.txt", p_meta)
 
 ###########################################################
 # Try removing low deviation samples
@@ -125,13 +122,13 @@ get_devs <- function(df, label, lim1, lim2) {
     return(df)
 }
 
-# get samples above threshold
+# get samples above threshold (cell lines)
 zscore_cells_sumdev <- get_devs(zscore_cells, "zscore_cells", 55, 75)
 deviat_cells_sumdev <- get_devs(deviat_cells, "deviat_cells", 0.25, 0.35)
 
-# normalize
-normzs_cells_sumdev <- znorm(zscore_cells_sumdev)
-normdv_cells_sumdev <- znorm(deviat_cells_sumdev)
+# get samples above threshold (PDXs)
+zscore_pdx_sumdev <- get_devs(zscore_pdx, "zscore_pdx", 55, 75)
+deviat_pdx_sumdev <- get_devs(deviat_pdx, "deviat_pdx", 0.25, 0.4)
 
 ###########################################################
 # Plot heatmaps
@@ -180,8 +177,19 @@ plot_ARCHE_scores_heatmap_counts(zscore_cells_sumdev, "cells_znorm_zscores_sumde
 
 # heatmap of cell lines deviations
 plot_ARCHE_scores_heatmap_counts(deviat_cells, "cells_deviations", c_meta)
-plot_ARCHE_scores_heatmap_counts(deviat_cells, "cells_deviations_zscores", meta, znorm = TRUE)
+plot_ARCHE_scores_heatmap_counts(deviat_cells, "cells_znorm_deviations", c_meta, znorm = TRUE)
 plot_ARCHE_scores_heatmap_counts(deviat_cells_sumdev, "cells_deviations_sumdev", c_meta)
-plot_ARCHE_scores_heatmap_counts(deviat_cells_sumdev, "cells_deviations_zscores_sumdev", meta, znorm = TRUE)
+plot_ARCHE_scores_heatmap_counts(deviat_cells_sumdev, "cells_znorm_deviations_sumdev", c_meta, znorm = TRUE)
 
 
+# plot heatmap of PDXs zscores (raw chromvar)
+plot_ARCHE_scores_heatmap_counts(zscore_pdx, "pdxs_zcores", p_meta)
+plot_ARCHE_scores_heatmap_counts(zscore_pdx, "pdxs_znorm_zscores", p_meta, znorm = TRUE)
+plot_ARCHE_scores_heatmap_counts(zscore_pdx_sumdev, "pdxs_zcores_sumdev", p_meta)
+plot_ARCHE_scores_heatmap_counts(zscore_pdx_sumdev, "pdxs_znorm_zscores_sumdev", p_meta, znorm = TRUE)
+
+# heatmap of cell lines deviations
+plot_ARCHE_scores_heatmap_counts(deviat_pdx, "pdxs_deviations", p_meta)
+plot_ARCHE_scores_heatmap_counts(deviat_pdx, "pdxs_deviations_zscores", p_meta, znorm = TRUE)
+plot_ARCHE_scores_heatmap_counts(deviat_pdx_sumdev, "pdxs_deviations_sumdev", p_meta)
+plot_ARCHE_scores_heatmap_counts(deviat_pdx_sumdev, "pdxs_deviations_zscores_sumdev", p_meta, znorm = TRUE)
