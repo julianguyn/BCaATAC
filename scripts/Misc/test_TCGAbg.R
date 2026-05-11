@@ -1,7 +1,6 @@
 # umap - run on H4H
 
 library(data.table)
-library(umap)
 
 INDIR <- "/cluster/projects/bhklab/projects/BCaATAC/BCa_ARCHE_Scoring/data/results/"
 
@@ -33,14 +32,23 @@ for (j in names(merged)) {
       0)
 }
 
-# format for umap
+# format for PCA
 merged <- as.data.frame(merged)
 rownames(merged) <- paste0(merged$seqnames, ":", merged$start, ":", merged$end)
 merged <- merged[,-c(1:3)]
 merged <- t(merged)
 
-umap_res <- umap(merged)
-umap_res <- umap_res$layout |> as.data.frame()
-umap_res$sample <- rownames(merged)
+# run PCA
+pca_res <- prcomp(merged)
+samples <- rownames(merged)
+print(head(samples))
 
-save(umap_res, file = "cell_tcga_umap.RData")
+# get variances
+variance_pca <- pca_res$sdev^2
+variance_pca / sum(variance_pca) -> prop_var
+print(head(prop_var))
+
+pca_res <- pca_res$x[,c(1:2)]
+print(head(pca_res))
+
+save(pca_res, samples, prop_var, file = "cell_tcga_pca.RData")
