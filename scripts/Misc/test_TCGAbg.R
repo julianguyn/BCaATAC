@@ -143,7 +143,7 @@ plot_pca <- function(label) {
   ggsave(filename, p, width = 7, height = 5)
 
   # plot PC2vs3
-  p <- ggplot(pca_res, aes(x = PC1, y = PC2, shape = Sample_Type, fill = Subtype)) +
+  p <- ggplot(pca_res, aes(x = PC3, y = PC2, shape = Sample_Type, fill = Subtype)) +
     geom_point(size = 3, alpha = 0.8) +
     scale_fill_manual(values = subtype_pal) +
     scale_shape_manual(values = c(24, 21)) +
