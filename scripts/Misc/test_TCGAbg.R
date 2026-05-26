@@ -1,10 +1,10 @@
-# umap - run on H4H
+# PCA - run on H4H
+# cd /cluster/projects/bhklab/projects/BCaATAC/BCa_ARCHE_Scoring/temp_scripts
 
 library(data.table)
-library(ggplot2)
 
 set.seed(101)
-source("utils/palettes.R")
+
 
 INDIR <- "/cluster/projects/bhklab/projects/BCaATAC/BCa_ARCHE_Scoring/data/results/"
 OUTDIR <- "data/results/figures/Misc/scoring/"
@@ -21,11 +21,11 @@ load_mat <- function(path) {
 }
 
 # load in cell lines
-cell <- load_mat("cell_lines/50k_TCGAbg/matrix/cells_50k.consensus.Binarymat.rds")
+cells <- load_mat("cell_lines/50k_TCGAbg/matrix/cells_50k.consensus.Binarymat.rds")
 tcga_cells <- load_mat("TCGA/cell_50k/matrix/TCGA_50k_cell.consensus.Binarymat.rds")
 
 # load in pdxs
-pdx <- load_mat("PDXs/50k_TCGAbg/matrix/PDXs_50k.consensus.Binarymat.rds")
+pdxs <- load_mat("PDXs/50k_TCGAbg/matrix/PDXs_50k.consensus.Binarymat.rds")
 tcga_pdxs <- load_mat("TCGA/pdx_50k/matrix/TCGA_50k_pdx.consensus.Binarymat.rds")
 
 ###########################################################
@@ -37,7 +37,7 @@ format_df <- function(sample, tcga) {
 
   # merged on peaks
   merged <- merge(
-    cell,
+    sample,
     tcga,
     by = c("seqnames", "start", "end"),
     all = TRUE
@@ -63,9 +63,75 @@ format_df <- function(sample, tcga) {
 merged_cells <- format_df(cells, tcga_cells)
 merged_pdxs <- format_df(pdxs, tcga_pdxs)
 
+saveRDS(merged_cells, file = "merged_cells.rds") #1923648 peaks
+saveRDS(merged_pdxs, file = "merged_pdxs.rds") #1869335 peaks
+
+###########################################################
+# Fisher's test to find differentially accessible peaks
+###########################################################
+
+# run separately in H4H
+
+OUTFILE = "cells_fisher_batch1.rds"
+
+# load in RDSs
+merged_cells <- readRDS("merged_cells.rds")
+
+# optional subset
+merged_cells <- merged_cells[,c(1:10000)]
+
+# your group factor — must match row order of merged_cells
+cell_groups <- factor(c(rep("Cells", 64), rep("Tumour", 75)))
+#pdx_groups <- factor(c(rep("PDXs", 88), rep("Tumour", 75)))
+
+run_fisher <- function(merged, group) {
+
+  merged <- as.data.frame(merged)
+  # extract peak names
+
+  results <- lapply(colnames(merged), function(peak) {
+    peak_vals <- merged[[peak]]
+    tbl <- table(peak_vals, group)
+    
+    #catch cases where peak is all 0 or 1 in one group
+    if (nrow(tbl) < 2) {
+      data.frame(
+        peak = peak,
+        ft = FALSE,
+        p.value = NA,
+        odds_ratio = NA,
+        row.names = NULL
+      )
+    } else {
+      ft <- fisher.test(tbl)
+      data.frame(
+        peak = peak,
+        ft = TRUE,
+        p.value = ft$p.value,
+        odds_ratio = as.numeric(ft$estimate),
+        row.names = NULL
+      )
+    }
+  })
+
+  results_df <- do.call(rbind, Filter(Negate(is.null), results))
+  results_df$padj <- p.adjust(results_df$p.value, method = "BH")
+  results_df <- results_df[order(results_df$padj), ]
+
+}
+
+cell_res <- run_fisher(merged_cells, cell_groups)
+
+saveRDS(cell_res, file = OUTFILE)
+
+#pdx_res <- run_fisher(merged_pdxs, pdx_groups)
+
 ###########################################################
 # Run PCA
 ###########################################################
+
+library(ggplot2)
+source("utils/palettes.R")
 
 # helper function to run pca
 run_pca <- function(merged, outfile) {
