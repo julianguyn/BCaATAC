@@ -80,7 +80,7 @@ run_pca <- function(merged, outfile) {
   variance_pca / sum(variance_pca) -> prop_var
   print(head(prop_var))
 
-  pca_res <- pca_res$x[,c(1:3)]
+  pca_res <- pca_res$x[,c(1:5)]
   print(head(pca_res))
 
   save(pca_res, samples, prop_var, file = outfile)
@@ -105,6 +105,22 @@ mapping$ATAC.Seq.File.Name <- gsub("\\.", "-", mapping$ATAC.Seq.File.Name)
 ###########################################################
 # Helper function to plot PCA plots
 ###########################################################
+
+# helper function to plot PCA
+helper_plot_pca <- function(pca_res, PCx, PCy, label) {
+
+  nums <- paste0(sub("PC", "", PCx), sub("PC", "", PCy))
+  
+  p <- ggplot(pca_res, aes(x = .data[[PCx]], y = .data[[PCy]], shape = Sample_Type, fill = Subtype)) +
+    geom_point(size = 3, alpha = 0.8) +
+    scale_fill_manual(values = subtype_pal) +
+    scale_shape_manual(values = c(24, 21)) +
+    theme_bw() +
+    guides(fill = guide_legend(override.aes = list(shape = 21)))
+  filename <- paste0(OUTDIR, label, "_tcga_pca", nums, ".png")
+  ggsave(filename, p, width = 7, height = 5)
+
+}
 
 plot_pca <- function(label) {
 
@@ -132,26 +148,16 @@ plot_pca <- function(label) {
   }
   pca_res$Subtype[is.na(pca_res$Subtype)] <- "unknown"
 
-  # plot PC1vs2
-  p <- ggplot(pca_res, aes(x = PC1, y = PC2, shape = Sample_Type, fill = Subtype)) +
-    geom_point(size = 3, alpha = 0.8) +
-    scale_fill_manual(values = subtype_pal) +
-    scale_shape_manual(values = c(24, 21)) +
-    theme_bw() +
-    guides(fill = guide_legend(override.aes = list(shape = 21)))
-  filename <- paste0(OUTDIR, label, "_tcga_pca12.png")
-  ggsave(filename, p, width = 7, height = 5)
-
-  # plot PC2vs3
-  p <- ggplot(pca_res, aes(x = PC3, y = PC2, shape = Sample_Type, fill = Subtype)) +
-    geom_point(size = 3, alpha = 0.8) +
-    scale_fill_manual(values = subtype_pal) +
-    scale_shape_manual(values = c(24, 21)) +
-    theme_bw() +
-    guides(fill = guide_legend(override.aes = list(shape = 21)))
-  filename <- paste0(OUTDIR, label, "_tcga_pca23.png")
-  ggsave(filename, p, width = 7, height = 5)
-
+  # plot PCs
+  helper_plot_pca(pca_res, "PC1", "PC2", label)
+  helper_plot_pca(pca_res, "PC2", "PC3", label)
+  helper_plot_pca(pca_res, "PC3", "PC4", label)
+  helper_plot_pca(pca_res, "PC4", "PC5", label)
+  helper_plot_pca(pca_res, "PC5", "PC6", label)
+  helper_plot_pca(pca_res, "PC6", "PC7", label)
+  helper_plot_pca(pca_res, "PC7", "PC8", label)
+  helper_plot_pca(pca_res, "PC8", "PC9", label)
+  helper_plot_pca(pca_res, "PC9", "PC10", label)
 }
 
 ###########################################################

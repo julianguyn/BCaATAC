@@ -124,7 +124,7 @@ ht2 <- Heatmap(
 # Compiled heatmap
 ###########################################################
 
-filename <- "data/results/figures/1-Signatures/"
+filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
 png(filename, width = 11, height = 6, res = 600, units = "in")
 ht1 %v% ht2
 dev.off()
