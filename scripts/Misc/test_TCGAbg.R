@@ -69,20 +69,16 @@ saveRDS(merged_pdxs, file = "merged_pdxs.rds") #1869335 peaks
 ###########################################################
 # Fisher's test to find differentially accessible peaks
 ###########################################################
-
-# run separately in H4H
-
-OUTFILE = "cells_fisher_batch1.rds"
+# -- run on H4H
 
 # load in RDSs
+print("loading in data")
 merged_cells <- readRDS("merged_cells.rds")
-
-# optional subset
-merged_cells <- merged_cells[,c(1:10000)]
+merged_pdxs <- readRDS("merged_pdxs.rds")
 
 # your group factor — must match row order of merged_cells
 cell_groups <- factor(c(rep("Cells", 64), rep("Tumour", 75)))
-#pdx_groups <- factor(c(rep("PDXs", 88), rep("Tumour", 75)))
+pdx_groups <- factor(c(rep("PDXs", 88), rep("Tumour", 75)))
 
 run_fisher <- function(merged, group) {
 
@@ -120,11 +116,14 @@ run_fisher <- function(merged, group) {
 
 }
 
+print("running cell line")
 cell_res <- run_fisher(merged_cells, cell_groups)
+print("running PDXs")
+pdx_res <- run_fisher(merged_pdxs, pdx_groups)
 
-saveRDS(cell_res, file = OUTFILE)
-
-#pdx_res <- run_fisher(merged_pdxs, pdx_groups)
+print("saving")
+saveRDS(cell_res, file = "results/cells_fisher.rds")
+saveRDS(pdx_res, file = "results/pdxs_fisher.rds")
 
 ###########################################################
 # Run PCA
