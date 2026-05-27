@@ -82,12 +82,12 @@ find_diff_peaks <- function(merged, n_samples) {
   tumours <- merged[(n_samples+1):nrow(merged),]
 
   sample_count <- colSums(samples)
-  sample_zero <- sample_count[sample_count == 0]
-  sample_ones <- sample_count[sample_count == n_samples]
+  sample_zero <- sample_count[sample_count <= 5]
+  sample_ones <- sample_count[sample_count >= n_samples-5]
 
   tumour_count <- colSums(tumours)
-  tumour_zero <- tumour_count[tumour_count == 0]
-  tumour_ones <- tumour_count[tumour_count == 75]
+  tumour_zero <- tumour_count[tumour_count <= 5]
+  tumour_ones <- tumour_count[tumour_count >= 75-5]
 
   diff_peaks <- c(
     intersect(names(sample_zero), names(tumour_ones)),
@@ -98,8 +98,15 @@ find_diff_peaks <- function(merged, n_samples) {
 
 cell_diff_peaks <- find_diff_peaks(merged_cells, 64)
 saveRDS(cell_diff_peaks, file = "results/cell_diff_peaks.rds")
+# 17314 with 0 overlap
+# 27370 with 2 overlap
+# 37461 with 5 overlap
+
 pdx_diff_peaks <- find_diff_peaks(merged_pdxs, 88)
 saveRDS(pdx_diff_peaks, file = "results/pdx_diff_peaks.rds")
+# 10744 with 0 overlap
+# 17168 with 2 overlap
+# 28284 with 5 overlap
 
 ###########################################################
 # Fisher's test to find differentially accessible peaks
