@@ -67,7 +67,7 @@ saveRDS(merged_cells, file = "merged_cells.rds") #1923648 peaks
 saveRDS(merged_pdxs, file = "merged_pdxs.rds") #1869335 peaks
 
 ###########################################################
-# Fisher's test to find differentially accessible peaks
+# Identify differential peaks
 ###########################################################
 # -- run on H4H
 
@@ -76,9 +76,41 @@ print("loading in data")
 merged_cells <- readRDS("merged_cells.rds")
 merged_pdxs <- readRDS("merged_pdxs.rds")
 
-# your group factor — must match row order of merged_cells
+find_diff_peaks <- function(merged, n_samples) {
+  
+  samples <- merged[1:n_samples,]
+  tumours <- merged[(n_samples+1):nrow(merged),]
+
+  sample_count <- colSums(samples)
+  sample_zero <- sample_count[sample_count == 0]
+  sample_ones <- sample_count[sample_count == n_samples]
+
+  tumour_count <- colSums(tumours)
+  tumour_zero <- tumour_count[tumour_count == 0]
+  tumour_ones <- tumour_count[tumour_count == 75]
+
+  diff_peaks <- c(
+    intersect(names(sample_zero), names(tumour_ones)),
+    intersect(names(sample_ones), names(tumour_zero))
+  )
+  return(diff_peaks)
+}
+
+cell_diff_peaks <- find_diff_peaks(merged_cells, 64)
+saveRDS(cell_diff_peaks, file = "results/cell_diff_peaks.rds")
+pdx_diff_peaks <- find_diff_peaks(merged_pdxs, 88)
+saveRDS(pdx_diff_peaks, file = "results/pdx_diff_peaks.rds")
+
+###########################################################
+# Fisher's test to find differentially accessible peaks
+###########################################################
+# -- run on H4H
+
+
+# sample groups
 cell_groups <- factor(c(rep("Cells", 64), rep("Tumour", 75)))
 pdx_groups <- factor(c(rep("PDXs", 88), rep("Tumour", 75)))
+
 
 run_fisher <- function(merged, group) {
 
