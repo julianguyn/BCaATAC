@@ -3,6 +3,9 @@
 # load libraries
 suppressPackageStartupMessages({
     library(ggplot2)
+    library(survival)
+    library(ggsurvfit)
+    library(survminer)
 })
 
 source("utils/palettes.R")
@@ -44,6 +47,7 @@ meta$ARCHE <- factor(meta$ARCHE, levels = rev(names(ARCHE_pal)))
 meta$Tumor_purity <- as.numeric(meta$Tumor_purity)
 meta$years_to_birth <- as.numeric(meta$years_to_birth)
 meta$overall_survival <- as.numeric(meta$overall_survival)
+meta$status <- as.numeric(meta$status)
 meta$pathologic_stage <- factor(meta$pathologic_stage, levels = rev(names(stage_pal)))
 
 ###########################################################
@@ -129,3 +133,87 @@ plot_boxplot <- function(column_name, axis_name, filename) {
 plot_boxplot("Tumor_purity", "Tumour Purity", "purity.png")
 plot_boxplot("years_to_birth", "Age", "age.png")
 plot_boxplot("overall_survival", "OS (Days)", "os.png")
+
+###########################################################
+# Plot survival plots
+###########################################################
+
+df <- meta
+
+for (group in unique(df[[ref]])) {
+    df$ref <- ifelse(df[[ref]] == group, group, "Other")
+    fit <- survfit(Surv(overall_survival, status) ~ ref, data = df)
+
+    p <- ggsurvplot(
+        fit,
+        data = df,
+        pval = TRUE,
+        risk.table = TRUE,
+        palette = c("#046C9A", "#827A6F"),
+        legend.title = "",
+        xlab = "Time (days)"
+    )
+    p$plot <- p$plot + theme(
+        legend.key.size = unit(1, "cm"),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8)
+    )
+
+    filename <- paste0("data/results/figures/1-Signatures/survivalplots/", ref, "_", group, ".png")
+    png(filename, width=7, height=6, units='in', res = 600, pointsize=80)
+    print(p)
+    dev.off()
+}
+
+# --- sanity check of survival by subtypes across ALL BRCA tumours
+pheno <- pheno[-which(is.na(pheno$PAM50)),] #826
+pheno$overall_survival <- as.numeric(pheno$overall_survival)
+pheno$status <- as.numeric(pheno$status)
+pheno$PAM50 <- as.character(pheno$PAM50)
+
+for (group in unique(pheno$PAM50)) {
+    pheno$ref <- ifelse(pheno$PAM50 == group, group, "Other")
+    fit <- survfit(Surv(overall_survival, status) ~ ref, data = pheno)
+
+    p <- ggsurvplot(
+        fit,
+        data = pheno,
+        pval = TRUE,
+        risk.table = TRUE,
+        palette = c("#046C9A", "#827A6F"),
+        legend.title = "",
+        xlab = "Time (days)"
+    )
+    p$plot <- p$plot + theme(
+        legend.key.size = unit(1, "cm"),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8)
+    )
+
+    filename <- paste0("data/results/figures/1-Signatures/survivalplots/ALL_BRCA_", group, ".png")
+    png(filename, width=7, height=6, units='in', res = 600, pointsize=80)
+    print(p)
+    dev.off()
+}
+
+fit <- survfit(Surv(overall_survival, status) ~ PAM50, data = pheno)
+
+p <- ggsurvplot(
+    fit,
+    data = pheno,
+    pval = TRUE,
+    risk.table = TRUE,
+    palette = unname(subtype_pal[1:4]),
+    legend.title = "",
+    xlab = "Time (days)"
+)
+p$plot <- p$plot + theme(
+    legend.key.size = unit(1, "cm"),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 8)
+)
+
+filename <- paste0("data/results/figures/1-Signatures/survivalplots/ALL_BRCA_all_subtypes.png")
+png(filename, width=7, height=6, units='in', res = 600, pointsize=80)
+print(p)
+dev.off()
