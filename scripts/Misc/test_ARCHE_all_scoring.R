@@ -6,12 +6,14 @@ suppressPackageStartupMessages({
     library(data.table)
     library(ComplexHeatmap)
     library(circlize)
+    library(ggplot2)
 })
 
 set.seed(101)
 
 source("utils/palettes.R")
 source("utils/plots/ARCHE_scores_heatmap.R")
+source("utils/plots/test_ARCHE_all_scoring.R")
 
 # ---------------------------------------------------------
 # Helper functions
@@ -68,46 +70,16 @@ zsc <- get_scores("data/rawdata/all_scoring/cell_pdx_tcga.Zscore.txt", meta)
 dev <- get_scores("data/rawdata/all_scoring/cell_pdx_tcga.Deviations.txt", meta)
 
 ###########################################################
-# Try removing low deviation samples
+# Remove low deviation samples
 ###########################################################
-### - removed
+
+# get samples above threshold
+zscore_sumdev <- get_devs(zsc, meta, "zscore", 100)
+deviat_sumdev <- get_devs(dev, meta, "deviations", 0.25)
 
 ###########################################################
 # Plot heatmaps
 ###########################################################
-
-# helper function to make heatmap
-plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, znorm = FALSE, subset_dev = FALSE, lim = NULL) {
-
-    # normalize
-    if (znorm == TRUE) {
-        cat("Normalizing\n")
-        toPlot <- znorm(df)
-        toPlot <- toPlot[, colSums(is.na(toPlot)) == 0]
-        df <- df[,colnames(df) %in% colnames(toPlot)]
-    } else {
-        toPlot <- df
-    }
-    
-    score_pal <- colorRamp2(seq(min(toPlot), max(toPlot), length = 3), c("#AD6A6C", "white", "#077293"))
-    count_pal <- colorRamp2(seq(min(colSums(abs(df))), max(colSums(abs(df))), length = 3), c("#DFDFDF", "#989898", "#202020"))
-
-    ha <- HeatmapAnnotation(
-        Subtype = meta$subtype[match(colnames(df), meta$sampleid)],
-        Type = meta$type[match(colnames(df), meta$sampleid)],
-        SumDevs = colSums(abs(df)),
-        col = list(Subtype = subtype_pal, Type = sample_type_pal, SumDevs = count_pal))
-
-    filename <- paste0("data/results/figures/Misc/all_scoring/", label, "_ARCHE_scores.png")
-    cat("-----Saving plot to", filename, "\n")
-    png(filename, width = 11, height = 4, res = 600, units = "in")
-    print(
-        Heatmap(toPlot, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
-            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 3),
-            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
-    )
-    dev.off()
-}
 
 # plot heatmap of zscores
 plot_ARCHE_scores_heatmap_counts(zsc, "zcores", meta)
