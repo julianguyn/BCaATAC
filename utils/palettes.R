@@ -30,7 +30,15 @@ subtype_pal <- c(
     "TNBC" = "#AF4C5B",
     "ER" = "#363E62",
     "HER2" = "#EED4D3",
-    "TPBC" = "#6365AF"
+    "TPBC" = "#B3B4D0",
+    "Basal/TNBC" = "#AF4C5B",
+    "Luminal/ER+" = "#363E62"
+)
+
+sample_type_pal <- c(
+    "cell_line" = "#D3A78C",
+    "PDX" = "#8C7568",
+    "tumour" = "#FFEAD4"
 )
 
 cfDNA_subtype_pal <- c(
