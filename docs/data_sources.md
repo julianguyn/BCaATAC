@@ -336,6 +336,7 @@ Includes: REFLECT-6B_metadata.xlsx
 - **Creation Date**: Feb 11, 2026
 ```
 
+```markdown
 ## chromvar-allSamples
 
 - **Source**: BHK Lab (J.N.)
@@ -387,4 +388,24 @@ Includes: REFLECT-6B_metadata.xlsx
 - **Name**: Tumour Fraction parameters for REFLECT
 - **Download Date**: 2026-03-13
 - **Source**: Bratman lab cluster (S.M.)
+```
+
+### data/rawdata/all_scoring
+
+```markdown
+## cell_pdx_tcga
+
+Includes chromvar output for ARCHE scores when pooling cells, PDX, and BCa TCGA tumours together (scored on June 4th, 2026)
+```
+
+```markdown
+## cell_pdx_pdo_tcga
+
+Includes chromvar output for ARCHE scores when pooling cells, PDX, PDOs, and BCa TCGA tumours together (scored on June 10th, 2026)
+```
+
+```markdown
+## tcga_pancancer
+
+Includes chromvar output for ARCHE scores for TCGA pan-cancer (BRCA, COAD, ESCA, STAD, LUAD, and LUSC) - to be expanded to other cohorts (scored on June 5th, 2026)
 ```
