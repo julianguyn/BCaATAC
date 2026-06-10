@@ -7,6 +7,8 @@ suppressPackageStartupMessages({
     library(ComplexHeatmap)
     library(circlize)
     library(ggplot2)
+    library(reshape2)
+    library(RColorBrewer)
 })
 
 set.seed(101)
@@ -35,7 +37,6 @@ get_scores <- function(filename, meta) {
 sample_meta <- read.csv("metadata/lupien_metadata.csv")
 dups <- sample_meta$sampleid[duplicated(sample_meta$sampleid)] # label dups
 sample_meta$sampleid[sample_meta$sampleid %in% dups] <- paste0(sample_meta$sampleid[sample_meta$sampleid %in% dups], " (", sample_meta$tech[sample_meta$sampleid %in% dups], ")")
-
 
 # load in TCGA metadata
 tcga_meta <- read.csv("data/rawdata/TCGA/TCGA_sourcefiles.csv")
@@ -88,3 +89,51 @@ plot_ARCHE_scores_heatmap_counts(zsc, "znorm_zscores", meta, znorm = TRUE)
 # heatmap of deviations
 plot_ARCHE_scores_heatmap_counts(dev, "deviations", meta)
 plot_ARCHE_scores_heatmap_counts(dev, "znorm_deviations", meta, znorm = TRUE)
+
+###########################################################
+# Compare TCGA scores with NMF
+###########################################################
+
+tumour_meta <- meta[meta$type == "tumour",]
+
+scores <- zsc
+
+scores <- as.data.frame(t(scores[,colnames(scores) %in% tumour_meta$sampleid]))
+scores$ARCHE <- tumour_meta$arche[match(rownames(scores), tumour_meta$sampleid)]
+scores$sampleID <- rownames(scores)
+scores$rank <- as.character(tcga_meta$rank[match(scores$sampleID, gsub("\\.", "-", tcga_meta$Sample.Name))])
+
+
+# --- heatmap
+
+toPlot <- reshape2::melt(scores)
+toPlot$variable <- factor(toPlot$variable, levels = paste0("ARCHE", 6:1))
+toPlot <- toPlot[order(as.numeric(toPlot$rank)),]
+toPlot$sampleID <- factor(toPlot$sampleID, levels = unique(toPlot$sampleID))
+
+ggplot(toPlot, aes(x = sampleID, y = variable, fill = value)) +
+    geom_tile() +
+    scale_fill_gradientn("ARCHE\nExpression\nScore", colours = brewer.pal(9, "Blues")) +
+    theme_minimal() +
+    theme(
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 7),
+        axis.title.x = element_blank()
+    )
+
+# --- individual waterfall plots
+
+for (arche in paste0("ARCHE", 1:6)) {
+
+    toPlot <- scores[order(scores[[arche]], decreasing = TRUE),]
+    toPlot$sampleID <- factor(toPlot$sampleID, levels = toPlot$sampleID)
+
+    ggplot(toPlot, aes(x = sampleID, y = .data[[arche]], fill = ARCHE)) +
+        geom_bar(stat = "identity", color = "black") +
+        scale_fill_manual(values = ARCHE_pal) +
+        theme_classic() +
+        theme(
+            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 7),
+            axis.title.x = element_blank()
+        )
+
+}
