@@ -37,6 +37,7 @@ subtype_pal <- c(
 
 sample_type_pal <- c(
     "cell_line" = "#D3A78C",
+    "PDO" = "#C68A4B",
     "PDX" = "#8C7568",
     "tumour" = "#FFEAD4"
 )

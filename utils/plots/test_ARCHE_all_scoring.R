@@ -1,5 +1,5 @@
 # helper function to get sum of magnitude deviations
-get_devs <- function(df, meta, label, lim) {
+get_devs <- function(df, dir, meta, label, lim) {
 
     devs <- colSums(abs(df)) |> as.data.frame()
     colnames(devs) <- "Sum"
@@ -14,7 +14,7 @@ get_devs <- function(df, meta, label, lim) {
         scale_y_continuous(breaks = seq(0, y, by = 2)) +
         theme_bw() +
         ggtitle(paste0(label, ";  n >", lim, ": ", n))
-    filename <- paste0("data/results/figures/Misc/all_scoring/sumdev_", label, ".png")
+    filename <- paste0("data/results/figures/Misc/all_scoring/", dir, "/sumdev_", label, ".png")
     ggsave(filename, p, w=6, h=4)
 
     to_keep <- rownames(devs[devs$Sum > lim,,drop=FALSE])
@@ -23,7 +23,7 @@ get_devs <- function(df, meta, label, lim) {
 }
 
 # helper function to make heatmap
-plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, znorm = FALSE, subset_dev = FALSE, lim = NULL) {
+plot_ARCHE_scores_heatmap_counts <- function(df, dir, label, meta, znorm = FALSE, subset_dev = FALSE, lim = NULL) {
 
     # normalize
     if (znorm == TRUE) {
@@ -44,7 +44,7 @@ plot_ARCHE_scores_heatmap_counts <- function(df, label, meta, znorm = FALSE, sub
         SumDevs = colSums(abs(df)),
         col = list(Subtype = subtype_pal, Type = sample_type_pal, SumDevs = count_pal))
 
-    filename <- paste0("data/results/figures/Misc/all_scoring/", label, "_ARCHE_scores.png")
+    filename <- paste0("data/results/figures/Misc/all_scoring/", dir, "/", label, "_ARCHE_scores.png")
     cat("-----Saving plot to", filename, "\n")
     png(filename, width = 11, height = 4, res = 600, units = "in")
     print(
