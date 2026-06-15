@@ -54,3 +54,58 @@ plot_ARCHE_scores_heatmap_counts <- function(df, dir, label, meta, znorm = FALSE
     )
     dev.off()
 }
+
+# helper function to plot PCA plots
+plot_pca <- function(pca_res, dir, meta) {
+
+    rownames(pca_res) <- sub("_peaks.*", "", rownames(pca_res))
+    pca_res <- as.data.frame(pca_res)
+    pca_res$type <- meta$type[match(rownames(pca_res), meta$filename)]
+    pca_res$subtype <- meta$subtype[match(rownames(pca_res), meta$filename)]
+
+    p1 <- ggplot(pca_res, aes(x = PC1, y = PC2, color = subtype, shape = type)) +
+        geom_point(size = 2) +
+        scale_color_manual(values = subtype_pal) +
+        theme_bw()
+
+
+    p2 <- ggplot(pca_res, aes(x = PC1, y = PC2, color = type)) +
+        geom_point(size = 2) +
+        scale_color_manual(values = sample_type_pal) +
+        theme_bw()
+
+    p <- p1 + p2
+    filename <- paste0("data/results/figures/Misc/all_scoring/", dir, "/pca.png")
+    ggsave(filename, p, width = 9, height = 3.5)
+}
+
+# plot rank tile plot of ARCHE scores
+plot_ARCHE_rank <- function(scores, arche, label, norm = FALSE) {
+
+    if (norm == TRUE) scores <- znorm(scores)
+
+    toPlot <- as.data.frame(t(scores[rownames(scores) == arche,]))
+    toPlot$sampleid <- rownames(toPlot)
+    toPlot$type <- meta$type[match(toPlot$sampleid, meta$sampleid)]
+    toPlot$subtype <- meta$subtype[match(toPlot$sampleid, meta$sampleid)]
+
+    toPlot <- toPlot[order(toPlot[[arche]], decreasing = TRUE),]
+    toPlot$sampleid <- factor(toPlot$sampleid, levels = toPlot$sampleid)
+    toPlot$type <- factor(toPlot$type, levels = names(sample_type_pal))
+
+    p <- ggplot(toPlot, aes(x = sampleid, y = type, fill = subtype)) +
+        geom_tile(color = "black") +
+        scale_fill_manual(values = subtype_pal) +
+        #scale_y_discrete(labels = c("Cells", "PDX", "Tumour")) +
+        theme_void() +
+        theme(
+            legend.position = "none",
+            axis.text.y = element_text(size = 8, hjust = 1, margin = margin(r = 3)),
+            plot.title = element_text(size = 9, face = "bold"),
+            panel.background = element_rect(fill = "#F0F0F0", color = NA)
+        ) +
+        ggtitle(paste(label, "-", arche))
+    
+    return(p)
+
+}

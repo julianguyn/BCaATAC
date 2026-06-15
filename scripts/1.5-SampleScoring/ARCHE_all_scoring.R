@@ -121,7 +121,31 @@ plot_ARCHE_scores_heatmap_counts(dev, dir, "znorm_deviations", meta, znorm = TRU
 ###########################################################
 
 # pca outfiles generated from 1.5-SampleScoring/ARCHE_all_PCA.R
+load(paste0("data/rawdata/all_scoring/", dir, ".RData"))
 
+plot_pca(pca_res, dir, meta)
+
+###########################################################
+# Compare rank of ARCHE scoring
+###########################################################
+
+for (arche in paste0("ARCHE", 1:6)) {
+
+    p1 <- plot_ARCHE_rank(zsc, arche, "ZScores")
+    p2 <- plot_ARCHE_rank(zscore_sumdev, arche, "ZScores-sumdev")
+    p3 <- plot_ARCHE_rank(zsc, arche, "ZScores (znorm)", norm = TRUE)
+    p4 <- plot_ARCHE_rank(zscore_sumdev, arche, "ZScores-sumdev (znorm)", norm = TRUE)
+
+    p5 <- plot_ARCHE_rank(dev, arche, "Deviations")
+    p6 <- plot_ARCHE_rank(deviat_sumdev, arche, "Deviations-sumdev")
+    p7 <- plot_ARCHE_rank(dev, arche, "Deviations (znorm)", norm = TRUE)
+    p8 <- plot_ARCHE_rank(deviat_sumdev, arche, "Deviations-sumdev (znorm)", norm = TRUE)
+
+
+    p <- p1 / p2 / p3 / p4 / p5 / p6 / p7 / p8
+    filename <- paste0("data/results/figures/Misc/all_scoring/", dir, "/rank_scores_", arche, ".png")
+    ggsave(filename, p, width = 13, height = 6)
+}
 
 
 ###########################################################
