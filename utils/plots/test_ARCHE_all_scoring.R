@@ -65,12 +65,14 @@ plot_pca <- function(pca_res, dir, meta) {
 
     p1 <- ggplot(pca_res, aes(x = PC1, y = PC2, color = subtype, shape = type)) +
         geom_point(size = 2) +
+        scale_shape_manual(values = sample_type_shapes) +
         scale_color_manual(values = subtype_pal) +
         theme_bw()
 
 
     p2 <- ggplot(pca_res, aes(x = PC1, y = PC2, color = type)) +
         geom_point(size = 2) +
+        scale_shape_manual(values = sample_type_shapes) +
         scale_color_manual(values = sample_type_pal) +
         theme_bw()
 

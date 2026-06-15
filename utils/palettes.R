@@ -2,7 +2,7 @@
 
 ARCHE_pal <- c(
     "ARCHE1" = "#046C9A", 
-    "ARCHE2" = "#B58E8E",
+    "ARCHE2" = "#BA9B9B",
     "ARCHE3" = "#E1D5DF", 
     "ARCHE4" = "#7294D4", 
     "ARCHE5" = "#985E5E",
@@ -40,6 +40,13 @@ sample_type_pal <- c(
     "PDO" = "#C68A4B",
     "PDX" = "#8C7568",
     "tumour" = "#FFEAD4"
+)
+
+sample_type_shapes <- c(
+    "cell_line" = 16,
+    "PDO" = 15,
+    "PDX" = 17,
+    "tumour" = 3
 )
 
 cfDNA_subtype_pal <- c(
