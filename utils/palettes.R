@@ -2,11 +2,11 @@
 
 ARCHE_pal <- c(
     "ARCHE1" = "#046C9A", 
-    "ARCHE2" = "#BBADB9", 
-    "ARCHE3" = "#7294D4", 
-    "ARCHE4" = "#E8E1D9", 
-    "ARCHE5" = "#AFC5D8", 
-    "ARCHE6" = "#DF9C93"
+    "ARCHE2" = "#B58E8E",
+    "ARCHE3" = "#E1D5DF", 
+    "ARCHE4" = "#7294D4", 
+    "ARCHE5" = "#985E5E",
+    "ARCHE6" = "#B4C7D8"
 )
 
 PSet_pal <- c(
