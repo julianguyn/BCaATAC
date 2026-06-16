@@ -93,6 +93,15 @@ preclinical_pal <- c(
     "SUDHL6" = "#E1B48D" # lymphoma
 )
 
+cancer_type_pal <- c(
+    "brca" = "#EBDCCB",
+    "coad" = "#2D4A33",
+    "esca" = "#386150",
+    "stad" = "#5C9386",
+    "luad" = "#91818A",
+    "lusc" = "#B2A3B5"
+)
+
 genfeat_pal <- c(
     "Promoter" = "#9C7DA6",
     "5' UTR" = "#47718A",
