@@ -55,3 +55,14 @@ validate_drug_response_cells <- function(arche, df) {
 }
 
 #  validate_drug_response_cells("ARCHE5", df)
+
+load(paste0("data/results/data/Misc/cell_pdx_tcga_ARCHE_drug_response_testing_all_scoring.RData"))
+
+### --- SANDBOX
+# CFI-400945
+# PACLITAXEL-15DAILY
+# ERIBULIN-LOW
+# TRASTUZUMAB-DERUXTECAN
+
+search_drug_response_cells("ARCHE6_EVEROLIMUS", cell_toPlot)
+validate_drug_response_cells("ARCHE5", cell_toPlot)

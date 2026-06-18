@@ -1,9 +1,14 @@
 # -------- RUN ON H4H
 library(SummarizedExperiment)
 
+#files <- c(
+#    "/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/results/TCGA_cell_PDX/chromvar/cell_pdx_tcga.counts_filtered.rds",
+#    "/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/results/TCGA_cell_PDX_PDO/chromvar/cell_pdx_pdo_tcga.counts_filtered.rds"
+#)
+
 files <- c(
-    "/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/results/TCGA_cell_PDX/chromvar/cell_pdx_tcga.counts_filtered.rds",
-    "/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/results/TCGA_cell_PDX_PDO/chromvar/cell_pdx_pdo_tcga.counts_filtered.rds"
+    "/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/results/TCGA_PDX/chromvar/pdx_tcga.counts_filtered.rds",
+    "/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/results/TCGA_cell/chromvar/cell_tcga.counts_filtered.rds"
 )
 
 for (file in files) {
