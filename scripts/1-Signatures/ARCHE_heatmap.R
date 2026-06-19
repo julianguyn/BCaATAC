@@ -1,6 +1,7 @@
 # main figure to plot heatmap of ARCHE and other molecular features
 
 suppressPackageStartupMessages({
+    library(data.table)
     library(tidyverse)
     library(patchwork)
     library(RColorBrewer)
@@ -32,6 +33,28 @@ mat$variable <- meta$Sample.Name[match(mat$variable, meta$ATAC.Seq.File.Name)]
 mut <- read.table("data/results/data/2-MolecularSigAnalysis/TCGA_mutation_matrix.tsv")
 meta <- read.csv("metadata/TCGA_mutation_meta.csv")
 colnames(mut) <- gsub("\\.", "-", meta$Sample.Name[match(colnames(mut), gsub("-", "\\.", meta$snv_label))])
+
+# load in RNA matrix
+rna <- get_tcga_rna()
+colnames(rna) <- gsub("\\.", "-", colnames(rna))
+
+# load in correlated genes
+#gene_corr <- readRDS("data/results/data/2-MolecularSigAnalysis/gene_correlations_arches.rds")
+
+###########################################################
+# Get DEGS
+###########################################################
+
+genes <- c()
+for (arche in paste0("ARCHE", 1:6)) {
+    deg <- read.csv(paste0("data/results/data/2-MolecularSigAnalysis/DEG/ARCHE_", arche, "_vs_Other.csv"))
+    deg <- deg[which(deg$padj < 0.05),]
+    deg <- deg[order(abs(deg$log2FoldChange), decreasing = TRUE),]
+    message(paste("\nGenes added from", arche))
+    print(deg$X[1:5])
+    genes <- c(genes, deg$X[1:5])
+}
+genes <- unique(genes)
 
 ###########################################################
 # Handle duplicates and format data
@@ -70,6 +93,23 @@ mut <- mut[rownames(mut) %in% bca_mutations,]
 
 mut <- mut[,match(colnames(toPlot), colnames(mut))] |> as.matrix()
 mut_bin <- ifelse(is.na(mut), NA, ifelse(mut >= 1, 1, 0))
+
+###########################################################
+# Format RNA data
+###########################################################
+
+# keep top10 genes from top correlations (modify here)
+#sig_res <- gene_corr[gene_corr$FDR < 0.05,]
+#sig_res <- sig_res[order(abs(sig_res$rho), decreasing = TRUE),]
+#genes <- sig_res$gene[1:10]
+rna <- as.data.frame(rna[genes,])
+
+
+rna$'TCGA-A2-A0T4-1' <- rna$'TCGA-A2-A0T4-2' <- rna[,colnames(rna) == "TCGA-A2-A0T4"]
+rna$'TCGA-A2-A0T4' <- NULL
+
+rna <- rna[,match(colnames(toPlot), colnames(rna))] |> as.matrix()
+
 
 ###########################################################
 # ARCHE heatmap
@@ -121,10 +161,34 @@ ht2 <- Heatmap(
 )
 
 ###########################################################
+# RNA heatmap
+###########################################################
+
+# make colour palette
+cols <- brewer.pal(9, "BuPu")
+col_fun <- colorRamp2(
+    seq(min(rna, na.rm = TRUE),
+        max(rna, na.rm = TRUE),
+        length.out = 9),
+    cols
+)
+
+ht3 <- Heatmap(
+    rna,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    name = "Gene\nExpression",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
+    column_names_gp = gpar(fontsize = 8)
+)
+
+###########################################################
 # Compiled heatmap
 ###########################################################
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
-png(filename, width = 11, height = 6, res = 600, units = "in")
-ht1 %v% ht2
+png(filename, width = 11, height = 10, res = 600, units = "in")
+ht1 %v% ht2 %v% ht3 
 dev.off()

@@ -56,7 +56,8 @@ validate_drug_response_cells <- function(arche, df) {
 
 #  validate_drug_response_cells("ARCHE5", df)
 
-load(paste0("data/results/data/Misc/cell_pdx_tcga_ARCHE_drug_response_testing_all_scoring.RData"))
+#load(paste0("data/results/data/Misc/cell_pdx_tcga_ARCHE_drug_response_testing_all_scoring.RData"))
+load("data/results/data/Misc/sample_tcga_ARCHE_drug_response_testing_all_scoring.RData")
 
 ### --- SANDBOX
 # CFI-400945
@@ -64,5 +65,34 @@ load(paste0("data/results/data/Misc/cell_pdx_tcga_ARCHE_drug_response_testing_al
 # ERIBULIN-LOW
 # TRASTUZUMAB-DERUXTECAN
 
-search_drug_response_cells("ARCHE6_EVEROLIMUS", cell_toPlot)
+search_drug_response_cells("ARCHE5_PACLITAXEL-15DAILY", cell_toPlot)
+
 validate_drug_response_cells("ARCHE5", cell_toPlot)
+
+
+pairs <- c(
+    "ARCHE4_Irinotecan",
+    "ARCHE4_SN-38",
+    "ARCHE4_Topotecan",
+    "ARCHE4_TPT"
+)
+
+for (pair in pairs) {
+    tt <- cell_toPlot[cell_toPlot$pairs == pair,c("pairs", "pc", "FDR", "pset", "Label")]
+    tt <- tt[order(abs(tt$pc), decreasing = TRUE),]
+    message(paste("\nResults for", pair, "--------------\n"))
+    print(tt)
+}
+
+pairs <- c(
+    "ARCHE4_SACITUZAMAB-GOVITECAN",
+    "ARCHE4_DATOPOTAMAB-DERUXTECAN"
+)
+
+for (pair in pairs) {
+
+    message(paste("\nResults for", pair, "--------------\n"))
+    tt <- pdx_all_toPlot[pdx_all_toPlot$pairs == pair ,c("pairs", "N", "PC.BAR_median", "pval.BAR_median", "Label")]
+    print(tt[order(abs(tt$PC.BAR_median), decreasing = TRUE),])
+
+}

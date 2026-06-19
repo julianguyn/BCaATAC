@@ -70,6 +70,8 @@ get_arche_devs <- function(sample, filename, meta) {
 
 # read in cell metadata
 meta <- read.csv("metadata/lupien_metadata.csv")
+dups <- meta$sampleid[duplicated(meta$sampleid)] # label dups
+meta$sampleid[meta$sampleid %in% dups] <- paste0(meta$sampleid[meta$sampleid %in% dups], " (", meta$tech[meta$sampleid %in% dups], ")")
 
 c_meta <- meta[meta$type == "cell_line", ]
 p_meta <- meta[meta$type == "PDX", ]
