@@ -2,6 +2,7 @@
 
 suppressPackageStartupMessages({
     library(data.table)
+    library(readxl)
     library(tidyverse)
     library(patchwork)
     library(RColorBrewer)
@@ -189,6 +190,6 @@ ht3 <- Heatmap(
 ###########################################################
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
-png(filename, width = 11, height = 10, res = 600, units = "in")
+png(filename, width = 11, height = 8, res = 600, units = "in")
 ht1 %v% ht2 %v% ht3 
 dev.off()

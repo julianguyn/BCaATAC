@@ -15,6 +15,9 @@ suppressPackageStartupMessages({
   library(grid)
   library(gridExtra)
   library(ggh4x)
+  library(tidyr)
+  library(ComplexHeatmap)
+  library(circlize)
 })
 
 source("utils/plots/molecularsig_analysis.R")
@@ -121,3 +124,40 @@ plot_molecularsig_corr(corr_c_my, "MYC Target Signatures", "myc", "ccls")
 
 # plot box plots
 plot_corr_boxplots(corr_v3, corr_t_hm)
+
+###########################################################
+# Complex heatmap of signatures
+###########################################################
+
+df <- corr_t_hm # do the others too?
+
+toPlot <- pivot_wider(
+  df, 
+  names_from = Mol.Sig,
+  values_from = Corr
+)
+labels <- toPlot$ATAC.Sig
+toPlot$ATAC.Sig <- NULL
+toPlot <- as.data.frame(lapply(toPlot, as.numeric))
+rownames(toPlot) <- labels
+
+# make colour palette
+cols <- brewer.pal(9, "RdBu")
+col_fun <- colorRamp2(
+    seq(-0.75,0.75,length.out = 9),
+    cols
+)
+
+ht <- Heatmap(
+    toPlot,
+    cluster_rows = FALSE,
+    name = "Correlation",
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
+    column_names_gp = gpar(fontsize = 8)
+)
+
+filename <- "data/results/figures/2-MolecularSigAnalysis/molecularsig/figure1_hallmarks_heatmap.png"
+png(filename, width = 9, height = 5, res = 600, units = "in")
+ht
+dev.off()
