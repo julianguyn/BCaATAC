@@ -278,6 +278,41 @@ save(cell_toPlot, pdx_all_toPlot, pdx_sumdev_toPlot,
     file = "data/results/data/Misc/sample_tcga_ARCHE_drug_response_testing_all_scoring.RData")
 
 ###########################################################
+# Plot cell line results
+###########################################################
+
+indiv_plots <- function(pair) {
+
+    dir <- "4.5-NewDrugResponse/cells/indivplots/"
+
+    p1 <- plot_indivPlot(pair, zscore_cells, "zscore", dir = "NewDrugResponse")
+    p2 <- plot_indivPlot(pair, normzs_cells, "normzscr", dir = "NewDrugResponse")
+
+    p3 <- plot_indivPlot(pair, deviat_cells, "deviat", dir = "NewDrugResponse")
+    p4 <- plot_indivPlot(pair, normdv_cells, "normdev", dir = "NewDrugResponse")
+
+    #plot_indivPlot(pair, zscore_cells_sumdev, "zscore_sumdev", dir = "NewDrugResponse")
+    #plot_indivPlot(pair, normzs_cells_sumdev, "normzscr_sumdev", dir = "NewDrugResponse")
+
+    #plot_indivPlot(pair, deviat_cells_sumdev, "deviat_sumdev", dir = "NewDrugResponse")
+    #plot_indivPlot(pair, normdv_cells_sumdev, "normdev_sumdev", dir = "NewDrugResponse")
+
+    rownames(pcc) <- NULL
+
+    p <- (p1 + p2) / (p3 + p4) + plot_layout(guides = "collect")
+    filename <- paste0("data/results/figures/", dir, pair, ".png")
+    ggsave(filename, p, width = 8, height = 6)
+
+}
+
+# create dataframe to store results
+pcc <- data.frame(matrix(nrow=0, ncol=5))
+colnames(pcc) <- c("ARCHE_Drug", "Label", "PSet", "PCC", "pvalue")
+
+indiv_plots("ARCHE5_Paclitaxel")
+
+
+###########################################################
 # Plot PDX results
 ###########################################################
 

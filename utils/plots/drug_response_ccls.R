@@ -4,7 +4,13 @@
 #' @param signature_scores data.frame.
 #' @param label string.
 #' 
-plot_indivPlot <- function(pair, signature_scores, label) {
+plot_indivPlot <- function(pair, signature_scores, label, dir = "DrugResponse") {
+
+    dir <- switch(
+        dir,
+        DrugResponse = "4-DrugResponse/ClassA/indivplots/",
+        NewDrugResponse = "4.5-NewDrugResponse/cells/indivplots/"
+    )
 
     arche <- gsub("_.*", "", pair)
     drug <- gsub(paste0(arche, "_"), "", pair)
@@ -56,8 +62,7 @@ plot_indivPlot <- function(pair, signature_scores, label) {
     # set up palette for plotting
     pal <- PSet_pal[names(PSet_pal) %in% unique(all_drug_sen$PSet)]
 
-    png(paste0("data/results/figures/4-DrugResponse/ClassA/indivplots/",label, "_", pair,".png"), width=160, height=125, units='mm', res = 600, pointsize=80)
-    print(ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = PSet)) + 
+    p <- ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = PSet)) + 
         geom_point(size = 3, shape = 21) + 
         geom_smooth(method = "lm", se=F, aes(color = PSet)) + 
         scale_fill_manual(values = pal) + 
@@ -66,16 +71,16 @@ plot_indivPlot <- function(pair, signature_scores, label) {
         theme_classic() + 
         theme(
             panel.border = element_rect(color = "black", fill = NA, size = 0.5),
-            plot.title = element_text(hjust = 0.5, size = 16), 
+            plot.title = element_text(hjust = 0.5, size = 12, face = "bold"), 
             legend.key.size = unit(0.7, 'cm')
         ) +
         xlim(-x, x) + ylim(0, 1) + 
         labs(
             x = paste0(arche, " Score"), 
             y = paste0(drug, " Response (AAC)"),
-            title = paste0(arche, " - ", drug)
-        ))
-    dev.off()
+            title = paste0(label, ": ", arche, " - ", drug)
+        )
+    return(p)
 }
 
 #' Plot Class A associations across PSets
