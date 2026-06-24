@@ -9,7 +9,6 @@ suppressPackageStartupMessages({
     library(reshape2)
     library(ComplexHeatmap)
     library(circlize)
-    library(genefu)
 })
 
 source("utils/plots/signatures.R")
@@ -39,6 +38,9 @@ colnames(mut) <- gsub("\\.", "-", meta$Sample.Name[match(colnames(mut), gsub("-"
 # load in RNA matrix
 rna_df <- get_tcga_rna()
 colnames(rna_df) <- gsub("\\.", "-", colnames(rna_df))
+
+# load in pam50 subtyping
+pam50_subtyping <- readRDS("data/procdata/TCGA/pam50_subtyping.rds")
 
 # load in correlated genes
 #gene_corr <- readRDS("data/results/data/2-MolecularSigAnalysis/gene_correlations_arches.rds")
@@ -100,12 +102,6 @@ mut_bin <- ifelse(is.na(mut), NA, ifelse(mut >= 1, 1, 0))
 # Format RNA data
 ###########################################################
 
-# keep top10 genes from top correlations (modify here)
-#sig_res <- gene_corr[gene_corr$FDR < 0.05,]
-#sig_res <- sig_res[order(abs(sig_res$rho), decreasing = TRUE),]
-#genes <- sig_res$gene[1:10]
-rna <- as.data.frame(rna[genes,])
-
 format_rna <- function(rna) {
     rna$'TCGA-A2-A0T4-1' <- rna$'TCGA-A2-A0T4-2' <- rna[,colnames(rna) == "TCGA-A2-A0T4"]
     rna$'TCGA-A2-A0T4' <- NULL
@@ -114,7 +110,8 @@ format_rna <- function(rna) {
     return(rna)
 }
 
-rna <- format_rna(rna)
+pam50 <- as.data.frame(t(pam50_subtyping$subtype.proba))
+rna <- format_rna(pam50)
 
 ###########################################################
 # ARCHE heatmap
@@ -133,9 +130,11 @@ col_fun <- colorRamp2(
 ha1 <- HeatmapAnnotation(
     'ARCHE' = assigned_ARCHE,
     'PAM50' = subtype,
+    'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
     col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
     annotation_name_side = "left",
-    annotation_name_gp = gpar(fontsize = 9)
+    annotation_name_gp = gpar(fontsize = 9),
+    gap = unit(c(0.5,0.5,0.5), "mm")
 )
 
 # heatmap
@@ -143,19 +142,55 @@ ht1 <- Heatmap(
     toPlot,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
-    name = "ARCHE\nScore",
+    name = "NMF\nWeight",
     column_split = assigned_ARCHE,
     col = col_fun,
     row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
     column_names_gp = gpar(fontsize = 8),
-    top_annotation = ha1
+    top_annotation = ha1,
+    row_title = "ARCHEs",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 10),
+    border = TRUE
+)
+
+###########################################################
+# PAM50 heatmap
+###########################################################
+
+# make colour palette
+cols <- brewer.pal(9, "BuPu")
+col_fun <- colorRamp2(
+    seq(min(rna, na.rm = TRUE),
+        max(rna, na.rm = TRUE),
+        length.out = 9),
+    cols
+)
+
+ht2 <- Heatmap(
+    rna,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    name = "Subtyping\nScore",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "PAM50",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 10),
+    border = TRUE
 )
 
 ###########################################################
 # Mutation heatmap
 ###########################################################
 
-ht2 <- Heatmap(
+ht3 <- Heatmap(
     mut_bin,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
@@ -163,39 +198,12 @@ ht2 <- Heatmap(
     column_split = assigned_ARCHE,
     col = c("0" = "#F1F1F1", "1" = random_blue),
     row_names_gp = gpar(fontsize = 8, fontface = "italic"),
-    column_names_gp = gpar(fontsize = 8)
-)
-
-###########################################################
-# RNA heatmap
-###########################################################
-
-# make colour palette
-cols <- rev(brewer.pal(9, "PuOr"))
-breaks <- c(
-    seq(0, 5, length.out = 5),    # 0, 1.25, 2.5, 3.75, 5   -> colors 1-5
-    seq(5, 20, length.out = 5)[-1] # 8.75, 12.5, 16.25, 20  -> colors 6-9 (drop duplicate 5)
-)
-
-col_fun <- colorRamp2(breaks, cols)
-
-#col_fun <- colorRamp2(
-#    seq(min(rna, na.rm = TRUE),
-#        max(rna, na.rm = TRUE),
-#        length.out = 9),
-#    cols
-#)
-
-ht3 <- Heatmap(
-    rna,
-    #row_split = 10,
-    #cluster_rows = FALSE,
-    cluster_columns = FALSE,
-    name = "Gene\nExpression",
-    column_split = assigned_ARCHE,
-    col = col_fun,
-    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
-    column_names_gp = gpar(fontsize = 8)
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "Mutations",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 10)
 )
 
 ###########################################################
@@ -203,8 +211,8 @@ ht3 <- Heatmap(
 ###########################################################
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
-png(filename, width = 11, height = 11, res = 600, units = "in")
-ht1 %v% ht2 %v% ht3 
+png(filename, width = 11, height = 8, res = 600, units = "in")
+ht1 %v% ht2 %v% ht3
 dev.off()
 
 ###########################################################
