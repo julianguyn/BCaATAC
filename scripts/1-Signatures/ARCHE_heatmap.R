@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
     library(reshape2)
     library(ComplexHeatmap)
     library(circlize)
+    library(genefu)
 })
 
 source("utils/plots/signatures.R")
@@ -36,8 +37,8 @@ meta <- read.csv("metadata/TCGA_mutation_meta.csv")
 colnames(mut) <- gsub("\\.", "-", meta$Sample.Name[match(colnames(mut), gsub("-", "\\.", meta$snv_label))])
 
 # load in RNA matrix
-rna <- get_tcga_rna()
-colnames(rna) <- gsub("\\.", "-", colnames(rna))
+rna_df <- get_tcga_rna()
+colnames(rna_df) <- gsub("\\.", "-", colnames(rna_df))
 
 # load in correlated genes
 #gene_corr <- readRDS("data/results/data/2-MolecularSigAnalysis/gene_correlations_arches.rds")
@@ -47,15 +48,15 @@ colnames(rna) <- gsub("\\.", "-", colnames(rna))
 ###########################################################
 
 genes <- c()
-for (arche in paste0("ARCHE", 1:6)) {
+for (arche in paste0("ARCHE", c(1,4,6,2,5,3))) {
     deg <- read.csv(paste0("data/results/data/2-MolecularSigAnalysis/DEG/ARCHE_", arche, "_vs_Other.csv"))
     deg <- deg[which(deg$padj < 0.05),]
     deg <- deg[order(abs(deg$log2FoldChange), decreasing = TRUE),]
     message(paste("\nGenes added from", arche))
-    print(deg$X[1:5])
-    genes <- c(genes, deg$X[1:5])
+    #print(nrow(deg[abs(deg$log2FoldChange) > 7,]))
+    genes <- c(genes, deg$X[abs(deg$log2FoldChange) > 6])
+    genes <- unique(genes)
 }
-genes <- unique(genes)
 
 ###########################################################
 # Handle duplicates and format data
@@ -105,12 +106,15 @@ mut_bin <- ifelse(is.na(mut), NA, ifelse(mut >= 1, 1, 0))
 #genes <- sig_res$gene[1:10]
 rna <- as.data.frame(rna[genes,])
 
+format_rna <- function(rna) {
+    rna$'TCGA-A2-A0T4-1' <- rna$'TCGA-A2-A0T4-2' <- rna[,colnames(rna) == "TCGA-A2-A0T4"]
+    rna$'TCGA-A2-A0T4' <- NULL
 
-rna$'TCGA-A2-A0T4-1' <- rna$'TCGA-A2-A0T4-2' <- rna[,colnames(rna) == "TCGA-A2-A0T4"]
-rna$'TCGA-A2-A0T4' <- NULL
+    rna <- rna[,match(colnames(toPlot), colnames(rna))] |> as.matrix()
+    return(rna)
+}
 
-rna <- rna[,match(colnames(toPlot), colnames(rna))] |> as.matrix()
-
+rna <- format_rna(rna)
 
 ###########################################################
 # ARCHE heatmap
@@ -127,8 +131,9 @@ col_fun <- colorRamp2(
 
 # subtype annotation
 ha1 <- HeatmapAnnotation(
-    'PAM50\nSubtype' = subtype,
-    col = list('PAM50\nSubtype' = subtype_pal),
+    'ARCHE' = assigned_ARCHE,
+    'PAM50' = subtype,
+    col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
     annotation_name_side = "left",
     annotation_name_gp = gpar(fontsize = 9)
 )
@@ -166,17 +171,25 @@ ht2 <- Heatmap(
 ###########################################################
 
 # make colour palette
-cols <- brewer.pal(9, "BuPu")
-col_fun <- colorRamp2(
-    seq(min(rna, na.rm = TRUE),
-        max(rna, na.rm = TRUE),
-        length.out = 9),
-    cols
+cols <- rev(brewer.pal(9, "PuOr"))
+breaks <- c(
+    seq(0, 5, length.out = 5),    # 0, 1.25, 2.5, 3.75, 5   -> colors 1-5
+    seq(5, 20, length.out = 5)[-1] # 8.75, 12.5, 16.25, 20  -> colors 6-9 (drop duplicate 5)
 )
+
+col_fun <- colorRamp2(breaks, cols)
+
+#col_fun <- colorRamp2(
+#    seq(min(rna, na.rm = TRUE),
+#        max(rna, na.rm = TRUE),
+#        length.out = 9),
+#    cols
+#)
 
 ht3 <- Heatmap(
     rna,
-    cluster_rows = FALSE,
+    #row_split = 10,
+    #cluster_rows = FALSE,
     cluster_columns = FALSE,
     name = "Gene\nExpression",
     column_split = assigned_ARCHE,
@@ -190,6 +203,86 @@ ht3 <- Heatmap(
 ###########################################################
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
-png(filename, width = 11, height = 8, res = 600, units = "in")
+png(filename, width = 11, height = 11, res = 600, units = "in")
 ht1 %v% ht2 %v% ht3 
+dev.off()
+
+###########################################################
+# Claudin heatmap
+###########################################################
+
+# Up-regulated in claudin-low tumors
+claudin_low_up <- c(
+  "ADAMDEC1", "ANXA1", "BTN3A3", "CASP1", "CD36", "CD3D",
+  "CFLAR", "COLEC12", "CTSK", "CTSS", "CXCL9", "DPT",
+  "EPAS1", "FHL1", "FUCA1", "GPX3", "LAPTM5", "LGALS2",
+  "LTB", "LXN", "MAF", "PLAC8", "PSMB10"
+)
+rna_cl_u <- format_rna(as.data.frame(rna_df[claudin_low_up,]))
+
+# Down-regulated in claudin-low tumors
+claudin_low_down <- c(
+  "AKAP1", "ANK3", "BSPRY", "CD24", "CDH1", "CLDN3", "CLDN4",
+  "CTTN", "EFNA4", "ELF3", "EPN3", "FLNB", "FXYD3", "GAS2L1",
+  "GCAT", "GPR56", "H1F0", "HIST1H2BD", "HIST2H2BE", "KRT18",
+  "KRT19", "KRT8", "LASS2", "MB", "MTA1", "MYO6", "NEBL",
+  "PBX1", "PIK3R3", "PPM1H", "PTPRF", "SLC19A2", "TOB1",
+  "TOM1L1", "TPD52", "TPD52L1", "TRAF4"
+)
+rna_cl_d <- format_rna(as.data.frame(rna_df[claudin_low_down,]))
+
+# make colour palette
+cols <- brewer.pal(9, "Purples")
+col_fun <- colorRamp2(
+    seq(min(toPlot, na.rm = TRUE),
+        max(toPlot, na.rm = TRUE),
+        length.out = 9),
+    cols
+)
+
+# subtype annotation
+ha1 <- HeatmapAnnotation(
+    'ARCHE' = assigned_ARCHE,
+    'PAM50' = subtype,
+    col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
+    annotation_name_side = "left",
+    annotation_name_gp = gpar(fontsize = 9)
+)
+
+ht1 <- Heatmap(
+    rna_cl_u,
+    cluster_columns = FALSE,
+    show_column_names = FALSE,
+    show_row_dend = FALSE,
+    name = "Gene\nExpression",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "CL (upregulated)",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 12, fontface = "bold"),
+    top_annotation = ha1
+)
+
+ht2 <- Heatmap(
+    rna_cl_d,
+    cluster_columns = FALSE,
+    show_column_names = FALSE,
+    show_row_dend = FALSE,
+    name = "Gene\nExpression",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "CL (downregulated)",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 12, fontface = "bold")
+)
+
+filename <- "data/results/figures/1-Signatures/suppfigure1_cl_heatmap.png"
+png(filename, width = 9, height = 7, res = 600, units = "in")
+draw(ht1 %v% ht2, merge_legends = TRUE)
 dev.off()
