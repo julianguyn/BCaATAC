@@ -151,7 +151,9 @@ for (group in unique(df[[ref]])) {
         risk.table = TRUE,
         palette = c("#046C9A", "#827A6F"),
         legend.title = "",
-        xlab = "Time (days)"
+        xlab = "Time (days)",
+        xlim = c(0, 1825),
+        break.time.by = 365
     )
     p$plot <- p$plot + theme(
         legend.key.size = unit(1, "cm"),
@@ -182,7 +184,9 @@ for (group in unique(pheno$PAM50)) {
         risk.table = TRUE,
         palette = c("#046C9A", "#827A6F"),
         legend.title = "",
-        xlab = "Time (days)"
+        xlab = "Time (days)",
+        xlim = c(0, 1825),
+        break.time.by = 365
     )
     p$plot <- p$plot + theme(
         legend.key.size = unit(1, "cm"),
@@ -205,7 +209,9 @@ p <- ggsurvplot(
     risk.table = TRUE,
     palette = unname(subtype_pal[1:4]),
     legend.title = "",
-    xlab = "Time (days)"
+    xlab = "Time (days)",
+    xlim = c(0, 1825),
+    break.time.by = 365
 )
 p$plot <- p$plot + theme(
     legend.key.size = unit(1, "cm"),

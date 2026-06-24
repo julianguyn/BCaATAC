@@ -133,8 +133,7 @@ ha1 <- HeatmapAnnotation(
     'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
     col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
     annotation_name_side = "left",
-    annotation_name_gp = gpar(fontsize = 9),
-    gap = unit(c(0.5,0.5,0.5), "mm")
+    annotation_name_gp = gpar(fontsize = 9)
 )
 
 # heatmap
@@ -218,6 +217,8 @@ dev.off()
 ###########################################################
 # Claudin heatmap
 ###########################################################
+
+# from https://pmc.ncbi.nlm.nih.gov/articles/PMC5207440/
 
 # Up-regulated in claudin-low tumors
 claudin_low_up <- c(
