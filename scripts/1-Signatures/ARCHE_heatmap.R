@@ -15,6 +15,7 @@ source("utils/plots/signatures.R")
 source("utils/get_data.R")
 source("utils/palettes.R")
 source("utils/bca_mutations.R")
+source("utils/gene_list.R")
 
 set.seed(123)
 
@@ -36,7 +37,7 @@ meta <- read.csv("metadata/TCGA_mutation_meta.csv")
 colnames(mut) <- gsub("\\.", "-", meta$Sample.Name[match(colnames(mut), gsub("-", "\\.", meta$snv_label))])
 
 # load in RNA matrix
-rna_df <- get_tcga_rna()
+rna_df <- as.data.frame(get_tcga_rna())
 colnames(rna_df) <- gsub("\\.", "-", colnames(rna_df))
 
 # load in pam50 subtyping
@@ -54,7 +55,6 @@ for (arche in paste0("ARCHE", c(1,4,6,2,5,3))) {
     deg <- read.csv(paste0("data/results/data/2-MolecularSigAnalysis/DEG/ARCHE_", arche, "_vs_Other.csv"))
     deg <- deg[which(deg$padj < 0.05),]
     deg <- deg[order(abs(deg$log2FoldChange), decreasing = TRUE),]
-    message(paste("\nGenes added from", arche))
     #print(nrow(deg[abs(deg$log2FoldChange) > 7,]))
     genes <- c(genes, deg$X[abs(deg$log2FoldChange) > 6])
     genes <- unique(genes)
@@ -215,29 +215,59 @@ ht1 %v% ht2 %v% ht3
 dev.off()
 
 ###########################################################
+# PAM50 gene heatmap
+###########################################################
+
+rna_df <- rna_df[pam50_genes,]
+rna_df <- format_rna(rna_df)
+
+# make colour palette
+cols <- colorRampPalette(c("#7F2929", "#BA5050", "#D4D7F8", "#80AAEE", "#3878DF"))(9)
+col_fun <- colorRamp2(
+    seq(0,
+        20,
+        length.out = 9),
+    cols
+)
+
+# subtype annotation
+ha1 <- HeatmapAnnotation(
+    'ARCHE' = assigned_ARCHE,
+    'PAM50' = subtype,
+    'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
+    col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
+    annotation_name_side = "left",
+    annotation_name_gp = gpar(fontsize = 9)
+)
+
+ht4 <- Heatmap(
+    rna_df,
+    row_split = 8,
+    show_row_dend = FALSE,
+    cluster_columns = FALSE,
+    name = "Gene\nExpression",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    top_annotation = ha1,
+    row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "PAM50 Genes",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 10)
+)
+
+filename <- "data/results/figures/1-Signatures/figure1_pam50_gene_heatmap.png"
+png(filename, width = 10, height = 8, res = 600, units = "in")
+ht4
+dev.off()
+
+###########################################################
 # Claudin heatmap
 ###########################################################
 
-# from https://pmc.ncbi.nlm.nih.gov/articles/PMC5207440/
-
-# Up-regulated in claudin-low tumors
-claudin_low_up <- c(
-  "ADAMDEC1", "ANXA1", "BTN3A3", "CASP1", "CD36", "CD3D",
-  "CFLAR", "COLEC12", "CTSK", "CTSS", "CXCL9", "DPT",
-  "EPAS1", "FHL1", "FUCA1", "GPX3", "LAPTM5", "LGALS2",
-  "LTB", "LXN", "MAF", "PLAC8", "PSMB10"
-)
 rna_cl_u <- format_rna(as.data.frame(rna_df[claudin_low_up,]))
-
-# Down-regulated in claudin-low tumors
-claudin_low_down <- c(
-  "AKAP1", "ANK3", "BSPRY", "CD24", "CDH1", "CLDN3", "CLDN4",
-  "CTTN", "EFNA4", "ELF3", "EPN3", "FLNB", "FXYD3", "GAS2L1",
-  "GCAT", "GPR56", "H1F0", "HIST1H2BD", "HIST2H2BE", "KRT18",
-  "KRT19", "KRT8", "LASS2", "MB", "MTA1", "MYO6", "NEBL",
-  "PBX1", "PIK3R3", "PPM1H", "PTPRF", "SLC19A2", "TOB1",
-  "TOM1L1", "TPD52", "TPD52L1", "TRAF4"
-)
 rna_cl_d <- format_rna(as.data.frame(rna_df[claudin_low_down,]))
 
 # make colour palette
