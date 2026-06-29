@@ -218,6 +218,8 @@ ht3 <- Heatmap(
 tfs <- tfs[-which(rownames(tfs) == "IRF8"),]
 tfs <- tfs[,match(colnames(toPlot), colnames(tfs))] |> as.matrix()
 
+tfs_norm <- znorm(as.data.frame(tfs))
+
 # make colour palette
 cols <- brewer.pal(9, "Blues")
 col_fun <- colorRamp2(
@@ -238,18 +240,19 @@ ha1 <- HeatmapAnnotation(
 )
 
 # make colour palette
-cols <- brewer.pal(9, "RdBu")
+cols <- rev(brewer.pal(9, "RdBu"))
 col_fun <- colorRamp2(
-    seq(200,
-        -200,
+    seq(4,
+        -4,
         length.out = 9),
     cols
 )
 
 ht <- Heatmap(
-    tfs,
+    tfs_norm,
     cluster_columns = FALSE,
-    name = "Subtyping\nScore",
+    row_split = 6,
+    name = "ZScore",
     column_split = assigned_ARCHE,
     col = col_fun,
     row_names_gp = gpar(fontsize = 8),
@@ -259,8 +262,9 @@ ht <- Heatmap(
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
-    border = TRUE
+    top_annotation = ha1
 )
+ht
 ###########################################################
 # Compiled heatmap
 ###########################################################
