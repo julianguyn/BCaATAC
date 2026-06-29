@@ -29,12 +29,13 @@ meta$Sample.Name <- gsub("\\.", "-", meta$Sample.Name)
 
 # get signature scores from NMF
 mat <- get_arche_tcga()
+mat_order <- mat$variable
 mat$variable <- meta$Sample.Name[match(mat$variable, meta$ATAC.Seq.File.Name)]
 
 # load in mutation matrix
 mut <- read.table("data/results/data/2-MolecularSigAnalysis/TCGA_mutation_matrix.tsv")
-meta <- read.csv("metadata/TCGA_mutation_meta.csv")
-colnames(mut) <- gsub("\\.", "-", meta$Sample.Name[match(colnames(mut), gsub("-", "\\.", meta$snv_label))])
+meta_mut <- read.csv("metadata/TCGA_mutation_meta.csv")
+colnames(mut) <- gsub("\\.", "-", meta_mut$Sample.Name[match(colnames(mut), gsub("-", "\\.", meta_mut$snv_label))])
 
 # load in RNA matrix
 rna_df <- as.data.frame(get_tcga_rna())
@@ -45,6 +46,9 @@ pam50_subtyping <- readRDS("data/procdata/TCGA/pam50_subtyping.rds")
 
 # load in correlated genes
 #gene_corr <- readRDS("data/results/data/2-MolecularSigAnalysis/gene_correlations_arches.rds")
+
+# load in TF zscores
+tfs <- read.table("data/rawdata/TCGA_TFs/tcga_TF.Zscore.txt")
 
 ###########################################################
 # Get DEGS
@@ -66,6 +70,8 @@ for (arche in paste0("ARCHE", c(1,4,6,2,5,3))) {
 
 # rename duplicate
 mat[mat$variable == "TCGA-A2-A0T4",]$variable <- rep(paste0("TCGA-A2-A0T4-", 1:2), each = 6)
+mapping <- unique(data.frame(mat = mat_order, new = mat$variable))
+colnames(tfs) <- mapping$new[match(sub("X", "", colnames(tfs)), mapping$mat)]
 
 # format toPlot
 toPlot <- mat %>% select(ARCHE, value, variable)
@@ -205,6 +211,56 @@ ht3 <- Heatmap(
     row_title_gp = gpar(fontsize = 10)
 )
 
+###########################################################
+# TFs binding sites heatmap
+###########################################################
+
+tfs <- tfs[-which(rownames(tfs) == "IRF8"),]
+tfs <- tfs[,match(colnames(toPlot), colnames(tfs))] |> as.matrix()
+
+# make colour palette
+cols <- brewer.pal(9, "Blues")
+col_fun <- colorRamp2(
+    seq(min(toPlot, na.rm = TRUE),
+        max(toPlot, na.rm = TRUE),
+        length.out = 9),
+    cols
+)
+
+# subtype annotation
+ha1 <- HeatmapAnnotation(
+    'ARCHE' = assigned_ARCHE,
+    'PAM50' = subtype,
+    'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
+    col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
+    annotation_name_side = "left",
+    annotation_name_gp = gpar(fontsize = 9)
+)
+
+# make colour palette
+cols <- brewer.pal(9, "RdBu")
+col_fun <- colorRamp2(
+    seq(200,
+        -200,
+        length.out = 9),
+    cols
+)
+
+ht <- Heatmap(
+    tfs,
+    cluster_columns = FALSE,
+    name = "Subtyping\nScore",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "PAM50",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 10),
+    border = TRUE
+)
 ###########################################################
 # Compiled heatmap
 ###########################################################
