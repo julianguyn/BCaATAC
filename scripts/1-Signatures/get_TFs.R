@@ -97,3 +97,11 @@ motif_to_gene <- list(
 
 unique_genes <- unique(na.omit(unlist(motif_to_gene)))
 writeLines(unique_genes, "data/procdata/TCGA/homer_TF_genes.txt")
+
+motifs_df <- data.frame(
+  motif = names(motif_to_gene),
+  gene = unlist(motif_to_gene)
+)
+tf$gene <- motifs_df$gene[match(tf$Name, motifs_df$motif)]
+
+write.table(tf, "data/procdata/TCGA/homer_compiled_TF_genes.txt")

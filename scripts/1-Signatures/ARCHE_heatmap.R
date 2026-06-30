@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
     library(reshape2)
     library(ComplexHeatmap)
     library(circlize)
+    library(matrixStats)
 })
 
 source("utils/plots/signatures.R")
@@ -16,6 +17,7 @@ source("utils/get_data.R")
 source("utils/palettes.R")
 source("utils/bca_mutations.R")
 source("utils/gene_list.R")
+source("utils/plots/ARCHE_scores_heatmap.R")
 
 set.seed(123)
 
@@ -220,15 +222,6 @@ tfs <- tfs[,match(colnames(toPlot), colnames(tfs))] |> as.matrix()
 
 tfs_norm <- znorm(as.data.frame(tfs))
 
-# make colour palette
-cols <- brewer.pal(9, "Blues")
-col_fun <- colorRamp2(
-    seq(min(toPlot, na.rm = TRUE),
-        max(toPlot, na.rm = TRUE),
-        length.out = 9),
-    cols
-)
-
 # subtype annotation
 ha1 <- HeatmapAnnotation(
     'ARCHE' = assigned_ARCHE,
@@ -239,32 +232,77 @@ ha1 <- HeatmapAnnotation(
     annotation_name_gp = gpar(fontsize = 9)
 )
 
-# make colour palette
-cols <- rev(brewer.pal(9, "RdBu"))
-col_fun <- colorRamp2(
-    seq(4,
-        -4,
-        length.out = 9),
-    cols
-)
 
-ht <- Heatmap(
-    tfs_norm,
-    cluster_columns = FALSE,
-    row_split = 6,
-    name = "ZScore",
-    column_split = assigned_ARCHE,
-    col = col_fun,
-    row_names_gp = gpar(fontsize = 8),
-    row_names_side = "left",
-    column_names_gp = gpar(fontsize = 8),
-    row_title = "PAM50",
-    row_title_side = "left",
-    row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10),
-    top_annotation = ha1
+tf_arche <- read.table("data/procdata/TCGA/homer_compiled_TF_genes.txt")
+tf_df <- data.frame(
+    ARCHE1 = rep(0, nrow(tfs)), ARCHE2 = 0, ARCHE3 = 0,
+    ARCHE4 = 0, ARCHE5 = 0, ARCHE6 = 0
 )
-ht
+rownames(tf_df) <- rownames(tfs)
+for (gene in rownames(tf_df)) {
+    for (arche in paste0("ARCHE", 1:6)) {
+        subset_df <- tf_arche[tf_arche$gene == gene,]
+        if (arche %in% subset_df$ARCHE) tf_df[gene, arche] <- 1
+    }
+}
+
+
+plot_tf_heatmap <- function(toPlot) {
+
+    n <- max(max(toPlot), abs(min(toPlot)))
+
+    # make colour palette
+    cols <- rev(brewer.pal(9, "RdBu"))
+    col_fun <- colorRamp2(
+        seq(5,
+            -5,
+            length.out = 9),
+        cols
+    )
+
+    na_val <- "#f8f8f8"
+    row_ha <- rowAnnotation(
+        ARCHE1 = factor(tf_df$ARCHE1),
+        ARCHE2 = tf_df$ARCHE2,
+        ARCHE3 = tf_df$ARCHE3,
+        ARCHE4 = tf_df$ARCHE4,
+        ARCHE5 = tf_df$ARCHE5,
+        ARCHE6 = tf_df$ARCHE6,
+        col = list(
+            'ARCHE1' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE1"]]),
+            'ARCHE2' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE2"]]),
+            'ARCHE3' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE3"]]),
+            'ARCHE4' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE4"]]),
+            'ARCHE5' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE5"]]),
+            'ARCHE6' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE6"]])
+        )
+    )
+
+
+    ht <- Heatmap(
+        toPlot,
+        cluster_columns = FALSE,
+        row_split = 6,
+        name = "Chromvar\nZScore",
+        column_split = assigned_ARCHE,
+        col = col_fun,
+        row_names_gp = gpar(fontsize = 8),
+        row_names_side = "left",
+        column_names_gp = gpar(fontsize = 8),
+        row_title = "Top Transcription Factors",
+        row_title_side = "left",
+        row_title_rot = 90,
+        row_title_gp = gpar(fontsize = 10),
+        top_annotation = ha1,
+        right_annotation = row_ha
+    )
+    ht
+
+}
+
+plot_tf_heatmap(tfs_norm)
+plot_tf_heatmap(tfs)
+
 ###########################################################
 # Compiled heatmap
 ###########################################################
