@@ -84,6 +84,13 @@ createBEDforHOMER("ARCHE4_20k")
 createBEDforHOMER("ARCHE5_20k")
 createBEDforHOMER("ARCHE6_20k")
 
+createBEDforHOMER("ARCHE1_50k")
+createBEDforHOMER("ARCHE2_50k")
+createBEDforHOMER("ARCHE3_50k")
+createBEDforHOMER("ARCHE4_50k")
+createBEDforHOMER("ARCHE5_50k")
+createBEDforHOMER("ARCHE6_50k")
+
 ###########################################################
 # Create Griffin site files for each ARCHE
 ###########################################################
