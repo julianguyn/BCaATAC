@@ -1,6 +1,8 @@
 # process the TE bed files
 
-setwd("/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/procdata/HERVs_LTRs")
+#setwd("/cluster/projects/bhklab/projects/BCaATAC/peak-set-scoring/data/procdata/HERVs_LTRs")
+
+count_regions <- data.frame(matrix(nrow=0, ncol=2))
 
 for (dir in list.files()) {
 
@@ -14,4 +16,7 @@ for (dir in list.files()) {
         bed <- rbind(bed, te)
     }
     write.table(bed, file = paste0("beds/", dir, ".bed"), quote = FALSE, row.names = FALSE)
+    count_regions <- rbind(count_regions, data.frame(Family = dir, Regions = nrow(bed)))
 }
+
+saveRDS(count_regions, file = "count_regions.rds")

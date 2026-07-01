@@ -26,7 +26,8 @@ mat_order <- mat$variable
 mat$variable <- meta$Sample.Name[match(mat$variable, meta$ATAC.Seq.File.Name)]
 
 # load in HERV_LTRs zscores
-tes <- read.table("data/rawdata/TCGA_HERV_LTRs/tcga_HERV_LTRs.Zscore.txt")
+#tes <- read.table("data/rawdata/TCGA_families/tcga_HERV_LTRs.Zscore.txt")
+tes <- read.table("data/rawdata/TCGA_families/tcga_TE_families.Zscore.txt")
 
 ###########################################################
 # Handle duplicates and format data
@@ -62,10 +63,12 @@ for (arche in colnames(toPlot)) {
 ###########################################################
 
 # make colour palette
-cols <- rev(brewer.pal(9, "RdBu"))
+cols <- colorRampPalette(c("#4B8F8C", "#A2E4D0","#AC71A7", "#5E4352"))(9)
+n <- max(max(toPlot), abs(min(toPlot)))
+n <- 20
 col_fun <- colorRamp2(
-    seq(8,
-        -8,
+    seq(n,
+        -n,
         length.out = 9),
     cols
 )
@@ -76,7 +79,7 @@ ha1 <- HeatmapAnnotation(
     'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
     col = list('ARCHE' = ARCHE_pal),
     annotation_name_side = "left",
-    annotation_name_gp = gpar(fontsize = 9)
+    annotation_name_gp = gpar(fontsize = 8)
 )
 
 ht <- Heatmap(
@@ -93,7 +96,6 @@ ht <- Heatmap(
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
-    top_annotation = ha1
+    bottom_annotation = ha1
 )
 ht
-h
