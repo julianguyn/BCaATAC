@@ -52,6 +52,9 @@ pam50_subtyping <- readRDS("data/procdata/TCGA/pam50_subtyping.rds")
 # load in TF zscores
 tfs <- read.table("data/rawdata/TCGA_TFs/tcga_TF.Zscore.txt")
 
+# load in TE zscores
+tes <- read.table("data/rawdata/TCGA_TEs/tcga_TE.Zscore.txt")
+
 ###########################################################
 # Get DEGS
 ###########################################################
@@ -74,6 +77,7 @@ for (arche in paste0("ARCHE", c(1,4,6,2,5,3))) {
 mat[mat$variable == "TCGA-A2-A0T4",]$variable <- rep(paste0("TCGA-A2-A0T4-", 1:2), each = 6)
 mapping <- unique(data.frame(mat = mat_order, new = mat$variable))
 colnames(tfs) <- mapping$new[match(sub("X", "", colnames(tfs)), mapping$mat)]
+colnames(tes) <- mapping$new[match(sub("X", "", colnames(tes)), mapping$mat)]
 
 # format toPlot
 toPlot <- mat %>% select(ARCHE, value, variable)
@@ -304,12 +308,45 @@ plot_tf_heatmap(tfs_norm)
 plot_tf_heatmap(tfs)
 
 ###########################################################
+# TEs heatmap
+###########################################################
+
+tes <- tes[,match(colnames(toPlot), colnames(tes))] |> as.matrix()
+rownames(tes) <- c("", "")
+
+cols <- rev(brewer.pal(9, "PuOr"))
+col_fun <- colorRamp2(
+    seq(max(tes),
+        min(tes),
+        length.out = 9),
+    cols
+)
+
+
+ht4 <- Heatmap(
+    tes,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    name = "Chromvar\nZScore",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "TEs",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 10),
+    border = TRUE
+)
+
+###########################################################
 # Compiled heatmap
 ###########################################################
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
 png(filename, width = 11, height = 8, res = 600, units = "in")
-ht1 %v% ht2 %v% ht3
+ht1 %v% ht2 %v% ht3 %v% ht4
 dev.off()
 
 ###########################################################
