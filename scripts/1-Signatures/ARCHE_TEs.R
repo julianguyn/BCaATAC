@@ -25,9 +25,10 @@ mat <- get_arche_tcga()
 mat_order <- mat$variable
 mat$variable <- meta$Sample.Name[match(mat$variable, meta$ATAC.Seq.File.Name)]
 
-# load in HERV_LTRs zscores
-#tes <- read.table("data/rawdata/TCGA_families/tcga_HERV_LTRs.Zscore.txt")
+# load in zscores
+herv_ltrs <- read.table("data/rawdata/TCGA_families/tcga_HERV_LTRs.Zscore.txt")
 tes <- read.table("data/rawdata/TCGA_families/tcga_TE_families.Zscore.txt")
+counts <- readRDS("data/rawdata/TCGA_families/count_regions.rds")
 
 ###########################################################
 # Handle duplicates and format data
@@ -58,34 +59,55 @@ for (arche in colnames(toPlot)) {
     toPlot[[arche]] <- rowMeans(tt)
 }
 
+toPlot <- toPlot[rownames(toPlot) %in% counts$Family[counts$Regions > 5000],]
+
+###########################################################
+# Colour palettes
+###########################################################
+
+cols <- colorRampPalette(c("#4B8F8C", "#A2E4D0","#AC71A7", "#5E4352"))(9)
+n <- 5
+col_fun <- colorRamp2(seq(n, -n, length.out = 9), cols)
+
+herv_pal <- c("Yes" = "#0F5257", "No" = "grey85")
+
+log2count_col <- colorRamp2(
+  seq(min(5, na.rm = TRUE), max(log2(counts$Regions), na.rm = TRUE), length.out = 9),
+  brewer.pal(9, "BuPu")
+)
+
+###########################################################
+# Create row anno
+###########################################################
+
+counts <- counts[match(rownames(toPlot), counts$Family),]
+counts$HERV_LTRs <- ifelse(counts$Family %in% rownames(herv_ltrs), "Yes", "No")
+
+row_ha <- rowAnnotation(
+    Log2Count = log2(counts$Regions), HERV_LTRs = counts$HERV_LTRs,
+    col = list(
+        Log2Count = log2count_col,
+        HERV_LTRs = herv_pal
+    ),
+    annotation_name_gp = gpar(fontsize = 8)
+)
+
+
 ###########################################################
 # Plot
 ###########################################################
 
-# make colour palette
-cols <- colorRampPalette(c("#4B8F8C", "#A2E4D0","#AC71A7", "#5E4352"))(9)
-n <- max(max(toPlot), abs(min(toPlot)))
-n <- 20
-col_fun <- colorRamp2(
-    seq(n,
-        -n,
-        length.out = 9),
-    cols
-)
-
-# ARCHE annotation
-ha1 <- HeatmapAnnotation(
+col_ha <- HeatmapAnnotation(
     'ARCHE' = paste0("ARCHE", 1:6),
-    'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
     col = list('ARCHE' = ARCHE_pal),
-    annotation_name_side = "left",
-    annotation_name_gp = gpar(fontsize = 8)
+    show_annotation_name = FALSE,
+    show_legend = FALSE
 )
 
 ht <- Heatmap(
     toPlot,
     cluster_columns = FALSE,
-    name = "Chromvar\nZScore",
+    name = "Capped\nChromvar\nZScore",
     col = col_fun,
     row_names_gp = gpar(fontsize = 8),
     row_names_side = "left",
@@ -96,6 +118,10 @@ ht <- Heatmap(
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
-    bottom_annotation = ha1
+    bottom_annotation = col_ha,
+    right_annotation = row_ha
 )
+filename <- "data/results/figures/1-Signatures/TE_heatmap.png"
+png(filename, width = 6.5, height = 5, res = 600, units = "in")
 ht
+dev.off()
