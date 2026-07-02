@@ -46,28 +46,8 @@ colnames(rna_df) <- gsub("\\.", "-", colnames(rna_df))
 # load in pam50 subtyping
 pam50_subtyping <- readRDS("data/procdata/TCGA/pam50_subtyping.rds")
 
-# load in correlated genes
-#gene_corr <- readRDS("data/results/data/2-MolecularSigAnalysis/gene_correlations_arches.rds")
-
-# load in TF zscores
-tfs <- read.table("data/rawdata/TCGA_TFs/tcga_TF.Zscore.txt")
-
 # load in TE zscores
 tes <- read.table("data/rawdata/TCGA_TEs/tcga_TE.Zscore.txt")
-
-###########################################################
-# Get DEGS
-###########################################################
-
-genes <- c()
-for (arche in paste0("ARCHE", c(1,4,6,2,5,3))) {
-    deg <- read.csv(paste0("data/results/data/2-MolecularSigAnalysis/DEG/ARCHE_", arche, "_vs_Other.csv"))
-    deg <- deg[which(deg$padj < 0.05),]
-    deg <- deg[order(abs(deg$log2FoldChange), decreasing = TRUE),]
-    #print(nrow(deg[abs(deg$log2FoldChange) > 7,]))
-    genes <- c(genes, deg$X[abs(deg$log2FoldChange) > 6])
-    genes <- unique(genes)
-}
 
 ###########################################################
 # Handle duplicates and format data
@@ -123,7 +103,7 @@ format_rna <- function(rna) {
 }
 
 pam50 <- as.data.frame(t(pam50_subtyping$subtype.proba))
-rna <- format_rna(pam50)
+pam50 <- format_rna(pam50)
 
 ###########################################################
 # ARCHE heatmap
@@ -164,7 +144,7 @@ ht1 <- Heatmap(
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
-    border = TRUE
+    border = border_col
 )
 
 ###########################################################
@@ -174,14 +154,14 @@ ht1 <- Heatmap(
 # make colour palette
 cols <- brewer.pal(9, "BuPu")
 col_fun <- colorRamp2(
-    seq(min(rna, na.rm = TRUE),
-        max(rna, na.rm = TRUE),
+    seq(min(pam50, na.rm = TRUE),
+        max(pam50, na.rm = TRUE),
         length.out = 9),
     cols
 )
 
 ht2 <- Heatmap(
-    rna,
+    pam50,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
     name = "Subtyping\nScore",
@@ -194,7 +174,7 @@ ht2 <- Heatmap(
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
-    border = TRUE
+    border = border_col
 )
 
 ###########################################################
@@ -214,98 +194,9 @@ ht3 <- Heatmap(
     row_title = "Mutations",
     row_title_side = "left",
     row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10)
+    row_title_gp = gpar(fontsize = 10),
+    border = border_col
 )
-
-###########################################################
-# TFs binding sites heatmap
-###########################################################
-
-tfs <- tfs[-which(rownames(tfs) == "IRF8"),]
-tfs <- tfs[,match(colnames(toPlot), colnames(tfs))] |> as.matrix()
-
-tfs_norm <- znorm(as.data.frame(tfs))
-
-# subtype annotation
-ha1 <- HeatmapAnnotation(
-    'ARCHE' = assigned_ARCHE,
-    'PAM50' = subtype,
-    'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
-    col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
-    annotation_name_side = "left",
-    annotation_name_gp = gpar(fontsize = 9)
-)
-
-
-tf_arche <- read.table("data/procdata/TCGA/homer_compiled_TF_genes.txt")
-tf_df <- data.frame(
-    ARCHE1 = rep(0, nrow(tfs)), ARCHE2 = 0, ARCHE3 = 0,
-    ARCHE4 = 0, ARCHE5 = 0, ARCHE6 = 0
-)
-rownames(tf_df) <- rownames(tfs)
-for (gene in rownames(tf_df)) {
-    for (arche in paste0("ARCHE", 1:6)) {
-        subset_df <- tf_arche[tf_arche$gene == gene,]
-        if (arche %in% subset_df$ARCHE) tf_df[gene, arche] <- 1
-    }
-}
-
-
-plot_tf_heatmap <- function(toPlot) {
-
-    n <- max(max(toPlot), abs(min(toPlot)))
-
-    # make colour palette
-    cols <- rev(brewer.pal(9, "RdBu"))
-    col_fun <- colorRamp2(
-        seq(5,
-            -5,
-            length.out = 9),
-        cols
-    )
-
-    na_val <- "#f8f8f8"
-    row_ha <- rowAnnotation(
-        ARCHE1 = factor(tf_df$ARCHE1),
-        ARCHE2 = tf_df$ARCHE2,
-        ARCHE3 = tf_df$ARCHE3,
-        ARCHE4 = tf_df$ARCHE4,
-        ARCHE5 = tf_df$ARCHE5,
-        ARCHE6 = tf_df$ARCHE6,
-        col = list(
-            'ARCHE1' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE1"]]),
-            'ARCHE2' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE2"]]),
-            'ARCHE3' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE3"]]),
-            'ARCHE4' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE4"]]),
-            'ARCHE5' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE5"]]),
-            'ARCHE6' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE6"]])
-        )
-    )
-
-
-    ht <- Heatmap(
-        toPlot,
-        cluster_columns = FALSE,
-        row_split = 6,
-        name = "Chromvar\nZScore",
-        column_split = assigned_ARCHE,
-        col = col_fun,
-        row_names_gp = gpar(fontsize = 8),
-        row_names_side = "left",
-        column_names_gp = gpar(fontsize = 8),
-        row_title = "Top Transcription Factors",
-        row_title_side = "left",
-        row_title_rot = 90,
-        row_title_gp = gpar(fontsize = 10),
-        top_annotation = ha1,
-        right_annotation = row_ha
-    )
-    ht
-
-}
-
-plot_tf_heatmap(tfs_norm)
-plot_tf_heatmap(tfs)
 
 ###########################################################
 # TEs heatmap
@@ -337,7 +228,7 @@ ht4 <- Heatmap(
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
-    border = TRUE
+    border = border_col
 )
 
 ###########################################################
@@ -460,3 +351,93 @@ filename <- "data/results/figures/1-Signatures/suppfigure1_cl_heatmap.png"
 png(filename, width = 9, height = 7, res = 600, units = "in")
 draw(ht1 %v% ht2, merge_legends = TRUE)
 dev.off()
+
+###########################################################
+# TFs binding sites heatmap
+###########################################################
+
+tfs <- tfs[-which(rownames(tfs) == "IRF8"),]
+tfs <- tfs[,match(colnames(toPlot), colnames(tfs))] |> as.matrix()
+
+tfs_norm <- znorm(as.data.frame(tfs))
+
+# subtype annotation
+ha1 <- HeatmapAnnotation(
+    'ARCHE' = assigned_ARCHE,
+    'PAM50' = subtype,
+    'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
+    col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
+    annotation_name_side = "left",
+    annotation_name_gp = gpar(fontsize = 9)
+)
+
+
+tf_arche <- read.table("data/procdata/TCGA/homer_compiled_TF_genes.txt")
+tf_df <- data.frame(
+    ARCHE1 = rep(0, nrow(tfs)), ARCHE2 = 0, ARCHE3 = 0,
+    ARCHE4 = 0, ARCHE5 = 0, ARCHE6 = 0
+)
+rownames(tf_df) <- rownames(tfs)
+for (gene in rownames(tf_df)) {
+    for (arche in paste0("ARCHE", 1:6)) {
+        subset_df <- tf_arche[tf_arche$gene == gene,]
+        if (arche %in% subset_df$ARCHE) tf_df[gene, arche] <- 1
+    }
+}
+
+
+plot_tf_heatmap <- function(toPlot) {
+
+    n <- max(max(toPlot), abs(min(toPlot)))
+
+    # make colour palette
+    cols <- rev(brewer.pal(9, "RdBu"))
+    col_fun <- colorRamp2(
+        seq(5,
+            -5,
+            length.out = 9),
+        cols
+    )
+
+    na_val <- "#f8f8f8"
+    row_ha <- rowAnnotation(
+        ARCHE1 = factor(tf_df$ARCHE1),
+        ARCHE2 = tf_df$ARCHE2,
+        ARCHE3 = tf_df$ARCHE3,
+        ARCHE4 = tf_df$ARCHE4,
+        ARCHE5 = tf_df$ARCHE5,
+        ARCHE6 = tf_df$ARCHE6,
+        col = list(
+            'ARCHE1' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE1"]]),
+            'ARCHE2' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE2"]]),
+            'ARCHE3' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE3"]]),
+            'ARCHE4' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE4"]]),
+            'ARCHE5' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE5"]]),
+            'ARCHE6' = c("0" = na_val, "1" = ARCHE_pal[["ARCHE6"]])
+        )
+    )
+
+
+    ht <- Heatmap(
+        toPlot,
+        cluster_columns = FALSE,
+        row_split = 6,
+        name = "Chromvar\nZScore",
+        column_split = assigned_ARCHE,
+        col = col_fun,
+        row_names_gp = gpar(fontsize = 8),
+        row_names_side = "left",
+        column_names_gp = gpar(fontsize = 8),
+        row_title = "Top Transcription Factors",
+        row_title_side = "left",
+        row_title_rot = 90,
+        row_title_gp = gpar(fontsize = 10),
+        top_annotation = ha1,
+        right_annotation = row_ha
+    )
+    ht
+
+}
+
+plot_tf_heatmap(tfs_norm)
+plot_tf_heatmap(tfs)
