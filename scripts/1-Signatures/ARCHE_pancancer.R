@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(reshape2)
     library(RColorBrewer)
+    library(patchwork)
 })
 
 set.seed(101)
@@ -65,3 +66,74 @@ plot_heatmap <- function(scores, meta, label) {
 }
 
 plot_heatmap(scores, meta, "zscores")
+
+###########################################################
+# Format dataframe for boxplots
+###########################################################
+
+scores$ARCHE <- rownames(scores)
+toPlot <- reshape2::melt(scores)
+toPlot$Cancer <- meta$cancer[match(toPlot$variable, meta$sampleid)]
+toPlot$Subtype <- meta$bca_subtype[match(toPlot$variable, meta$sampleid)]
+
+toPlot$Label <- ifelse(toPlot$Cancer == "brca", "Breast Cancer", "Other Cancer")
+toPlot$Cancer[toPlot$Cancer == "brca"] <- toPlot$Subtype[toPlot$Cancer == "brca"]
+
+
+###########################################################
+# Plot boxplots
+###########################################################
+
+toPlot$Cancer <- factor(toPlot$Cancer, levels = c(names(subtype_pal), names(cancer_type_pal)))
+toPlot <- toPlot[-which(toPlot$Cancer %in% c("Normal", "Not Available")),]
+
+
+# set y axis
+y_max <- max(toPlot$value)
+y_min <- min(toPlot$value)
+
+plot_pancancer <- function(toPlot, legend_title) {
+    p <- ggplot(toPlot, aes(x = Cancer, y = value, fill = Cancer)) +
+        geom_hline(yintercept = 0, linetype = "dashed") +
+        geom_boxplot() +
+        geom_jitter(
+            position = position_jitterdodge(
+            dodge.width = 0.75,
+            jitter.width = 0.2
+            ),
+            alpha = 0.6,
+            size = 1
+        ) +
+        scale_y_continuous(limits = c(y_min, y_max)) +
+        scale_fill_manual(legend_title, values = c(cancer_type_pal, subtype_pal)) +
+        facet_grid(
+            rows = vars(ARCHE)
+        ) +
+        theme_bw() +
+        theme(
+            strip.placement = "outside",
+            strip.background = element_blank(),
+            axis.title.x = element_blank()
+        ) +
+        labs(y = "Chromvar Zscores")
+    return(p)
+}
+
+p1 <- plot_pancancer(toPlot[toPlot$Label == "Breast Cancer",], "BCa Subtype") +
+    theme(
+    strip.text = element_blank()
+    )
+p2 <- plot_pancancer(toPlot[toPlot$Label == "Other Cancer",], "Cancer Type") +
+    theme(
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank()
+    )
+
+p <- (p1 + p2) +
+  plot_layout(widths = c(1, 1.5), guides = "collect") &
+  theme(legend.position = "right")
+
+filename <- "data/results/figures/1-Signatures/pancancer/pancancer_boxplots.png"
+ggsave(filename, p, width = 8, height = 6)
