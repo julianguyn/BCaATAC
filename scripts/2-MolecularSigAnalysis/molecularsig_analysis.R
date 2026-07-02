@@ -24,6 +24,8 @@ source("utils/plots/molecularsig_analysis.R")
 source("utils/corr_signatures.R")
 source("utils/get_data.R")
 source("utils/palettes.R")
+source("utils/anno/hallmark_categories.R")
+source("utils/anno/sbs_categories.R")
 
 ###########################################################
 # Load in data
@@ -126,38 +128,120 @@ plot_molecularsig_corr(corr_c_my, "MYC Target Signatures", "myc", "ccls")
 plot_corr_boxplots(corr_v3, corr_t_hm)
 
 ###########################################################
-# Complex heatmap of signatures
+# Set up for heatmaps
 ###########################################################
 
-df <- corr_t_hm # do the others too?
-
-toPlot <- pivot_wider(
-  df, 
-  names_from = Mol.Sig,
-  values_from = Corr
-)
-labels <- toPlot$ATAC.Sig
-toPlot$ATAC.Sig <- NULL
-toPlot <- as.data.frame(lapply(toPlot, as.numeric))
-rownames(toPlot) <- labels
-
 # make colour palette
-cols <- brewer.pal(9, "RdBu")
-col_fun <- colorRamp2(
-    seq(-0.75,0.75,length.out = 9),
-    cols
+cols <- colorRampPalette(c("#39066B", "#B18ED6", "#EBEBEB", "#75BFB2", "#008A8C"))(9)
+col_fun <- colorRamp2(seq(-1,1,length.out = 9),cols)
+
+# make row annotation
+row_ha <- rowAnnotation(
+    ARCHE = paste0("ARCHE", 1:6),
+    col = list(
+        ARCHE = ARCHE_pal),
+    show_annotation_name = FALSE,
+    show_legend = FALSE
 )
 
+# format toPlot
+format_sig_corrs <- function(corr) {
+  toPlot <- pivot_wider(
+    corr, 
+    names_from = Mol.Sig,
+    values_from = Corr
+  )
+  labels <- toPlot$ATAC.Sig
+  toPlot$ATAC.Sig <- NULL
+  toPlot <- as.data.frame(lapply(toPlot, as.numeric))
+  rownames(toPlot) <- labels
+  return(toPlot)
+}
+
+###########################################################
+# Complex heatmap of Hallmarks
+###########################################################
+
+# make column annotation
+col_ha <- HeatmapAnnotation(
+    Annotation = hallmark_categories$category,
+    col = list(Annotation = hallmark_pal),
+    annotation_name_gp = gpar(fontsize = 9)
+)
+
+# format toPlot
+toPlot <- format_sig_corrs(corr_t_hm)
+
+# plot
 ht <- Heatmap(
     toPlot,
+    column_split = 6,
+    column_title = "Hallmark Gene Sets",
+    column_title_side = "bottom",
+    column_title_gp = gpar(fontsize = 10),
     cluster_rows = FALSE,
     name = "Correlation",
     col = col_fun,
-    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
-    column_names_gp = gpar(fontsize = 8)
+    row_names_gp = gpar(fontsize = 8),
+    column_names_gp = gpar(fontsize = 8),
+    top_annotation = col_ha,
+    right_annotation = row_ha,
+    border = border_col,
+    cell_fun = function(j, i, x, y, width, height, fill) {
+        if (abs(toPlot[i, j]) > 0.5) {
+            grid.text("*", x, y, gp = gpar(fontsize = 12, col = "black"))
+        }
+    }
 )
 
 filename <- "data/results/figures/2-MolecularSigAnalysis/molecularsig/figure1_hallmarks_heatmap.png"
 png(filename, width = 9, height = 5, res = 600, units = "in")
-ht
+draw(ht,
+     heatmap_legend_side = "right", 
+     annotation_legend_side = "right",
+     merge_legend = TRUE)
+dev.off()
+
+###########################################################
+# Complex heatmap of Mutational Signatures
+###########################################################
+
+# make column annotation
+col_ha <- HeatmapAnnotation(
+    Annotation = sbs_categories$category,
+    col = list(Annotation = sbs_pal),
+    annotation_name_gp = gpar(fontsize = 9)
+)
+
+# format toPlot
+toPlot <- format_sig_corrs(corr_v3)
+
+# plot
+ht <- Heatmap(
+    toPlot,
+    column_split = 6,
+    column_title = "Mutational Signatures",
+    column_title_side = "bottom",
+    column_title_gp = gpar(fontsize = 10),
+    cluster_rows = FALSE,
+    name = "Correlation",
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8),
+    column_names_gp = gpar(fontsize = 8),
+    top_annotation = col_ha,
+    right_annotation = row_ha,
+    border = border_col,
+    cell_fun = function(j, i, x, y, width, height, fill) {
+        if (abs(toPlot[i, j]) > 0.5) {
+            grid.text("*", x, y, gp = gpar(fontsize = 12, col = "black"))
+        }
+    }
+)
+
+filename <- "data/results/figures/2-MolecularSigAnalysis/molecularsig/figure1_cosmic_heatmap.png"
+png(filename, width = 9, height = 4.5, res = 600, units = "in")
+draw(ht,
+     heatmap_legend_side = "right", 
+     annotation_legend_side = "right",
+     merge_legend = TRUE)
 dev.off()

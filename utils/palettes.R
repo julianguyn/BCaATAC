@@ -195,3 +195,34 @@ preclinical_pal2 <- c(
   "ZR751-Rep1" = "#DA627D",
   "ZR751-Rep2" = "#FFA5AB"
 )
+
+hallmark_pal <- c(
+    "Development" = "#355070",
+    "Immune" = "#B56576",
+    "Hormone_Response" = "#C297B8",
+    "Cellular_Stress" = "#90AEC2",
+    "Metabolism" = "#CB866A",
+    "DNA_Damage" = "#E4D5AA",
+    "Proliferation" = "#7D6157",
+    "Signaling" = "#EBC4C6"
+)
+
+sbs_pal <- c(
+  "Clock-like"             = "#999999",
+  "APOBEC"                 = "#EBC4C6",
+  "Immune"                 = "#B56576",
+  "HRD"                    = "#377EB8",
+  "MMR_deficiency"         = "#4a8caf",
+  "BER_deficiency"         = "#4e66a3",
+  "POLE_deficiency"        = "#28a0a6",
+  "Pol_eta_SHM"            = "#81e1f7",
+  "UV"                     = "#E4D5AA",
+  "Tobacco"                = "#654321",
+  "Environmental_chemical" = "#c59872",
+  "Treatment_related"      = "#FC8D62",
+  "ROS_oxidative"          = "#8DA0CB",
+  "Unknown"                = "#D3D3D3",
+  "Artifact"               = "#FFFFFF"
+)
+
+border_col = "#686868"
