@@ -51,6 +51,9 @@ plot_mafSummary(arche = "ARCHE6")
 tmb <- tmb(mafs)
 tmb$Sample_ID <- sub("^((?:[^-]+-){2}[^-]+).*", "\\1", tmb$Tumor_Sample_Barcode)
 tmb$ARCHE <- meta$ARCHE[match(tmb$Sample_ID, gsub("\\.", "-", meta$Sample.Name))]
+tmb$Subtype <- meta$Subtype[match(tmb$Sample_ID, gsub("\\.", "-", meta$Sample.Name))]
+
+saveRDS(tmb, file = "data/procdata/TCGA/tmb.rds")
 
 # ANOVA
 tmb.aov <- aov(total_perMB_log ~ ARCHE, data = tmb)
