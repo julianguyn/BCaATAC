@@ -1,5 +1,173 @@
 # helper script to grab TFs for chromvar
 
+suppressPackageStartupMessages({
+    library(tidyverse)
+    library(readr)
+    library(ComplexHeatmap)
+    library(circlize)
+    library(RColorBrewer)
+})
+
+source("utils/palettes.R")
+
+set.seed(101)
+
+###########################################################
+# Load in HOMER results
+###########################################################
+
+homer <- data.frame(matrix(nrow=0, ncol=13))
+
+for (arche in paste0("ARCHE", 1:6)) {
+  filename <- paste0("data/results/data/1-Signatures/findMotifsGenome/", arche, "/knownResults.txt")
+  df <- read_tsv(filename, show_col_types = FALSE)
+  colnames(df) <- c(
+    "motif_name", "consensus", "pvalue", "log_pvalue", "qvalue",
+    "num_target_seqs", "pct_target_seqs",
+    "num_bg_seqs", "pct_bg_seqs"
+  )
+
+  df <- df %>%
+    mutate(
+      pct_target_seqs = as.numeric(gsub("%", "", pct_target_seqs)),
+      pct_bg_seqs     = as.numeric(gsub("%", "", pct_bg_seqs)),
+      pct_diff        = pct_target_seqs - pct_bg_seqs,
+      fold_enrichment = pct_target_seqs / pct_bg_seqs
+    )
+
+  df <- df %>%
+    mutate(tf_name = sub("\\(.*", "", motif_name))
+
+  df$ARCHE <- arche
+  #df <- df[df$qvalue < 0.05,]
+  homer <- rbind(homer, df) |> as.data.frame()
+}
+
+# filter TFs
+filtered <- homer %>%
+    filter(
+      qvalue < 0.01,
+      pct_target_seqs > 10,      # >10% presence
+      fold_enrichment > 1.5     # >1.25x background rate
+    ) %>%
+    arrange(desc(pct_diff))
+homer <- homer[homer$motif_name %in% filtered$motif_name,]
+
+# label the FOXA1 dups
+homer$tf_name[grepl("LNCAP-FOXA1-ChIP-Seq", homer$motif_name, fixed = TRUE)] <- "FOXA1 (LNCAP)"
+homer$tf_name[grepl("MCF7-FOXA1-ChIP-Seq", homer$motif_name, fixed = TRUE)]  <- "FOXA1 (MCF7)"
+
+###########################################################
+# Plot dataframe
+###########################################################
+
+toPlot <- homer %>% 
+  select(ARCHE, tf_name, fold_enrichment) %>%
+  pivot_wider(
+    names_from = ARCHE,
+    values_from = fold_enrichment
+  ) %>% 
+  column_to_rownames("tf_name") %>% as.data.frame()
+
+# create annotation table
+tf_annotation <- data.frame(
+  tf_name = rownames(toPlot),
+  family = c(
+    "Zf (CTCF)", "Sp/KLF", "ETS", "ETS", "ETS",
+    "ETS", "Zf (CTCF)", "bZIP (AP-1)", "bZIP (AP-1)", "bZIP (AP-1)",
+    "bZIP (AP-1)", "bZIP (AP-1)", "bZIP (AP-1)", "bZIP (AP-1)", "CBF/NF-Y",
+    "bZIP (AP-1)", "bZIP (AP-1)", "ETS", "Grainyhead", "Forkhead",
+    "ETS", "IRF", "ETS", "Forkhead", "IRF"
+  ),
+  immune_lineage = c(
+    FALSE, FALSE, FALSE, FALSE, FALSE,
+    FALSE, FALSE, FALSE, FALSE, FALSE,
+    FALSE, FALSE, FALSE, FALSE, FALSE,
+    FALSE, FALSE, TRUE,  FALSE, FALSE,
+    FALSE, TRUE,  TRUE,  FALSE, TRUE
+  ),
+  stringsAsFactors = FALSE
+)
+
+###########################################################
+# Set colours
+###########################################################
+
+family_levels <- unique(tf_annotation$family)
+family_colors <- setNames(
+  colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(length(family_levels)),
+  family_levels
+)
+
+immune_colors <- c("TRUE" = "firebrick", "FALSE" = "grey85")
+
+cols <- colorRampPalette(c("#466D9F", "#6878C9", "#7986C7", "#8DC2A4", "#EBE4C5", "#EAEAEA"))(9)
+col_fun <- colorRamp2(
+    seq(3,0,
+        length.out = 9),
+    cols
+)
+
+###########################################################
+# Create annotations
+###########################################################
+
+col_ha <- HeatmapAnnotation(
+    'ARCHE' = paste0("ARCHE", 1:6),
+    col = list('ARCHE' = ARCHE_pal),
+    show_annotation_name = FALSE,
+    show_legend = FALSE
+)
+
+row_ha <- rowAnnotation(
+  Family = tf_annotation$family,
+  `Immune Lineage` = tf_annotation$immune_lineage,
+  col = list(
+    Family = family_colors,
+    `Immune Lineage` = immune_colors
+  ),
+  annotation_name_gp = gpar(fontsize = 8),
+  annotation_legend_param = list(
+    Family = list(title = "TF Family", title_gp = gpar(fontsize = 9, fontface = "bold"), labels_gp = gpar(fontsize = 8)),
+    `Immune Lineage` = list(title = "Immune Lineage TF", title_gp = gpar(fontsize = 9, fontface = "bold"), labels_gp = gpar(fontsize = 8))
+  )
+)
+
+###########################################################
+# Heatmap
+###########################################################
+
+ht <- Heatmap(
+  toPlot,
+  row_split = 6,
+  cluster_columns = FALSE,
+  name = "Fold\nEnrichment",
+  col = col_fun,
+  row_names_gp = gpar(fontsize = 8),
+  row_names_side = "left",
+  column_names_gp = gpar(fontsize = 8),
+  column_names_rot = 0,
+  column_names_centered = TRUE,
+  row_title = "Transcription Factor",
+  row_title_side = "left",
+  row_title_rot = 90,
+  row_title_gp = gpar(fontsize = 9),
+  bottom_annotation = col_ha,
+  right_annotation = row_ha
+)
+filename <- "data/results/figures/1-Signatures/TF_heatmap.png"
+png(filename, width = 6.5, height = 5, res = 600, units = "in")
+ht
+dev.off()
+
+
+
+
+###########################################################
+# OLD CODE
+###########################################################
+
+
 library(readxl)
 
 # make dataframe to store results
@@ -28,8 +196,6 @@ for (arche in paste0("ARCHE", 1:6)) {
 
     tf <- rbind(tf, motifs)
 }
-
-# 89 total, 59 unique
 
 # get unique genes
 genes <- unique(tf$Name)
