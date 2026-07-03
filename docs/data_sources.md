@@ -409,3 +409,16 @@ Includes chromvar output for ARCHE scores when pooling cells, PDX, PDOs, and BCa
 
 Includes chromvar output for ARCHE scores for TCGA pan-cancer (BRCA, COAD, ESCA, STAD, LUAD, and LUSC) - to be expanded to other cohorts (scored on June 5th, 2026)
 ```
+
+### data/rawdata/TEs
+
+```markdown
+## cd-23-0331
+
+Enriched TEs from https://aacrjournals.org/cancerdiscovery/article/13/11/2470/729834/Transposable-Elements-Are-Co-opted-as-Oncogenic?__cf_chl_f_tk=4omAvm9lu6fbZxh_B85DbYCmcShigvheiimTDFpFSSo-1783086474-1.0.1.1-ATbd5SjULCqnwib9lRNOputz7xym.xeW0cs7rL2njUw
+```
+```markdown
+## hg38_only_TEs
+
+TE regions from Lupien Lab (A.N.)
+```
