@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
     library(data.table)
     library(ggplot2)
     library(viridis)
+    library(patchwork)
 })
 
 source("utils/plots/signatures.R")
@@ -70,24 +71,39 @@ toPlot$name <- sub(
     toPlot$name
 )
 
-toPlot$name <- factor(toPlot$name, levels = unique(toPlot$name))
 toPlot$ARCHE <- factor(toPlot$ARCHE, levels = paste0("ARCHE", 6:1))
 
 toPlot <- toPlot[complete.cases(toPlot$name),]
 
 ###########################################################
+# Read in annotation
+###########################################################
+
+anno <- read.csv("utils/anno/GO_term_categories.csv")
+toPlot$Category <- anno$category[match(toPlot$name, anno$name)]
+
+anno <- anno[order(anno$category),]
+toPlot$name <- factor(toPlot$name, levels = unique(anno$name))
+
+###########################################################
 # Plot top GO terms
 ###########################################################
 
+
 p <- ggplot(toPlot, aes(x = name, y = ARCHE, size = -log10(Hyper_Adjp_BH + 0.001), color = Hyper_Fold_Enrichment)) +
+    annotate("rect", ymin = -Inf, ymax = Inf, 
+        xmin = c(0.5, 7.5, 23.5, 27.5, 40.5, 48.5, 54.5),
+        xmax = c(4.5, 16.5, 26.5, 28.5, 45.5, 50.5, 55.5),
+        fill = "#CCCFD5", alpha = 0.5) +
     geom_point() +
     geom_text(aes(label = top_pair), color = "white", vjust = 0.4, hjust = 0.5, size = 2) +
     scale_color_viridis_c(option = "mako", direction = -1, end = 0.9) +
-    theme_minimal() +
+    theme_bw() +
     theme(
         axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.25),
         axis.title.y = element_blank()
     ) +
     labs(size = "-log(FDR)", color = "Fold\nEnrichment", x = "GO Term")
+
 
 ggsave("data/results/figures/1-Signatures/GREAT/GREAT_50k_top10BP.png", p, width = 10.5, height = 6)

@@ -1,0 +1,123 @@
+index,name,category
+1,"positive regulation of gene expression, epigenetic",Epigenetic Regulation & Transcription
+2,negative regulation of receptor biosynthetic process,Signaling & Receptor Regulation
+3,negative regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+4,cellular response to arsenic-containing substance,Stress Response
+5,regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+6,platelet aggregation,Hemostasis
+7,"regulation of CD8-positive, alpha-beta T cell activation",Immune Response & Inflammation
+8,chromatin silencing at rDNA,Epigenetic Regulation & Transcription
+9,intrinsic apoptotic signaling pathway in response to DNA damage,Apoptosis & Mitochondrial Regulation
+10,protein refolding,Protein Homeostasis & Complex Disassembly
+11,SREBP signaling pathway,Signaling & Receptor Regulation
+12,apoptotic mitochondrial changes,Apoptosis & Mitochondrial Regulation
+13,regulation of hematopoietic progenitor cell differentiation,Cell Differentiation & Development
+14,rRNA metabolic process,RNA Processing & Ribosome Biogenesis
+15,regulation of hematopoietic stem cell differentiation,Cell Differentiation & Development
+16,macromolecular complex disassembly,Protein Homeostasis & Complex Disassembly
+17,"positive regulation of gene expression, epigenetic",Epigenetic Regulation & Transcription
+18,regulation of hematopoietic progenitor cell differentiation,Cell Differentiation & Development
+19,negative regulation of pri-miRNA transcription from RNA polymerase II promoter,Epigenetic Regulation & Transcription
+20,rRNA modification,RNA Processing & Ribosome Biogenesis
+21,negative regulation of mesenchymal cell proliferation,Cell Differentiation & Development
+22,regulation of hematopoietic stem cell differentiation,Cell Differentiation & Development
+23,commissural neuron axon guidance,Cell Differentiation & Development
+24,protein refolding,Protein Homeostasis & Complex Disassembly
+25,rRNA metabolic process,RNA Processing & Ribosome Biogenesis
+26,SREBP signaling pathway,Signaling & Receptor Regulation
+27,chromatin silencing at rDNA,Epigenetic Regulation & Transcription
+28,platelet aggregation,Hemostasis
+29,regulation of tooth mineralization,Cell Differentiation & Development
+30,negative regulation of receptor biosynthetic process,Signaling & Receptor Regulation
+31,macromolecular complex disassembly,Protein Homeostasis & Complex Disassembly
+32,small molecule metabolic process,Metabolism (Small Molecule)
+33,regulation of tooth mineralization,Cell Differentiation & Development
+34,small molecule biosynthetic process,Metabolism (Small Molecule)
+35,regulation of extracellular exosome assembly,Extracellular Vesicle/Exosome
+36,regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+37,carboxylic acid metabolic process,Metabolism (Small Molecule)
+38,epithelial cell morphogenesis,Cell Differentiation & Development
+39,regulation of epidermal cell differentiation,Cell Differentiation & Development
+40,nucleoside metabolic process,Metabolism (Small Molecule)
+41,small molecule catabolic process,Metabolism (Small Molecule)
+42,negative regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+43,protein refolding,Protein Homeostasis & Complex Disassembly
+44,cytoskeleton-dependent intracellular transport,"Cytoskeleton, Structure & Protein Localization"
+45,apoptotic mitochondrial changes,Apoptosis & Mitochondrial Regulation
+46,cellular response to arsenic-containing substance,Stress Response
+47,positive regulation of DNA biosynthetic process,Cell Cycle & Genome Stability
+48,actin cytoskeleton organization,"Cytoskeleton, Structure & Protein Localization"
+49,intrinsic apoptotic signaling pathway in response to DNA damage,Apoptosis & Mitochondrial Regulation
+50,"positive regulation of gene expression, epigenetic",Epigenetic Regulation & Transcription
+51,positive regulation of telomerase activity,Cell Cycle & Genome Stability
+52,"regulation of CD8-positive, alpha-beta T cell activation",Immune Response & Inflammation
+53,macromolecular complex disassembly,Protein Homeostasis & Complex Disassembly
+54,actin filament-based process,"Cytoskeleton, Structure & Protein Localization"
+55,chromatin silencing at rDNA,Epigenetic Regulation & Transcription
+56,positive regulation of cell proliferation involved in kidney development,Cell Differentiation & Development
+57,oxygen transport,Transport (Oxygen/Gas)
+58,negative regulation of monocyte differentiation,Immune Response & Inflammation
+59,protein-DNA complex disassembly,Protein Homeostasis & Complex Disassembly
+60,gas transport,Transport (Oxygen/Gas)
+61,macromolecular complex disassembly,Protein Homeostasis & Complex Disassembly
+62,positive regulation of telomerase activity,Cell Cycle & Genome Stability
+63,negative regulation of cell division,Cell Cycle & Genome Stability
+64,positive regulation of metanephros development,Cell Differentiation & Development
+65,positive regulation of DNA biosynthetic process,Cell Cycle & Genome Stability
+66,rRNA metabolic process,RNA Processing & Ribosome Biogenesis
+67,negative regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+68,"regulation of CD8-positive, alpha-beta T cell activation",Immune Response & Inflammation
+69,protein refolding,Protein Homeostasis & Complex Disassembly
+70,cytoskeleton-dependent intracellular transport,"Cytoskeleton, Structure & Protein Localization"
+71,regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+72,rRNA modification,RNA Processing & Ribosome Biogenesis
+73,cellular response to arsenic-containing substance,Stress Response
+74,apoptotic mitochondrial changes,Apoptosis & Mitochondrial Regulation
+75,"positive regulation of gene expression, epigenetic",Epigenetic Regulation & Transcription
+76,nucleoside metabolic process,Metabolism (Small Molecule)
+77,SREBP signaling pathway,Signaling & Receptor Regulation
+78,epithelial cell morphogenesis,Cell Differentiation & Development
+79,platelet aggregation,Hemostasis
+80,immune system process,Immune Response & Inflammation
+81,immune response,Immune Response & Inflammation
+82,regulation of immune system process,Immune Response & Inflammation
+83,regulation of immune response,Immune Response & Inflammation
+84,defense response,Immune Response & Inflammation
+85,leukocyte activation,Immune Response & Inflammation
+86,positive regulation of immune system process,Immune Response & Inflammation
+87,cell activation,Immune Response & Inflammation
+88,immune effector process,Immune Response & Inflammation
+89,cytokine-mediated signaling pathway,Immune Response & Inflammation
+90,intrinsic apoptotic signaling pathway in response to DNA damage,Apoptosis & Mitochondrial Regulation
+91,negative regulation of intracellular signal transduction,Signaling & Receptor Regulation
+92,actin cytoskeleton organization,"Cytoskeleton, Structure & Protein Localization"
+93,"regulation of CD8-positive, alpha-beta T cell activation",Immune Response & Inflammation
+94,actin filament-based process,"Cytoskeleton, Structure & Protein Localization"
+95,small molecule metabolic process,Metabolism (Small Molecule)
+96,cellular response to arsenic-containing substance,Stress Response
+97,regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+98,platelet aggregation,Hemostasis
+99,protein refolding,Protein Homeostasis & Complex Disassembly
+100,"positive regulation of gene expression, epigenetic",Epigenetic Regulation & Transcription
+101,negative regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+102,apoptotic mitochondrial changes,Apoptosis & Mitochondrial Regulation
+103,negative regulation of receptor biosynthetic process,Signaling & Receptor Regulation
+104,actin filament-based process,"Cytoskeleton, Structure & Protein Localization"
+105,actin cytoskeleton organization,"Cytoskeleton, Structure & Protein Localization"
+106,apical protein localization,"Cytoskeleton, Structure & Protein Localization"
+107,asymmetric protein localization,"Cytoskeleton, Structure & Protein Localization"
+108,cytoskeleton-dependent intracellular transport,"Cytoskeleton, Structure & Protein Localization"
+109,negative regulation of intracellular signal transduction,Signaling & Receptor Regulation
+110,regulation of store-operated calcium entry,Signaling & Receptor Regulation
+111,apoptotic mitochondrial changes,Apoptosis & Mitochondrial Regulation
+112,actin filament-based movement,"Cytoskeleton, Structure & Protein Localization"
+113,cytoskeleton organization,"Cytoskeleton, Structure & Protein Localization"
+114,cellular response to arsenic-containing substance,Stress Response
+115,negative regulation of receptor biosynthetic process,Signaling & Receptor Regulation
+116,regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+117,negative regulation of release of cytochrome c from mitochondria,Apoptosis & Mitochondrial Regulation
+118,intrinsic apoptotic signaling pathway in response to DNA damage,Apoptosis & Mitochondrial Regulation
+119,regulation of tooth mineralization,Cell Differentiation & Development
+120,cytokine-mediated signaling pathway,Immune Response & Inflammation
+121,regulation of epidermal cell differentiation,Cell Differentiation & Development
+122,"regulation of CD8-positive, alpha-beta T cell activation",Immune Response & Inflammation
