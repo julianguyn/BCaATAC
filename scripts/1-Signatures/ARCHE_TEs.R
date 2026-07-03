@@ -69,8 +69,6 @@ cols <- colorRampPalette(c("#4B8F8C", "#A2E4D0","#AC71A7", "#5E4352"))(9)
 n <- 5
 col_fun <- colorRamp2(seq(n, -n, length.out = 9), cols)
 
-herv_pal <- c("Yes" = "#0F5257", "No" = "grey85")
-
 log2count_col <- colorRamp2(
   seq(min(5, na.rm = TRUE), max(log2(counts$Regions), na.rm = TRUE), length.out = 9),
   brewer.pal(9, "BuPu")
@@ -80,14 +78,33 @@ log2count_col <- colorRamp2(
 # Create row anno
 ###########################################################
 
-counts <- counts[match(rownames(toPlot), counts$Family),]
-counts$HERV_LTRs <- ifelse(counts$Family %in% rownames(herv_ltrs), "Yes", "No")
+te_anno <- data.frame(
+  family = c(
+    "Alu", "FLAM", "FRAM", "MIR", "Kanga", "MamSINE",
+    "L1M", "L1P", "Lx", "HAL", "X_LINE",
+    "ERV", "HERV", "LTR", "MLT", "MST", "THE", "MER",
+    "Charlie", "Tigger", "MADE", "Arthur",
+    "MamRep", "MamTip", "SVA"
+  ),
+  cluster = c(
+    rep("SINE", 6),
+    rep("LINE", 5),
+    rep("HERV / LTR", 7),
+    rep("DNA Transposon", 4),
+    rep("Other", 3)
+  ))
+
+
+counts <- counts[match(te_anno$family, counts$Family),]
+toPlot <- toPlot[match(te_anno$family, rownames(toPlot)),]
+toPlot <- toPlot[match(te_anno$family, rownames(toPlot)),]
 
 row_ha <- rowAnnotation(
-    Log2Count = log2(counts$Regions), HERV_LTRs = counts$HERV_LTRs,
+    Log2Count = log2(counts$Regions), 
+    Category = factor(te_anno$cluster, levels = names(te_pal)),
     col = list(
         Log2Count = log2count_col,
-        HERV_LTRs = herv_pal
+        Category = te_pal
     ),
     annotation_name_gp = gpar(fontsize = 8)
 )
@@ -106,6 +123,8 @@ col_ha <- HeatmapAnnotation(
 
 ht <- Heatmap(
     toPlot,
+    cluster_rows = FALSE,
+    row_split = te_clusters$cluster,
     cluster_columns = FALSE,
     name = "Capped\nChromvar\nZScore",
     col = col_fun,

@@ -225,4 +225,12 @@ sbs_pal <- c(
   "Artifact"               = "#FFFFFF"
 )
 
+te_pal <- c(
+    "SINE" = "#355070",
+    "LINE" = "#E4D5AA",
+    "HERV / LTR" = "#EBC4C6",
+    "DNA Transposon" = "#7D6157",
+    "Other" = "#969695"
+)
+
 border_col = "#686868"
