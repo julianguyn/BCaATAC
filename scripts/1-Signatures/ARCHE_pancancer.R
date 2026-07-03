@@ -88,52 +88,51 @@ toPlot$Cancer <- factor(toPlot$Cancer, levels = c(names(subtype_pal), names(canc
 toPlot <- toPlot[-which(toPlot$Cancer %in% c("Normal", "Not Available")),]
 
 
-# set y axis
-y_max <- max(toPlot$value)
-y_min <- min(toPlot$value)
+# set x axis
+x_max <- max(toPlot$value)
+x_min <- min(toPlot$value)
 
 plot_pancancer <- function(toPlot, legend_title) {
-    p <- ggplot(toPlot, aes(x = Cancer, y = value, fill = Cancer)) +
-        geom_hline(yintercept = 0, linetype = "dashed") +
-        geom_boxplot() +
-        geom_jitter(
-            position = position_jitterdodge(
-            dodge.width = 0.75,
-            jitter.width = 0.2
-            ),
-            alpha = 0.6,
-            size = 1
-        ) +
-        scale_y_continuous(limits = c(y_min, y_max)) +
+    p <- ggplot(toPlot, aes(y = Cancer, x = value, fill = Cancer)) +
+        annotate("rect", ymin = -Inf, ymax = Inf, 
+            xmin = 0,
+            xmax = x_max,
+            fill = "#CCCFD5", alpha = 0.5) +
+        geom_vline(xintercept = 0, linetype = "dashed") +
+        geom_boxplot(outlier.size = 1) +
+        scale_x_continuous(limits = c(x_min, x_max)) +
         scale_fill_manual(legend_title, values = c(cancer_type_pal, subtype_pal)) +
         facet_grid(
-            rows = vars(ARCHE)
+            cols = vars(ARCHE)
         ) +
         theme_bw() +
         theme(
+            panel.spacing = unit(0, "lines"),
             strip.placement = "outside",
             strip.background = element_blank(),
-            axis.title.x = element_blank()
+            axis.title.y = element_blank()
         ) +
-        labs(y = "Chromvar Zscores")
+        labs(x = "Chromvar Zscores")
     return(p)
 }
 
 p1 <- plot_pancancer(toPlot[toPlot$Label == "Breast Cancer",], "BCa Subtype") +
     theme(
-    strip.text = element_blank()
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.line.x = element_blank()
     )
 p2 <- plot_pancancer(toPlot[toPlot$Label == "Other Cancer",], "Cancer Type") +
     theme(
-        axis.title.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.line.y = element_blank()
+        strip.text = element_blank(),
+        axis.text.x = element_text(size = 6),
+        axis.title.x = element_text(size = 9)
     )
 
 p <- (p1 + p2) +
-  plot_layout(widths = c(1, 1.5), guides = "collect") &
+  plot_layout(heights = c(1, 1.5), guides = "collect") &
   theme(legend.position = "right")
 
 filename <- "data/results/figures/1-Signatures/pancancer/pancancer_boxplots.png"
-ggsave(filename, p, width = 8, height = 6)
+ggsave(filename, p, width = 6, height = 4)

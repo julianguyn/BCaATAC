@@ -99,7 +99,7 @@ family_colors <- setNames(
   family_levels
 )
 
-immune_colors <- c("TRUE" = "firebrick", "FALSE" = "grey85")
+immune_colors <- c("TRUE" = "#B56576", "FALSE" = "grey85")
 
 cols <- colorRampPalette(c("#466D9F", "#6878C9", "#7986C7", "#8DC2A4", "#EBE4C5", "#EAEAEA"))(9)
 col_fun <- colorRamp2(
