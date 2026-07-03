@@ -49,6 +49,12 @@ pam50_subtyping <- readRDS("data/procdata/TCGA/pam50_subtyping.rds")
 # load in TE zscores
 tes <- read.table("data/rawdata/TCGA_TEs/tcga_TE.Zscore.txt")
 
+# load in lehmann classification
+# from https://pmc.ncbi.nlm.nih.gov/articles/PMC4911051/#_ad93_
+lm <- read_excel("data/rawdata/tcga/pone.0157368.s008.xlsx", sheet = 2, skip = 1, col_names = TRUE)[,1:7] |> as.data.frame()
+lm$TCGA_SAMPLE <- sub("-01$", "", lm$TCGA_SAMPLE)
+lm <- lm[lm$TCGA_SAMPLE %in% meta$Sample.Name,]
+
 ###########################################################
 # Handle duplicates and format data
 ###########################################################
@@ -104,6 +110,20 @@ format_rna <- function(rna) {
 
 pam50 <- as.data.frame(t(pam50_subtyping$subtype.proba))
 pam50 <- format_rna(pam50)
+
+###########################################################
+# Format Lehmann data
+###########################################################
+
+rownames(lm) <- lm$TCGA_SAMPLE
+lm <- as.data.frame(t(lm[,c(6:7)]))
+
+missing <- unique(mat$variable[-which(mat$variable %in% colnames(lm))])
+for (sample in missing) {
+    lm[[sample]] <- NA
+}
+
+lm <- format_rna(lm)
 
 ###########################################################
 # ARCHE heatmap
@@ -178,10 +198,41 @@ ht2 <- Heatmap(
 )
 
 ###########################################################
+# Lehmann heatmap
+###########################################################
+
+lehmann_pal <- c(
+    "ER" = "#f0f2f5",
+    "HER2" = "#EED4D3",
+    "BL1" = "#7c3f3f",
+    "M" = "#AB92BF",
+    "LAR" = "#655A7C",
+    "IM" = "#B56576",
+    "BL2" = "#655151"
+)
+
+ht3 <- Heatmap(
+    lm,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    name = "Lehmann\nSubtype",
+    column_split = assigned_ARCHE,
+    col = lehmann_pal,
+    row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "Lehmann",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 10),
+    border = border_col
+)
+
+###########################################################
 # Mutation heatmap
 ###########################################################
 
-ht3 <- Heatmap(
+ht4 <- Heatmap(
     mut_bin,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
@@ -214,7 +265,7 @@ col_fun <- colorRamp2(
 )
 
 
-ht4 <- Heatmap(
+ht5 <- Heatmap(
     tes,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
@@ -237,7 +288,7 @@ ht4 <- Heatmap(
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
 png(filename, width = 11, height = 8, res = 600, units = "in")
-ht1 %v% ht2 %v% ht3 %v% ht4
+ht1 %v% ht2 %v% ht3 %v% ht4 %v% ht5
 dev.off()
 
 ###########################################################

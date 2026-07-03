@@ -40,32 +40,31 @@ load("TE_stemness_signature.RData")
 tp_bed <- data.frame(matrix(nrow=0, ncol=3))
 pt_bed <- data.frame(matrix(nrow=0, ncol=3))
 
-count_tp <- count_pt <- 0
+# get all files
 
-for (file in list.files(recursive = TRUE, pattern = "*sorted")) {
-    
-    te <- sub(".*/", "", sub("\\.bed\\.sorted", "", file))
+samples <- data.frame(
+    file = list.files(recursive = TRUE, pattern = "*sorted"),
+    sample = sub(".*/", "", sub("\\.bed\\.sorted", "", list.files(recursive = TRUE, pattern = "*sorted")))
+)
 
-    if (te %in% te_tp) {
-        te <- read.table(file)
-        colnames(te) <- c("seqnames", "start", "end")
-        te$seqnames <- sub("chr", "", te$seqnames)
-        te <- te[te$seqnames %in% c(1:22, "X", "Y"), ]
-        tp_bed <- rbind(tp_bed, te)
-        count_tp <- count_tp + 1
-    }
-    if (te %in% te_pt) {
-        te <- read.table(file)
-        colnames(te) <- c("seqnames", "start", "end")
-        te$seqnames <- sub("chr", "", te$seqnames)
-        te <- te[te$seqnames %in% c(1:22, "X", "Y"), ]
-        pt_bed <- rbind(pt_bed, te)
-        count_pt <- count_pt + 1
-    }
+tp_samples <- samples[samples$sample %in% te_tp,]
+pt_samples <- samples[samples$sample %in% te_pt,]
 
-    write.table(tp_bed, file = "signature_bed/tp.bed", quote = FALSE, row.names = FALSE)
-    write.table(pt_bed, file = "signature_bed/pt.bed", quote = FALSE, row.names = FALSE)
+for (file in tp_samples$file) {
+    te <- read.table(file)
+    colnames(te) <- c("seqnames", "start", "end")
+    te$seqnames <- sub("chr", "", te$seqnames)
+    te <- te[te$seqnames %in% c(1:22, "X", "Y"), ]
+    tp_bed <- rbind(tp_bed, te)
 }
 
-print(count_tp)
-print(count_pt)
+for (file in pt_samples$file) {
+    te <- read.table(file)
+    colnames(te) <- c("seqnames", "start", "end")
+    te$seqnames <- sub("chr", "", te$seqnames)
+    te <- te[te$seqnames %in% c(1:22, "X", "Y"), ]
+    pt_bed <- rbind(pt_bed, te)
+}
+
+write.table(tp_bed, file = "signature_bed/tp.bed", quote = FALSE, row.names = FALSE)
+write.table(pt_bed, file = "signature_bed/pt.bed", quote = FALSE, row.names = FALSE)
