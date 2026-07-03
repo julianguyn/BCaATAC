@@ -77,7 +77,7 @@ p <- ggplot(meta, aes(y = .data[[ref]], fill = .data[[ref]])) +
     axis.title.x = element_text(size = 10)) +
   labs(x = "Tumour Sample Count")
 
-ggsave(paste0(OUTDIR, ".png"), p, width = 3, height = 2.5, bg = "transparent")
+ggsave(paste0(OUTDIR, ".png"), p, width = 3, height = 2, bg = "transparent")
 
 ###########################################################
 # Plot stage and ARCHE score
@@ -99,7 +99,7 @@ plot_prop <- function(column_name, legend_title, pal, filename) {
         ) +
         labs(x = "Proportion", fill = legend_title)
 
-    ggsave(paste0(OUTDIR, filename), p, width = 2, height = 2.5, bg = "transparent")
+    ggsave(paste0(OUTDIR, filename), p, width = 2, height = 2, bg = "transparent")
 }
 
 plot_prop("pathologic_stage", "Stage", stage_pal, "stage.png")
@@ -130,7 +130,7 @@ plot_boxplot <- function(column_name, axis_name, filename) {
         ) +
         labs(x = axis_name)
 
-    ggsave(paste0(OUTDIR, filename), p, width = 2, height = 2.5, bg = "transparent")
+    ggsave(paste0(OUTDIR, filename), p, width = 2, height = 2, bg = "transparent")
 
 }
 
@@ -159,7 +159,7 @@ p <- ggplot(tmb, aes(y = .data[[ref]], x = total_perMB_log, fill = .data[[ref]])
             axis.title.x = element_text(size = 10)
         ) +
         labs(x = "TMB/MB (log10)")
-ggsave(paste0(OUTDIR, "tmb.png"), p, width = 2, height = 2.5, bg = "transparent")
+ggsave(paste0(OUTDIR, "tmb.png"), p, width = 2, height = 2, bg = "transparent")
 
 ###########################################################
 # Plot survival plots
@@ -208,63 +208,3 @@ plot_survival <- function(df, cutoff) {
 for (group in unique(df[[ref]])) {
     plot_survival(meta, cutoff)
 }
-
-
-
-
-# --- sanity check of survival by subtypes across ALL BRCA tumours
-pheno <- pheno[-which(is.na(pheno$PAM50)),] #826
-pheno$overall_survival <- as.numeric(pheno$overall_survival)
-pheno$status <- as.numeric(pheno$status)
-pheno$PAM50 <- as.character(pheno$PAM50)
-
-for (group in unique(pheno$PAM50)) {
-    pheno$ref <- ifelse(pheno$PAM50 == group, group, "Other")
-    fit <- survfit(Surv(overall_survival, status) ~ ref, data = pheno)
-
-    p <- ggsurvplot(
-        fit,
-        data = pheno,
-        pval = TRUE,
-        risk.table = TRUE,
-        palette = c("#046C9A", "#827A6F"),
-        legend.title = "",
-        xlab = "Time (days)",
-        xlim = c(0, 1825),
-        break.time.by = 365
-    )
-    p$plot <- p$plot + theme(
-        legend.key.size = unit(1, "cm"),
-        legend.text = element_text(size = 8),
-        legend.title = element_text(size = 8)
-    )
-
-    filename <- paste0("data/results/figures/1-Signatures/survivalplots/ALL_BRCA_", group, ".png")
-    png(filename, width=7, height=6, units='in', res = 600, pointsize=80)
-    print(p)
-    dev.off()
-}
-
-fit <- survfit(Surv(overall_survival, status) ~ PAM50, data = pheno)
-
-p <- ggsurvplot(
-    fit,
-    data = pheno,
-    pval = TRUE,
-    risk.table = TRUE,
-    palette = unname(subtype_pal[1:4]),
-    legend.title = "",
-    xlab = "Time (days)",
-    xlim = c(0, 1825),
-    break.time.by = 365
-)
-p$plot <- p$plot + theme(
-    legend.key.size = unit(1, "cm"),
-    legend.text = element_text(size = 8),
-    legend.title = element_text(size = 8)
-)
-
-filename <- paste0("data/results/figures/1-Signatures/survivalplots/ALL_BRCA_all_subtypes.png")
-png(filename, width=7, height=6, units='in', res = 600, pointsize=80)
-print(p)
-dev.off()

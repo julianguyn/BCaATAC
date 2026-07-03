@@ -233,4 +233,14 @@ te_pal <- c(
     "Other" = "#969695"
 )
 
+lehmann_pal <- c(
+    "ER" = "#f0f2f5",
+    "HER2" = "#EED4D3",
+    "BL1" = "#7c3f3f",
+    "M" = "#AB92BF",
+    "LAR" = "#655A7C",
+    "IM" = "#B56576",
+    "BL2" = "#655151"
+)
+
 border_col = "#686868"

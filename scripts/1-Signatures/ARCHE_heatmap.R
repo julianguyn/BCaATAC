@@ -201,16 +201,6 @@ ht2 <- Heatmap(
 # Lehmann heatmap
 ###########################################################
 
-lehmann_pal <- c(
-    "ER" = "#f0f2f5",
-    "HER2" = "#EED4D3",
-    "BL1" = "#7c3f3f",
-    "M" = "#AB92BF",
-    "LAR" = "#655A7C",
-    "IM" = "#B56576",
-    "BL2" = "#655151"
-)
-
 ht3 <- Heatmap(
     lm,
     cluster_rows = FALSE,
