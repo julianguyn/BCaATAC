@@ -57,7 +57,6 @@ top_pairs <- c(
 
 toPlot <- rbind(great1, great2, great3, great4, great5, great6)
 toPlot <- toPlot[toPlot$name %in% sub("_.*", "", top_pairs),]
-toPlot$top_pair <- ifelse(toPlot$pair %in% top_pairs, "▲", "")
 
 # shorten names
 toPlot$name <- sub(
@@ -96,7 +95,6 @@ p <- ggplot(toPlot, aes(x = name, y = ARCHE, size = -log10(Hyper_Adjp_BH + 0.001
         xmax = c(4.5, 16.5, 26.5, 28.5, 45.5, 50.5, 55.5),
         fill = "#CCCFD5", alpha = 0.5) +
     geom_point() +
-    geom_text(aes(label = top_pair), color = "white", vjust = 0.4, hjust = 0.5, size = 2) +
     scale_color_viridis_c(option = "mako", direction = -1, end = 0.9) +
     theme_bw() +
     theme(

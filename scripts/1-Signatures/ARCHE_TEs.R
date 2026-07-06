@@ -61,12 +61,21 @@ for (arche in colnames(toPlot)) {
 
 toPlot <- toPlot[rownames(toPlot) %in% counts$Family[counts$Regions > 5000],]
 
+# log normalize
+signed_log <- function(x) {
+  sign(x) * log1p(abs(x))
+}
+tes <- rownames(toPlot)
+
+toPlot <- as.data.frame(lapply(toPlot, signed_log))
+rownames(toPlot) <- tes
+
 ###########################################################
 # Colour palettes
 ###########################################################
 
 cols <- colorRampPalette(c("#4B8F8C", "#A2E4D0","#AC71A7", "#5E4352"))(9)
-n <- 5
+n <- 3.5
 col_fun <- colorRamp2(seq(n, -n, length.out = 9), cols)
 
 log2count_col <- colorRamp2(
@@ -124,9 +133,9 @@ col_ha <- HeatmapAnnotation(
 ht <- Heatmap(
     toPlot,
     cluster_rows = FALSE,
-    row_split = te_clusters$cluster,
+    row_split = te_anno$cluster,
     cluster_columns = FALSE,
-    name = "Capped\nChromvar\nZScore",
+    name = "Signed Log\nChromvar\nZScore",
     col = col_fun,
     row_names_gp = gpar(fontsize = 8),
     row_names_side = "left",
