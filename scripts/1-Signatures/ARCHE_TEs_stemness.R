@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
     library(circlize)
     library(RColorBrewer)
     library(reshape2)
+    library(ggnewscale)
 })
 
 source("utils/get_data.R")
@@ -44,20 +45,7 @@ mat_order <- mat$variable
 mat$variable <- meta$Sample.Name[match(mat$variable, meta$ATAC.Seq.File.Name)]
 
 # load in zscores
-tes <- read.table("data/rawdata/TCGA_families/tcga_TE_families_all.Zscore.txt")
-
-# load in stemness signatures
-te_tp <- read_excel("data/rawdata/TEs/cd-23-0331_supplementary_table_s2_suppst2.xlsx", sheet = 1, col_names = TRUE, skip = 1)
-te_pt <- read_excel("data/rawdata/TEs/cd-23-0331_supplementary_table_s3_suppst3.xlsx", sheet = 1, col_names = TRUE, skip = 1)
-
-###########################################################
-# Get TEs
-###########################################################
-
-te_tp <- te_tp$'TE family'[te_tp$Enrichment == "Mammary"] #56
-te_pt <- te_pt$'TE family'[te_pt$Enrichment == "PSCs_Mammary"] #194
-
-save(te_tp, te_pt, file = "data/procdata/TE_stemness_signature.RData")
+tes <- read.table("data/rawdata/TCGA_TEs/tcga_TE_stemness.Zscore.txt")
 
 ###########################################################
 # Handle duplicates and format data
@@ -78,89 +66,33 @@ tcga_anno <- unique(mat[,c(2,4,5)])
 # Create toPlot
 ###########################################################
 
-create_TE_toPlot <- function(tes) {
-
-    toPlot <- data.frame(matrix(nrow = nrow(tes), ncol = 6))
-    rownames(toPlot) <- rownames(tes)
-    colnames(toPlot) <- paste0("ARCHE", 1:6)
-
-    for (arche in colnames(toPlot)) {
-        samples <- tcga_anno$variable[tcga_anno$signature_assign == arche]
-        tt <- tes[,which(colnames(tes) %in% samples)]
-        toPlot[[arche]] <- rowMeans(tt)
-    }
-    return(toPlot)
-}
-
-te_tp <- create_TE_toPlot(tes[te_tp,])
-te_pt <- create_TE_toPlot(tes[te_pt,])
+tes$Signature <- rownames(tes)
+toPlot <- reshape2::melt(tes)
+toPlot$ARCHE <- mat$signature_assign[match(toPlot$variable, mat$variable)]
+toPlot$Subtype <- mat$subtype[match(toPlot$variable, mat$variable)]
 
 ###########################################################
-# Colour palettes
+# Plot
 ###########################################################
 
-cols <- colorRampPalette(c("#4B8F8C", "#A2E4D0","#AC71A7", "#5E4352"))(9)
-n <- 2
-col_fun <- colorRamp2(seq(n, -n, length.out = 9), cols)
+p <- ggplot(toPlot, aes(x = ARCHE, y = value)) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_boxplot(aes(fill = Signature), outlier.shape = NA, 
+                 position = position_dodge(width = 0.75)) +
+    scale_fill_manual("TE Signature", 
+        values = c("pt" = "#D1A78B", "tp" = "#E9D5C3"),
+        labels = c("PSC-enriched", "Tissue-enriched")
+    ) +
+    new_scale_fill() +
+    geom_jitter(aes(fill = Subtype, group = Signature), 
+                shape = 21, colour = "black", size = 2,
+                position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.75)) +
+    scale_fill_manual("Subtype", values = subtype_pal) +
+    labs(y = "Zscore") +
+    theme_bw() +
+    theme(
+        axis.title.x = element_blank()
+    )
 
-###########################################################
-# Plot heatmaps
-###########################################################
-
-ht1 <- Heatmap(
-    te_tp,
-    cluster_columns = FALSE,
-    show_row_names = FALSE,
-    show_row_dend = FALSE,
-    name = "Capped\nZscore",
-    col = col_fun,
-    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
-    column_names_gp = gpar(fontsize = 8),
-    row_title = "Tissue-state\nEnriched TEs",
-    row_title_side = "left",
-    row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10, fontface = "bold"),
-    column_names_rot = 0,
-    column_names_centered = TRUE
-)
-
-ht2 <- Heatmap(
-    te_pt,
-    cluster_columns = FALSE,
-    show_row_names = FALSE,
-    show_row_dend = FALSE,
-    name = "Capped\nZscore",
-    col = col_fun,
-    row_names_gp = gpar(fontsize = 8, fontface = "italic"),
-    column_names_gp = gpar(fontsize = 8),
-    row_title = "Pluripotent Stem Cell\nEnriched TEs",
-    row_title_side = "left",
-    row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10, fontface = "bold"),
-    column_names_rot = 0,
-    column_names_centered = TRUE,
-)
-
-filename <- "data/results/figures/1-Signatures/suppfigure1_te_stemness_heatmap.png"
-png(filename, width = 5, height = 7, res = 600, units = "in")
-draw(ht1 %v% ht2, merge_legends = TRUE)
-dev.off()
-
-###########################################################
-# Plot violin plots
-###########################################################
-
-plot_violin <- function(te) {
-    te$TE <- rownames(te)
-    toPlot <- reshape2::melt(te)
-
-    ggplot(toPlot, aes(x = variable, y = value, fill = variable)) + 
-        geom_violin() +
-        geom_boxplot(width = 0.3) +
-        geom_jitter(
-            position = position_jitterdodge(dodge.width = 0.75, jitter.width = 0.2),
-            alpha = 0.2, size = 1
-        ) +
-        scale_fill_manual(values = ARCHE_pal) +
-        theme_bw()
-}
+filename <- "data/results/figures/1-Signatures/TE_stemness.png"
+ggsave(filename, p, width = 6, height = 4)
