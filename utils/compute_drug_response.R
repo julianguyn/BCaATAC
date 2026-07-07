@@ -26,49 +26,6 @@ format_combinations <- function(combinations, label) {
     return(combinations)
 }
 
-#' Compute concordance index
-#'
-#' Computes concordance index between ARCHE scores and drug AAC.
-#' @param signature_scores dataframe. ARCHE scores from get_arche_scores().
-#' @param sensitivity_data dataframe. Drug sensitivity from get_drugsen().
-#' @param label string. PSet name
-#' @return A dataframe of CI and metrics.
-#' 
-compute_ci <- function(signature_scores, sensitivity_data, label) {
-
-    # get PSet-specific cells
-    to_keep <- intersect(colnames(signature_scores),colnames(sensitivity_data))
-    signature_scores <- signature_scores[,match(to_keep, colnames(signature_scores))]
-    sensitivity_data <- sensitivity_data[,match(to_keep, colnames(sensitivity_data))]
-
-    # create data frame to hold results
-    combinations <- as.data.frame(matrix(data = NA, nrow = nrow(signature_scores) * nrow(sensitivity_data), ncol = 7))
-    colnames(combinations) <- c("signature", "drug", "ci", "pvalue", "se", "upper", "lower")
-    combinations$signature <- rep(rownames(signature_scores), nrow(sensitivity_data))
-    combinations$drug <- rep(rownames(sensitivity_data), each = nrow(signature_scores))
-
-    # compute concordance index
-    for (i in 1:nrow(combinations)){
-
-        ci <- survcomp::concordance.index(as.numeric(sensitivity_data[combinations$drug[i],]), # drug AAC
-                        surv.time = as.numeric(unlist(-signature_scores[combinations$signature[i],])), # ARCHE score
-                        surv.event = rep(1,length(sensitivity_data)), 
-                        outx = TRUE, method="noether", na.rm = TRUE)
-
-        combinations$pvalue[i] <- ci$p.value
-        combinations$ci[i] <- ci$c.index
-        combinations$se[i] <- ci$se
-        combinations$upper[i] <- ci$upper
-        combinations$lower[i] <- ci$lower
-    }
-
-    # format dataframe and FDR correction
-    combinations <- combinations[order(combinations$ci),]
-    combinations <- format_combinations(combinations, label)
-    
-    return(combinations)
-}
-
 #' Compute Pearson's correlation
 #'
 #' Computes PC between ARCHE scores and drug AAC.

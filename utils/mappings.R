@@ -44,6 +44,7 @@ mapping_cells <- c( "AU665" = "AU565",      # misspelt in tdxd
                     "ZR751" = "ZR-75-1")
 
 mapping_drugs <- c("945" = "CFI-400945",
+                    "TPT" = "Topotecan",
                     "carboplatin" = "Carboplatinum", 
                     "dipyridamole" = "Dipyridamole", 
                     "epirubicin" = "Epirubicin", 
@@ -138,7 +139,10 @@ map_drugs <- function(toPlot) {
 
     for (i in 1:nrow(toPlot)) {
         drug = toPlot$drug[i]
-        if (drug %in% names(mapping_drugs)) toPlot$drug[i] <- unname(mapping_drugs[drug])
+        if (drug %in% names(mapping_drugs)) {
+            message(paste("Mapping", drug))
+            toPlot$drug[i] <- unname(mapping_drugs[drug])
+        }
     }
 
     # redo pairs

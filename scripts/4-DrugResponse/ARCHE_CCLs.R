@@ -1,18 +1,17 @@
 # load libraries
 suppressPackageStartupMessages({
-    library(PharmacoGx)
-    library(survcomp)
-    library(wesanderson)
     library(ggplot2)
+    library(matrixStats)
+    library(meta)
     library(ggh4x)
     library(reshape2)
-    library(meta)
     library(ggpubr)
     library(grid)
     library(gridExtra)
     library(dplyr)
     library(readxl)
     library(data.table)
+    library(patchwork)
 })
 
 source("utils/get_data.R")
@@ -22,101 +21,84 @@ source("utils/plots/drug_response_ccls.R")
 source("utils/palettes.R")
 source("utils/bca_drugs.R")
 source("utils/plots/ARCHE_scores_heatmap.R")
+source("utils/plots/drug_response_pdx.R")
+
+# ---------------------------------------------------------
+# Helper functions
+
+# get ARCHE scores
+get_scores <- function(filename, meta) {
+    scores <- fread(filename, data.table = FALSE) |> suppressWarnings()
+    scores$V1 <- NULL
+    rownames(scores) <- paste0("ARCHE", 1:6)
+    colnames(scores) <- sub("_peaks.*", "", colnames(scores))
+    scores <- scores[,which(colnames(scores) %in% meta$filename)]
+    colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
+    if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]
+    return(scores)
+}
+
+# helper function to get and filter by sum of magnitude deviations
+get_devs <- function(df, label) {
+
+    devs <- colSums(abs(df)) |> as.data.frame()
+    colnames(devs) <- "Sum"
+    devs$Type <- meta$type[match(rownames(devs), meta$sampleid)]
+
+    # calculate threshold
+    diff <- diff(range(df, na.rm = TRUE))
+    lim = diff/2
+
+    p <- ggplot(devs, aes(x = Sum)) +
+        geom_histogram(color = "black", linewidth = 0.3, fill = random_lightblue) +
+        geom_vline(xintercept = lim, linetype = "dashed", color = "gray") +
+        theme_bw() +
+        ggtitle(paste0(round(lim, 4))) + labs(y = "Count", x = "Sum of Magnitude ZScores")
+    filename <- paste0("data/results/figures/3-DataExploration/sumdev/", label, ".png")
+    ggsave(filename, p, w=5, h=4)
+
+    to_keep <- rownames(devs[devs$Sum > lim,,drop=FALSE])
+    message(paste("Removing:\n", rownames(devs[devs$Sum < lim,,drop=FALSE])))
+    df <- df[,to_keep]
+    return(df)
+}
+
 
 ###########################################################
-# Load in data
+# Prepare metadata
 ###########################################################
 
-# read in cell metadata
+# read in sample metadata
 meta <- read.csv("metadata/lupien_metadata.csv")
 
 # remove nergiz dups
 dups <- meta$sampleid[duplicated(meta$sampleid)]
 meta <- meta[!(meta$sampleid %in% dups & meta$tech == "nergiz"), ]
 
-# remove komal dups
-dups <- meta$sampleid[duplicated(meta$sampleid)]
-meta <- meta[!(meta$sampleid %in% dups & meta$tech == "tina"), ]
-
+# get cell lines
 c_meta <- meta[meta$type == "cell_line", ]
 
-# load in arche scores
-cells_20k <- get_arche_scores("cells", "k20", c_meta)
-cells_50k <- get_arche_scores("cells", "k50", c_meta)
-cells_all <- get_arche_scores("cells", "all", c_meta)
+###########################################################
+# Load in cell line data
+###########################################################
+
+# zscores
+zscore_cells <- get_scores(paste0("data/rawdata/all_scoring/cell_tcga.Zscore.txt"), c_meta)
+normzs_cells <- znorm(zscore_cells)
+
+# sumdevs
+zscore_cells_sumdev <- get_devs(zscore_cells, "zscore_cells")
+normzs_cells_sumdev <- znorm(zscore_cells_sumdev)
 
 # get drug sensitivity data
 load("data/procdata/CCLs/sensitivity_data.RData")
-
-# get tdxd response data
-tdxd <- get_tdxd()
-
-###########################################################
-# Normalize ARCHE scores
-###########################################################
-
-norm_20k <- znorm(cells_20k)
-norm_50k <- znorm(cells_50k)
-norm_all <- znorm(cells_all)
-
-###########################################################
-# Format TDXd response data
-###########################################################
-
-# map cell lines names
-rownames(tdxd) <- map_cells(tdxd$Cell.Line)
-tdxd$Cell.Line <- NULL
-tdxd <- t(tdxd) |> as.data.frame()
-
-# keep common samples
-tdxd <- tdxd[,which(colnames(tdxd) %in% samples$sample)]
-tdxd_sen <- tdxd[,order(colnames(tdxd))]
-
-###########################################################
-# Load in gene count data (for tdxd analysis)
-###########################################################
-
-# get BCa gene counts
-ubr2 <- get_pset_rna("UBR2")
-
-# get gene counts metadata
-gene_meta <- read.table("data/procdata/CCLs/rna/UBR2_RNA_meta.tsv", header = TRUE)
-
-# keep only ERBB2
-keep <- gene_meta$Ensembl[gene_meta$Gene.Symbol == "ERBB2"]
-erbb2 <- ubr2[rownames(ubr2) == keep,,drop=FALSE] |> as.data.frame()
-
-# keep common cells
-common <- intersect(colnames(erbb2), colnames(tdxd_sen))
-erbb2 <- erbb2[,match(common, colnames(erbb2))]
-erbb2_tdxd <- tdxd_sen[,match(common, colnames(tdxd_sen))]
-
-###########################################################
-# Stratify HER2 and non-HER2 samples (for tdxd analysis)
-###########################################################
-
-# get samples
-her2 <- true_subtype$sample[true_subtype$subtype == "Her2"]
-nonher2 <- true_subtype$sample[true_subtype$subtype != "Her2"]
-
-# subset signatures
-her2 <- tdxd_sig[,colnames(tdxd_sig) %in% her2]
-nonher2 <- tdxd_sig[,colnames(tdxd_sig) %in% nonher2]
-
-# subset drug response
-her2_tdxd <- tdxd_sen[,match(colnames(her2), colnames(tdxd_sen))]
-nonher2_tdxd <- tdxd_sen[,match(colnames(nonher2), colnames(tdxd_sen))]
-
-# todo:: implement tdxd associations with new arche scores
-#tdxd_PC <- compute_pc(tdxd_sig, tdxd_sen, "TDXd")
-#erbb2_PC <- compute_pc(erbb2, erbb2_tdxd, "TDXd")
 
 ###########################################################
 # Compute PC of ARCHE-drug associations
 ###########################################################
 
 # helper function to compute arche associations across all psets
-arche_pc <- function(scores) {
+arche_pc <- function(scores, label) {
     ubr1_PC <- compute_pc(scores, ubr1_sen, "UBR1")
     ubr2_PC <- compute_pc(scores, ubr2_sen, "UBR2")
     gray_PC <- compute_pc(scores, gray_sen, "GRAY")
@@ -127,19 +109,23 @@ arche_pc <- function(scores) {
 
     # compile results
     PC_res <- rbind(ubr1_PC, ubr2_PC, gray_PC, gcsi_PC, gdsc_PC, ctrp_PC, ccle_PC)
+    PC_res$Label <- label
+
+    # map drugs
+    PC_res <- map_drugs(PC_res)
     return(PC_res)
 }
 
-pc_20k <- arche_pc(cells_20k)
-pc_50k <- arche_pc(cells_50k)
-pc_all <- arche_pc(cells_all)
+# zscores
+pc_zscore_cells <- arche_pc(zscore_cells, "zscore")
+pc_normzs_cells <- arche_pc(normzs_cells, "normzscr")
 
-pcnorm_20k <- arche_pc(norm_20k)
-pcnorm_50k <- arche_pc(norm_50k)
-pcnorm_all <- arche_pc(norm_all)
+# subsetted zscores
+pc_zscore_cells_sumdev <- arche_pc(zscore_cells_sumdev, "zscore_sumdev")
+pc_normzs_cells_sumdev <- arche_pc(normzs_cells_sumdev, "normzscr_sumdev")
 
 # save results
-save(pc_20k, pc_50k, pc_all, pcnorm_20k, pcnorm_50k, pcnorm_all,
+save(pc_zscore_cells, pc_normzs_cells, pc_zscore_cells_sumdev, pc_normzs_cells_sumdev,
      file = "data/results/data/4-DrugResponse/CCLs/ARCHE_CCLs_associations.RData")
 
 ###########################################################
@@ -172,16 +158,58 @@ get_classA <- function(PC_res, label) {
     toPlot <- map_drugs(toPlot)         # deal w drug names
     plot_ClassA_heatmap(toPlot, "Single", label)
 
-    return(toPlot)
 }
 
-classA_20k <- get_classA(pc_20k, "20k")
-classA_50k <- get_classA(pc_50k, "50k")
-classA_all <- get_classA(pc_all, "all")
+get_classA(pc_zscore_cells, "zscore")
+get_classA(pc_normzs_cells, "normzscr")
 
-classA_norm20k <- get_classA(pcnorm_20k, "norm_20k")
-classA_norm50k <- get_classA(pcnorm_50k, "norm_50k")
-classA_normall <- get_classA(pcnorm_all, "norm_all")
+get_classA(pc_zscore_cells_sumdev, "zscore_sumdev")
+get_classA(pc_normzs_cells_sumdev, "normzscr_sumdev")
+
+###########################################################
+# Identify Class B Biomarkers
+###########################################################
+
+# helper function to compile PCC and meta-estimates for ClassB biomarkers
+get_classB <- function(PC_res, label) {
+
+    # perform meta analysis and save results
+    estimates <- compute_meta(PC_res)
+    filepath <- paste0("data/results/data/4-DrugResponse/CCLs/meta_estimates", label, ".csv")
+    write.csv(estimates, file = filepath, quote = FALSE, row.names = FALSE)
+
+    #ClassB biomarkers: abs(TE > 0.25) & FDR < 0.05
+    ClassB <- estimates[which(abs(estimates$TE) > 0.25 & estimates$FDR < 0.05),]
+    ClassB <- ClassB[order(ClassB$TE, decreasing = TRUE),]
+    ClassB$rank <- factor(1:nrow(ClassB), levels = c(1:nrow(ClassB)))
+    
+    keep <- PC_res[which(PC_res$pairs %in% ClassB$pair),]
+    
+    # combine PC_res and meta results
+    toPlot <- data.frame(
+        signature = c(keep$signature, ClassB$signature),
+        drug = c(keep$drug, ClassB$drug),
+        pairs = c(keep$pairs, ClassB$pair),
+        estimate = c(keep$pc, ClassB$TE),
+        upper = c(keep$upper, ClassB$upper),
+        lower = c(keep$lower, ClassB$lower),
+        FDR = c(keep$FDR, ClassB$FDR),
+        pset = c(keep$pset, rep("Meta Estimate", nrow(ClassB)))
+    )
+    toPlot$meta <- factor(ifelse(toPlot$pset == "Meta Estimate", TRUE, FALSE), levels = c(TRUE, FALSE))
+    toPlot$pset <- factor(toPlot$pset, levels = c(unique(PC_res$pset), "Meta Estimate"))
+
+    # plot Class B biomarker associations as heatmap
+    plot_ClassB_heatmap(toPlot, label)
+
+}
+
+get_classB(pc_zscore_cells, "zscore")
+get_classB(pc_normzs_cells, "normzscr")
+
+get_classB(pc_zscore_cells_sumdev, "zscore_sumdev")
+get_classB(pc_normzs_cells_sumdev, "normzscr_sumdev")
+
 
 ###########################################################
 # Indiv plots for associations of interest
@@ -206,14 +234,7 @@ pcc <- data.frame(matrix(nrow=0, ncol=5))
 colnames(pcc) <- c("ARCHE_Drug", "Label", "PSet", "PCC", "pvalue")
 
 # plot for pairs of interest
-indiv_plots("ARCHE4_Etoposide")
-indiv_plots("ARCHE6_Etoposide")
-
-indiv_plots("ARCHE2_Paclitaxel")
-indiv_plots("ARCHE5_Paclitaxel")
-indiv_plots("ARCHE6_Paclitaxel")
-
-indiv_plots("ARCHE4_945")
+#indiv_plots("ARCHE4_Etoposide")
 
 bcl2 <- c(
     "decitabine:navitoclax (2:1 mol/mol)",
@@ -226,104 +247,40 @@ pairs <- paste0("ARCHE2_", bcl2)
 for (pair in pairs) {
     indiv_plots(pair)
 }
-indiv_plots("ARCHE5_navitoclax:birinapant (1:1 mol/mol)")
-
-indiv_plots("ARCHE1_Olaparib")
-
-indiv_plots("ARCHE5_Simvastatin")
-indiv_plots("ARCHE4_Simvastatin")
-indiv_plots("ARCHE6_Simvastatin")
-indiv_plots("ARCHE6_Lovastatin")
-indiv_plots("ARCHE2_Simvastatin")
-indiv_plots("ARCHE2_Lovastatin")
-indiv_plots("ARCHE3_Simvastatin")
-
-
-write.csv(pcc, file = "data/results/data/4-DrugResponse/CCLs/indiv_PCC.csv", quote = FALSE, row.names = FALSE)
-
-sig <- pcc[abs(pcc$PCC) > 0.4 & pcc$pvalue < 0.1,]
-write.csv(sig, file = "data/results/data/4-DrugResponse/CCLs/indiv_PCC_sig.csv", quote = FALSE, row.names = FALSE)
 
 ###########################################################
-# Identify Class B Biomarkers
+# Compile cell line results - NOT DONE
 ###########################################################
 
-# helper function to compile PCC and meta-estimates for ClassB biomarkers
-get_classB <- function(PC_res, label) {
+cell_toPlot <- rbind(
+    pc_zscore_cells, pc_normzs_cells,
+    pc_zscore_cells_sumdev, pc_normzs_cells_sumdev
+)
 
-    # perform meta analysis and save results
-    estimates <- compute_meta(PC_res)
-    filepath <- paste0("data/results/data/4-DrugResponse/CCLs/meta_estimates", label, ".csv")
-    write.csv(estimates, file = filepath, quote = FALSE, row.names = FALSE)
-
-    #ClassB biomarkers: abs(TE > 0.4) & FDR < 0.05
-    ClassB <- estimates[which(abs(estimates$TE) > 0.4 & estimates$FDR < 0.05),]
-    ClassB <- ClassB[order(ClassB$TE, decreasing = TRUE),]
-    ClassB$rank <- factor(1:nrow(ClassB), levels = c(1:nrow(ClassB)))
-    
-    keep <- PC_res[which(PC_res$pairs %in% ClassB$pair),]
-    
-    # combine PC_res and meta results
-    toPlot <- data.frame(
-        signature = c(keep$signature, ClassB$signature),
-        drug = c(keep$drug, ClassB$drug),
-        pairs = c(keep$pairs, ClassB$pair),
-        estimate = c(keep$pc, ClassB$TE),
-        upper = c(keep$upper, ClassB$upper),
-        lower = c(keep$lower, ClassB$lower),
-        FDR = c(keep$FDR, ClassB$FDR),
-        pset = c(keep$pset, rep("Meta Estimate", nrow(ClassB)))
-    )
-    toPlot$meta <- factor(ifelse(toPlot$pset == "Meta Estimate", TRUE, FALSE), levels = c(TRUE, FALSE))
-    toPlot$pset <- factor(toPlot$pset, levels = c(unique(PC_res$pset), "Meta Estimate"))
-
-    # plot Class B biomarker associations as forest plot
-    #plot_ClassB_forest(toPlot, label)
-
-    # plot Class B biomarker associations as heatmap
-    plot_ClassB_heatmap(toPlot, label)
-
-    return(toPlot)
-}
-
-classB_20k <- get_classB(pc_20k, "20k")
-classB_50k <- get_classB(pc_50k, "50k")
-classB_all <- get_classB(pc_all, "all")
-
-classB_norm20k <- get_classB(pcnorm_20k, "norm20k")
-classB_norm50k <- get_classB(pcnorm_50k, "norm50k")
-classB_normall <- get_classB(pcnorm_all, "normall")
+pair = "ARCHE4_Topotecan"
+toPlot <- cell_toPlot[cell_toPlot$pairs == pair,]
+toPlot$sig <- ifelse(toPlot$FDR < 0.1, 'FDR < 0.1', 'FDR >= 0.1')
 
 
-###########################################################
-# Combine TDXd data for plotting
-###########################################################
+toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
+toPlot$Label <- factor(toPlot$Label, levels = c(
+    "zscore", "normzscr", "zscore_sumdev", "normzscr_sumdev")
+)
 
-# helper function to combine drug response and arche scores
-combine_data <- function(signature_scores, tdxd) {
-    combined <- t(rbind(tdxd, signature_scores)) |> as.data.frame()
-    samples <- rownames(combined)
-    combined <- sapply(combined, as.numeric) |> as.data.frame()
-    rownames(combined) <- samples
-    combined$subtype <- true_subtype$subtype[match(samples, true_subtype$sample)]
-    return(combined)
-}
+ggplot(toPlot, aes(x = pset, y = Label, fill = pc, size = -log(FDR), shape = sig)) +
+    geom_point() +
+    geom_text(data = subset(toPlot, sig == 'FDR < 0.1'), aes(label = round(pc, 2)), color = "black", size = 2.5) +
+    scale_shape_manual(values = c(21, 24)) +
+    scale_size(range = c(2, 12)) +
+    scale_fill_gradient2(
+        low = "#BC4749",
+        high = "#689CB0",
+        mid = "#C2BBC9",
+        limits = c(-1, 1)
+    ) +
+    theme_bw() +
+    theme(
+        legend.key.size = unit(0.3, 'cm')
+    ) +
+    ggtitle(pair)
 
-all_c <- combine_data(tdxd_sig, tdxd)
-her_c <- combine_data(her2, her2_tdxd)
-non_c <- combine_data(nonher2, nonher2_tdxd)
-erbb2_c <- combine_data(erbb2, erbb2_tdxd)
-
-###########################################################
-# Plot correlation of ARCHE and TDXd response
-###########################################################
-
-plot_tdxd_all(all_c, tdxd_PC, "Avg.IC50", "All Cells")
-plot_tdxd_all(all_c, tdxd_PC, "Avg.IC50.Treps", "All Cells")
-plot_tdxd_all(her_c, tdxd_PC, "Avg.IC50", "HER2 Cells")
-plot_tdxd_all(her_c, tdxd_PC, "Avg.IC50.Treps", "HER2 Cells")
-plot_tdxd_all(non_c, tdxd_PC, "Avg.IC50", "Non-HER2 Cells")
-plot_tdxd_all(non_c, tdxd_PC, "Avg.IC50.Treps", "Non-Her2 Cells")
-
-plot_tdxd_corr(erbb2_c, erbb2_PC, "ENSG00000141736", "Avg.IC50", save = TRUE)
-plot_tdxd_corr(erbb2_c, erbb2_PC, "ENSG00000141736", "Avg.IC50.Treps", save = TRUE)

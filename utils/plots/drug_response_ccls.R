@@ -258,23 +258,15 @@ plot_ClassB_heatmap <- function(toPlot, label) {
     # format plot
     toPlot <- toPlot[order(toPlot$pairs),]
     toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
-    toPlot$pairs <- factor(toPlot$pairs, levels = unique(toPlot$pairs))
-
-    # arche bounds 
-    n_pairs <- toPlot %>%
-        group_by(signature) %>%
-        summarise(n_pairs = n_distinct(pairs)) %>%
-        mutate(cumulative = cumsum(n_pairs))
-    bounds <- n_pairs$cumulative+0.5
+    toPlot$pairs <- factor(toPlot$pairs, levels = rev(unique(toPlot$pairs)))
 
     # main heatmap (pset~pair) PCC
-    p1 <- ggplot(toPlot[toPlot$meta == FALSE,], aes(x = pairs, y = pset, fill = estimate)) + 
+    p1 <- ggplot(toPlot[toPlot$meta == FALSE,], aes(x = pset, y = pairs, fill = estimate)) + 
         geom_tile(color = 'black') +
-        geom_text(data = subset(toPlot[toPlot$meta == FALSE,], FDR < 0.05),
-                aes(label = "*"), 
-                vjust = 0.75, size = 4) +
-        geom_vline(xintercept = bounds[1:4], color = "gray") +
-        scale_x_discrete(labels = function(pairs) gsub(".*_", "", pairs)) +
+        geom_text(data = toPlot[toPlot$meta == FALSE,],
+                aes(label = round(toPlot$estimate[toPlot$meta == FALSE], 2)), 
+                vjust = 0.75, size = 2) +
+        scale_y_discrete(labels = function(pairs) gsub(".*_", "", pairs)) +
         scale_fill_gradient2("Pearson's\nCorrelation\nCoefficient", 
                             low = "#BC4749", 
                             high = "#689CB0",
@@ -284,68 +276,42 @@ plot_ClassB_heatmap <- function(toPlot, label) {
         theme(
             axis.text.y = element_text(size=9, hjust=1, vjust=0.5, margin = margin(r = 6)), 
             axis.text.x = element_text(size=9, angle=90, hjust=1, vjust=0.5, margin = margin(t = 3)),
-            legend.title = element_text(size=9),
             axis.ticks = element_line(color = "gray", linewidth = 0.3),
             axis.ticks.length = unit(2, "pt")
             )
     
     # Meta-Estimate
-    p2 <- ggplot(toPlot[toPlot$meta == TRUE,], aes(x = pairs, y = 1, fill = estimate)) + 
+    p2 <- ggplot(toPlot[toPlot$meta == TRUE,], aes(x = 1, y = pairs, fill = estimate)) + 
         geom_tile(color = "black") +
+        geom_text(data = toPlot[toPlot$meta == TRUE,],
+                aes(label = round(toPlot$estimate[toPlot$meta == TRUE], 2)), 
+                vjust = 0.75, size = 2) +
         theme_void() + 
-        geom_vline(xintercept = bounds[1:4], color = "gray") +
         scale_fill_gradient2("Meta TE", 
                             low = "#BC4749", 
                             high = "#689CB0",
                             mid = "#C2BBC9",
-                            limits = c(-1, 1)) +
-        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 5))) + 
-        labs(y = "Meta TE")
+                            limits = c(-1, 1))
 
     # BCa drug annotation
-    p3 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
+    p3 <- ggplot(toPlot, aes(x = 1, y = pairs, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
         geom_tile(color = "gray") +
         theme_void() + 
-        geom_vline(xintercept = bounds[1:4], color = "gray") +
-        scale_fill_manual(values = c("#3E517A", "white")) +
-        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 2))) + 
-        labs(y = "BCaDrug")
+        scale_fill_manual("BCa Drug", values = c("#3E517A", "white"), labels = c("Yes", "No"))
     
     # ARCHE annotation
-    p4 <- ggplot(toPlot, aes(x = pairs, y = 1, fill = signature)) + 
+    p4 <- ggplot(toPlot, aes(x = 1, y = pairs, fill = signature)) + 
         geom_tile(color = NA) +
         theme_void() + 
-        geom_vline(xintercept = bounds[1:4], color = "gray") +
-        scale_fill_manual("ARCHE", values = ARCHE_pal) +
-        theme(axis.title.y = element_text(size = 9, hjust=1, margin = margin(r = 5))) + 
-        labs(y = "ARCHE ")
-
-    # extract legends (just need the TE one, get others from Class A lol)
-    l2 <- as_ggplot(get_legend(p2))
-    p1 <- p1+theme(legend.position = "none")
-    p2 <- p2+theme(legend.position = "none")
-    p3 <- p3+theme(legend.position = "none")
-    p4 <- p4+theme(legend.position = "none")
+        scale_fill_manual("ARCHE", values = ARCHE_pal)
 
     filename <- paste0("data/results/figures/4-DrugResponse/ClassB/heatmap_", label, ".png")
-    png(filename, width = 7, height = 3.5, res = 600, units = "in")
-    print(
-        grid.arrange(p1, p2, p3, p4, l2, ncol = 10, nrow = 18,
-        layout_matrix = rbind(c(4,4,4,4,4,4,4,4,4,4,4,4,4,5,5),
-                              c(3,3,3,3,3,3,3,3,3,3,3,3,3,5,5),
-                              c(2,2,2,2,2,2,2,2,2,2,2,2,2,5,5), 
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5), 
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5), 
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,5,5),
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,NA,NA), 
-                              c(1,1,1,1,1,1,1,1,1,1,1,1,1,NA,NA)))
-    )
-    dev.off()
+    p <- p1 + p2 + p3 + p4 + 
+        plot_layout(widths = c(5, 1, 1, 1), guides = "collect") &
+        theme(legend.position = "right",
+                legend.box = "vertical")
+    ggsave(filename, p, width = 5, height = 8)
+    
 }
 
 #' Correlation plots of ARCHE and IC50
