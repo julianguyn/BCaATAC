@@ -258,15 +258,42 @@ plot_ClassB_heatmap <- function(toPlot, label) {
     # format plot
     toPlot <- toPlot[order(toPlot$pairs),]
     toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
-    toPlot$pairs <- factor(toPlot$pairs, levels = rev(unique(toPlot$pairs)))
+    #toPlot$pairs <- factor(toPlot$pairs, levels = rev(unique(toPlot$pairs)))
+    
+    # gaps
+    split <- table(sub("_.*", "", unique(toPlot$pairs))) |> as.numeric()
+    ct <- 1
+    idx <- c()
+    for (num in split) {
+        idx <- c(idx, ct:(ct + num - 1))
+        ct <- ct + num + 1
+    }
+    idx <- data.frame(pair = unique(toPlot$pairs), idx = idx)
+    toPlot$split <- idx$idx[match(toPlot$pairs, idx$pair)]
+    toPlot$split <- factor(toPlot$split, levels = c(max(toPlot$split):1))
+    ylabs <- setNames(toPlot$drug, toPlot$split)
+
+    # ARCHE annotation
+    p1 <- ggplot(toPlot, aes(x = 1, y = split, fill = signature)) + 
+        geom_tile(color = NA) +
+        scale_y_discrete(labels = ylabs, drop = FALSE) +
+        theme_void() + 
+        scale_fill_manual("ARCHE", values = ARCHE_pal)
+
+    # BCa drug annotation
+    p2 <- ggplot(toPlot, aes(x = 1, y = split, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
+        geom_tile(color = "gray") +
+        scale_y_discrete(labels = ylabs, drop = FALSE) +
+        theme_void() + 
+        scale_fill_manual("BCa Drug", values = c("#3E517A", "white"), labels = c("Yes", "No"))
 
     # main heatmap (pset~pair) PCC
-    p1 <- ggplot(toPlot[toPlot$meta == FALSE,], aes(x = pset, y = pairs, fill = estimate)) + 
+    p3 <- ggplot(toPlot[toPlot$meta == FALSE,], aes(x = pset, y = split, fill = estimate)) + 
         geom_tile(color = 'black') +
         geom_text(data = toPlot[toPlot$meta == FALSE,],
                 aes(label = round(toPlot$estimate[toPlot$meta == FALSE], 2)), 
-                vjust = 0.75, size = 2) +
-        scale_y_discrete(labels = function(pairs) gsub(".*_", "", pairs)) +
+                vjust = 0.5, size = 2.5) +
+        scale_y_discrete(labels = ylabs, drop = FALSE) +
         scale_fill_gradient2("Pearson's\nCorrelation\nCoefficient", 
                             low = "#BC4749", 
                             high = "#689CB0",
@@ -281,11 +308,12 @@ plot_ClassB_heatmap <- function(toPlot, label) {
             )
     
     # Meta-Estimate
-    p2 <- ggplot(toPlot[toPlot$meta == TRUE,], aes(x = 1, y = pairs, fill = estimate)) + 
+    p4 <- ggplot(toPlot[toPlot$meta == TRUE,], aes(x = 1, y = split, fill = estimate)) + 
         geom_tile(color = "black") +
         geom_text(data = toPlot[toPlot$meta == TRUE,],
                 aes(label = round(toPlot$estimate[toPlot$meta == TRUE], 2)), 
-                vjust = 0.75, size = 2) +
+                vjust = 0.5, size = 2.5) +
+        scale_y_discrete(labels = ylabs, drop = FALSE) +
         theme_void() + 
         scale_fill_gradient2("Meta TE", 
                             low = "#BC4749", 
@@ -293,24 +321,12 @@ plot_ClassB_heatmap <- function(toPlot, label) {
                             mid = "#C2BBC9",
                             limits = c(-1, 1))
 
-    # BCa drug annotation
-    p3 <- ggplot(toPlot, aes(x = 1, y = pairs, fill = ifelse(drug %in% bca_drugs, "A", "B"))) + 
-        geom_tile(color = "gray") +
-        theme_void() + 
-        scale_fill_manual("BCa Drug", values = c("#3E517A", "white"), labels = c("Yes", "No"))
-    
-    # ARCHE annotation
-    p4 <- ggplot(toPlot, aes(x = 1, y = pairs, fill = signature)) + 
-        geom_tile(color = NA) +
-        theme_void() + 
-        scale_fill_manual("ARCHE", values = ARCHE_pal)
-
     filename <- paste0("data/results/figures/4-DrugResponse/ClassB/heatmap_", label, ".png")
     p <- p1 + p2 + p3 + p4 + 
-        plot_layout(widths = c(5, 1, 1, 1), guides = "collect") &
+        plot_layout(widths = c(1,1, 8, 2), guides = "collect") &
         theme(legend.position = "right",
                 legend.box = "vertical")
-    ggsave(filename, p, width = 5, height = 8)
+    ggsave(filename, p, width = 5, height = 9)
     
 }
 
