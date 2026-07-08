@@ -1,25 +1,15 @@
 #' Plot individual associations across PSets
 #' 
-#' @param pair string. In format "<ARCHE>_<Drug>"
-#' @param signature_scores data.frame.
+#' @param pair string. In format "<Feature>_<Drug>"
+#' @param signature_scores data.frame with Feature in rownames.
 #' @param label string.
 #' 
-plot_indivPlot <- function(pair, signature_scores, label, dir = "DrugResponse") {
+plot_indivPlot <- function(pair, signature_scores, label, meta) {
 
-    dir <- switch(
-        dir,
-        DrugResponse = "4-DrugResponse/ClassA/indivplots/",
-        NewDrugResponse = "4.5-NewDrugResponse/cells/indivplots/"
-    )
+    dir <- "4-DrugResponse/benchmarks/"
 
-    arche <- gsub("_.*", "", pair)
-    drug <- gsub(paste0(arche, "_"), "", pair)
-
-    # fix that one drug name
-    to_fix = "doxorubicin:navitoclax (2:1 mol/mol)"
-    if (drug == to_fix) {
-        pair <- "ARCHE1_doxorubicin:navitoclax"
-    }
+    feature <- gsub("_.*", "", pair)
+    drug <- gsub(paste0(feature, "_"), "", pair)
 
     # set up dataframe to store results
     all_drug_sen <- data.frame(matrix(nrow=0, ncol=3))
@@ -35,15 +25,33 @@ plot_indivPlot <- function(pair, signature_scores, label, dir = "DrugResponse") 
     all_drug_sen <- get_doiAAC(ctrp_sen, drug, all_drug_sen, "CTRP")
 
     # get signature scores
-    signature_scores <- signature_scores[rownames(signature_scores) == arche,]
     all_drug_sen$Score <- NA
-    for (i in 1:nrow(all_drug_sen)) { 
-        all_drug_sen$Score[i] <-  signature_scores[,colnames(signature_scores) == all_drug_sen$Sample[i]]
+    if (label == "ARCHE") {
+        signature_scores <- signature_scores[rownames(signature_scores) == feature,]
+        all_drug_sen <- all_drug_sen[all_drug_sen$Sample %in% colnames(signature_scores),]
+        for (i in 1:nrow(all_drug_sen)) { 
+            all_drug_sen$Score[i] <-  signature_scores[,colnames(signature_scores) == all_drug_sen$Sample[i]]
+        }
+        all_drug_sen$Subtype <- meta$subtype[match(all_drug_sen$Sample, meta$sampleid)]
+    } else if (label == "PAM50") {
+        all_drug_sen$Subtype <- NA
+        all_drug_sen <- all_drug_sen[all_drug_sen$Sample %in% signature_scores$Sample,]
+        for (i in 1:nrow(all_drug_sen)) {
+            pset <- all_drug_sen$PSet[i]
+            cell <- all_drug_sen$Sample[i]
+            tt <- signature_scores[signature_scores$Sample == cell & signature_scores$Label == pset,]
+            if (nrow(tt) > 0) {
+                all_drug_sen$Score[i] <- tt[[feature]]
+                all_drug_sen$Subtype[i] <- tt$Subtype
+            }
+        }
+        all_drug_sen <- all_drug_sen[!is.na(all_drug_sen$Score), ]
     }
 
     # print PCC
     for (pset in unique(all_drug_sen$PSet)) {
         subset <- all_drug_sen[all_drug_sen$PSet == pset,]
+        if (nrow(subset) < 3) next
         pc <- cor.test(subset$Score, subset$AAC, method = "pearson", alternative = "two.sided")
 
         # update the global pcc dataframe
@@ -57,31 +65,34 @@ plot_indivPlot <- function(pair, signature_scores, label, dir = "DrugResponse") 
     }
 
     # get x axis limits for plotting
-    x <- max(max(all_drug_sen$Score), abs(min(all_drug_sen$Score)))
+    #x <- max(max(all_drug_sen$Score), abs(min(all_drug_sen$Score)))
 
-    # set up palette for plotting
-    pal <- PSet_pal[names(PSet_pal) %in% unique(all_drug_sen$PSet)]
+    all_drug_sen$PSet <- factor(all_drug_sen$PSet, levels = names(PSet_pal))
 
-    p <- ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = PSet)) + 
+    n <- length(unique(all_drug_sen$PSet))
+
+    p <- ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = Subtype)) + 
         geom_point(size = 3, shape = 21) + 
-        geom_smooth(method = "lm", se=F, aes(color = PSet)) + 
-        scale_fill_manual(values = pal) + 
-        scale_color_manual(values = pal) +
-        guides(color = 'none', fill = guide_legend(override.aes=list(values = pal[names(pal) %in% unique(all_drug_sen$PSet)], linetype = 0))) +
-        theme_classic() + 
+        facet_wrap(~PSet, nrow = n) +
+        geom_smooth(method = "lm", se=F, color = "black", aes(group = 1), show.legend = FALSE) + 
+        scale_fill_manual(values = subtype_pal) + 
+        theme_bw() + 
         theme(
-            panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+            strip.background = element_rect(fill = "white"),
             plot.title = element_text(hjust = 0.5, size = 12, face = "bold"), 
             legend.key.size = unit(0.7, 'cm')
         ) +
-        xlim(-x, x) + ylim(0, 1) + 
+        #xlim(-x, x) + 
+        ylim(0, 1) + 
         labs(
-            x = paste0(arche, " Score"), 
+            x = paste0(feature, " Score"), 
             y = paste0(drug, " Response (AAC)"),
-            title = paste0(label, ": ", arche, " - ", drug)
+            title = label
         )
-    return(p)
+    filename <- paste0("data/results/figures/", dir, pair, ".png")
+    ggsave(filename, p, width = 3.25, height = n+3)
 }
+
 
 #' Plot Class A associations across PSets
 #'

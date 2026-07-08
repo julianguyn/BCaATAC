@@ -43,6 +43,7 @@ colnames(rna) <- map_cells(colnames(rna))
 # keep only cell lines being used
 samples <- get_cells()
 rna <- rna[,colnames(rna) %in% samples$sample]
+rna <- log2(rna+1)
 df <- data.frame(Genes = rownames(rna), rna)
 colnames(df) <- c("Genes", colnames(rna))
 # save
@@ -77,6 +78,8 @@ write.table(meta, file = "data/procdata/CCLs/rna/UBR2_RNA_meta.tsv",  quote = F,
 # Process UBR2 gene counts matrices from other PSets
 ###########################################################
 
-get_pset_rna("data/rawdata/psets/PSet_GRAY2017.rds", "data/procdata/CCLs/rna/GRAY_RNA.tsv")
-get_pset_rna("data/rawdata/psets/gCSI.rds", "data/procdata/CCLs/rna/gCSI_RNA.tsv")
-get_pset_rna("data/rawdata/psets/CCLE.rds", "data/procdata/CCLs/rna/CCLE_RNA.tsv")
+save_pset_rna("data/rawdata/psets/PSet_UHNBreast.rds", "data/procdata/CCLs/rna/UBR1_RNA.tsv")
+save_pset_rna("data/rawdata/psets/PSet_GRAY2017.rds", "data/procdata/CCLs/rna/GRAY_RNA.tsv")
+save_pset_rna("data/rawdata/psets/gCSI.rds", "data/procdata/CCLs/rna/gCSI_RNA.tsv")
+save_pset_rna("data/rawdata/psets/GDSC2-8.2.rds", "data/procdata/CCLs/rna/GDSC2_RNA.tsv")
+save_pset_rna("data/rawdata/psets/CCLE.rds", "data/procdata/CCLs/rna/CCLE_RNA.tsv")

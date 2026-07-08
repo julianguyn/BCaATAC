@@ -57,7 +57,7 @@ get_drugsen <- function(pset, load = FALSE, update = TRUE, map = FALSE) {
 #' @param input string. Path to input PSet
 #' @param output string. Path to save dataframe
 #' 
-get_pset_rna <- function(input, output) {
+save_pset_rna <- function(input, output) {
     pset <- readRDS(input) |> updateObject()
     pset <- summarizeMolecularProfiles(pset, mDataType = "Kallisto_0.46.1.rnaseq.counts")
     rna <- pset@assays@data$expr

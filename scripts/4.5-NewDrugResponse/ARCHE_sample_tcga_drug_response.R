@@ -150,7 +150,7 @@ p_meta_t <- meta_t[meta_t$type == "PDX", ]
 p_meta_k <- meta_k[meta_k$type == "PDX", ]
 
 # load in arche zscores and normalize
-zscore_t <- get_scores(paste0("data/rawdata/all_scoring/pdx_tcga.Zscore.txt"), p_meta_t)
+zscore_t <- get_scores(paste0("data/rawdata/tcga_pdx_rmtina/pdx_tcga_rmtina.Zscore.txt"), p_meta_t)
 normzs_t <- znorm(zscore_t)
 zscore_k <- get_scores(paste0("data/rawdata/all_scoring/pdx_tcga.Zscore.txt"), p_meta_k)
 normzs_k <- znorm(zscore_k)
@@ -324,10 +324,10 @@ plot_PDX_ARCHEs <- function(compile, label) {
     toPlot <- compile[compile$pair %in% sig_pairs,]
     toPlot$sig <- ifelse(toPlot$pval.BAR_median < 0.1, 'pval < 0.1', 'pval >= 0.1')
 
-    toPlot$Label <- factor(toPlot$Label, levels = c(
-        "zscore_T", "zscore_K", "deviat_T", "deviat_K",
-        "normzscr_T", "normzscr_K", "normdev_T", "normdev_K")
-    )
+    #toPlot$Label <- factor(toPlot$Label, levels = c(
+    #    "zscore_T", "zscore_K", "deviat_T", "deviat_K",
+    #    "normzscr_T", "normzscr_K", "normdev_T", "normdev_K")
+    #)
 
     for (arche in paste0("ARCHE", 1:6)) {
 

@@ -20,69 +20,52 @@ get_cells <- function() {
 
 #' Get ARCHE scores for samples
 #'
-#' @param sample string. "cells" or "pdxs"
-#' @param arche string. "k20", "k50", or "all"
+#' @param filename string. path to zscores.txt
+#' @param meta dataframe.
 #' @return ARCHE scores for requested samples.
 #' 
-get_arche_scores <- function(sample, arche, meta) {
-
-    # get filepath
-    filepath <- switch(
-        sample,
-        cells = "data/rawdata/ccls/cells_",
-        pdxs = "data/rawdata/pdx/PDXs_"
-    )
-
-    # get filename
-    filename <- switch(
-        arche,
-        k20 = "20k.Zscore.txt",
-        k50 = "50k.Zscore.txt",
-        all = "all.Zscore.txt"
-    )
-
-    file <- paste0(filepath, filename)
-
-    # load in arche scores
-    scores <- read.table(file)
-    rownames(scores) <- paste0("ARCHE", 1:6)
-
-    # standardize sample names of cell lines
-    colnames(scores) <- sub("^X", "", gsub("\\.(?!$)", "-", colnames(scores), perl = TRUE))
-    scores <- scores[, colnames(scores) %in% meta$filename]
-    colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
-    scores <- scores[, order(colnames(scores))]
-    if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]
-    if (sample == "pdxs") colnames(scores) <- map_pdx(colnames(scores))
-
-    return(scores)
-}
-
-# - load in deviations
-#' Get ARCHE deviation scores for samples
-#'
-#' @param sample string. "cells" or "PDXs"
-#' @param arche string. "20k", "50k", or "all"
-#' @return ARCHE deviation scores for requested samples.
-#' 
-get_arche_devs <- function(sample, arche, meta) {
-
-    filename <- paste0("data/rawdata/ARCHE_counts/", sample, "_", arche, ".Deviations.txt")
+get_arche_scores <- function(filename, meta) {
     scores <- fread(filename, data.table = FALSE) |> suppressWarnings()
     scores$V1 <- NULL
     rownames(scores) <- paste0("ARCHE", 1:6)
-    print(dim(scores))
-    print(scores[1:5,1:5])
-
-    # standardize sample names of cell lines
-    colnames(scores) <- sub("^X", "", gsub("\\.(?!$)", "-", colnames(scores), perl = TRUE))
-    scores <- scores[, colnames(scores) %in% meta$filename]
+    colnames(scores) <- sub("_peaks.*", "", colnames(scores))
+    scores <- scores[,which(colnames(scores) %in% meta$filename)]
     colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
-    scores <- scores[, order(colnames(scores))]
     if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]
-    if (sample == "PDXs") colnames(scores) <- map_pdx(colnames(scores))
-
     return(scores)
+}
+
+#' Get sum of zscore deviations for samples
+#'
+#' @param df data.frame from get_arche_scores()
+#' @param label string. for plot
+#' @param plot boolean.
+#' @return ARCHE scores filtered for low sumdev samples
+#' 
+get_arche_sumdevs <- function(df, label = NULL, plot = FALSE) {
+
+    devs <- colSums(abs(df)) |> as.data.frame()
+    colnames(devs) <- "Sum"
+    devs$Type <- meta$type[match(rownames(devs), meta$sampleid)]
+
+    # calculate threshold
+    diff <- diff(range(df, na.rm = TRUE))
+    lim = diff/2
+
+    if (plot == TRUE) {
+        p <- ggplot(devs, aes(x = Sum)) +
+            geom_histogram(color = "black", linewidth = 0.3, fill = random_lightblue) +
+            geom_vline(xintercept = lim, linetype = "dashed", color = "gray") +
+            theme_bw() +
+            ggtitle(paste0(round(lim, 4))) + labs(y = "Count", x = "Sum of Magnitude ZScores")
+        filename <- paste0("data/results/figures/3-DataExploration/sumdev/", label, ".png")
+        ggsave(filename, p, w=5, h=4)
+    }
+
+    to_keep <- rownames(devs[devs$Sum > lim,,drop=FALSE])
+    message(paste("Removing:\n", rownames(devs[devs$Sum < lim,,drop=FALSE])))
+    df <- df[,to_keep]
+    return(df)
 }
 
 #' Extract AAC for drug of interest
@@ -113,7 +96,7 @@ get_doiAAC <- function(pset, drug, df, label) {
 #' 
 get_pset_rna <- function(pset, gene.symbol = FALSE) {
 
-    pset_options <- c("UBR2", "GRAY", "gCSI", "CCLE")
+    pset_options <- c("UBR1", "UBR2", "GRAY", "gCSI", "GDSC2", "CCLE")
     if (!pset %in% pset_options) {
         message("Option not valid. Pick from: UBR2, GRAY, gCSI, CCLE")
         return(NA)

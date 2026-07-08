@@ -24,10 +24,15 @@ source("utils/get_data.R")
 ###########################################################
 
 # get gene counts from PSets
+ubr1 <- get_pset_rna("UBR1")
 ubr2 <- get_pset_rna("UBR2")
 gray <- get_pset_rna("GRAY")
 gcsi <- get_pset_rna("gCSI")
+gdsc <- get_pset_rna("GDSC2")
 ccle <- get_pset_rna("CCLE")
+
+# clean GDSC
+gdsc <- gdsc[, colSums(is.na(gdsc)) != nrow(gdsc)]
 
 # get gene counts metadata
 meta <- read.table("data/procdata/CCLs/rna/UBR2_RNA_meta.tsv", header = TRUE)
@@ -45,9 +50,11 @@ data(scmod2.robust)
 genes <- intersect(rownames(ubr2), rownames(ccle))
 
 # subset for overlapping genes
+ubr1 <- ubr1[match(genes, rownames(ubr1)),order(colnames(ubr1))]
 ubr2 <- ubr2[match(genes, rownames(ubr2)),order(colnames(ubr2))]
 gray <- gray[match(genes, rownames(gray)),order(colnames(gray))]
 gcsi <- gcsi[match(genes, rownames(gcsi)),order(colnames(gcsi))]
+gdsc <- gdsc[match(genes, rownames(gdsc)),order(colnames(gdsc))]
 ccle <- ccle[match(genes, rownames(ccle)),order(colnames(ccle))]
 
 ###########################################################
@@ -59,10 +66,81 @@ scale_rna <- function(x) {
   x / sum(x, na.rm = TRUE) * 1e6
 }
 
+ubr1 <- apply(ubr1, 2, scale_rna) |> as.data.frame()
 ubr2 <- apply(ubr2, 2, scale_rna) |> as.data.frame()
 gray <- apply(gray, 2, scale_rna) |> as.data.frame()
 gcsi <- apply(gcsi, 2, scale_rna) |> as.data.frame()
+gdsc <- apply(gdsc, 2, scale_rna) |> as.data.frame()
 ccle <- apply(ccle, 2, scale_rna) |> as.data.frame()
+
+###########################################################
+# Compute subtyping model scores
+###########################################################
+
+# PAM50
+ubr1_pam50 <- score_bca_subtype(ubr1, meta, model = "pam50")
+ubr2_pam50 <- score_bca_subtype(ubr2, meta, model = "pam50")
+ccle_pam50 <- score_bca_subtype(ccle, meta, model = "pam50")
+gcsi_pam50 <- score_bca_subtype(gcsi, meta, model = "pam50")
+gray_pam50 <- score_bca_subtype(gray, meta, model = "pam50")
+gdsc_pam50 <- score_bca_subtype(gdsc, meta, model = "pam50")
+
+# SCMGENE
+ubr2_scmgene <- score_bca_subtype(ubr2, meta, model = "scmgene")
+
+# SCMOD2
+ubr2_scmod2 <- score_bca_subtype(ubr2, meta, model = "scmod2")
+
+save(
+    ubr1_pam50, ubr2_pam50, ubr2_scmgene, ubr2_scmod2,
+    ccle_pam50, gcsi_pam50, gray_pam50, gdsc_pam50,
+    file = "data/results/data/3-DataExploration/ccls_subtyping_scores.RData"
+)
+
+###########################################################
+# Compile and plot across PSets
+###########################################################
+
+# get cell line subtype
+true_subtype <- get_cell_subtype()
+
+# temp function to compile results across psets
+compile_scores <- function(ubr2, gray, gcsi, ccle) {
+
+    # compile subtype results
+    toPlot <- rbind.fill(
+        as.data.frame(t(ubr2))[rownames(t(ubr2)) == "Subtype",], 
+        as.data.frame(t(gray))[rownames(t(gray)) == "Subtype",],
+        as.data.frame(t(gcsi))[rownames(t(gcsi)) == "Subtype",],
+        as.data.frame(t(ccle))[rownames(t(ccle)) == "Subtype",]
+    ) |> t() |> as.data.frame()
+    colnames(toPlot) <- c("UBR2", "GRAY", "gCSI", "CCLE")
+
+    toPlot$true_subtype <- true_subtype$subtype[match(rownames(toPlot), true_subtype$sample)]
+    return(toPlot)
+}
+
+pam50 <- compile_scores(ubr2_pam50, gray_pam50, gcsi_pam50, ccle_pam50)
+
+# plot subtypes across psets
+plot_bca_subtype(pam50, "pam50")
+
+###########################################################
+# Compile and plot UBR2 across subtyping models
+###########################################################
+
+# compile subtype results
+toPlot <- rbind.fill(
+    as.data.frame(t(ubr2_pam50))[rownames(t(ubr2_pam50)) == "Subtype",],
+    as.data.frame(t(ubr2_scmgene))[rownames(t(ubr2_scmgene)) == "Subtype",],
+    as.data.frame(t(ubr2_scmod2))[rownames(t(ubr2_scmod2)) == "Subtype",]
+) |> t() |> as.data.frame()
+colnames(toPlot) <- c("PAM50", "SCMGENE", "SCMOD2")
+
+toPlot$true_subtype <- true_subtype$subtype[match(rownames(toPlot), true_subtype$sample)]
+
+plot_bca_subtype(toPlot, "UBR2")
+
 
 ###########################################################
 # Melt for correlations
@@ -112,69 +190,3 @@ p6 <- corr_pset_rna(gcsi_m, ccle_m, corr)
 ###########################################################
 
 plot_rna_corr(p1, p2, p3, p4, p5, p6, "Pearson_unlog")
-
-###########################################################
-# Compute subtyping model scores
-###########################################################
-
-# PAM50
-ubr2_pam50 <- score_bca_subtype(ubr2, meta, model = "pam50")
-ccle_pam50 <- score_bca_subtype(ccle, meta, model = "pam50")
-gcsi_pam50 <- score_bca_subtype(gcsi, meta, model = "pam50")
-gray_pam50 <- score_bca_subtype(gray, meta, model = "pam50")
-
-# SCMGENE
-ubr2_scmgene <- score_bca_subtype(ubr2, meta, model = "scmgene")
-
-# SCMOD2
-ubr2_scmod2 <- score_bca_subtype(ubr2, meta, model = "scmod2")
-
-save(
-    ubr2_pam50, ubr2_scmgene, ubr2_scmod2,
-    ccle_pam50, gcsi_pam50, gray_pam50,
-    file = "data/results/data/3-DataExploration/ccls_subtyping_scores.RData"
-)
-
-###########################################################
-# Compile and plot across PSets
-###########################################################
-
-# get cell line subtype
-true_subtype <- get_cell_subtype()
-
-# temp function to compile results across psets
-compile_scores <- function(ubr2, gray, gcsi, ccle) {
-
-    # compile subtype results
-    toPlot <- rbind.fill(
-        as.data.frame(t(ubr2))[rownames(t(ubr2)) == "Subtype",], 
-        as.data.frame(t(gray))[rownames(t(gray)) == "Subtype",],
-        as.data.frame(t(gcsi))[rownames(t(gcsi)) == "Subtype",],
-        as.data.frame(t(ccle))[rownames(t(ccle)) == "Subtype",]
-    ) |> t() |> as.data.frame()
-    colnames(toPlot) <- c("UBR2", "GRAY", "gCSI", "CCLE")
-
-    toPlot$true_subtype <- true_subtype$subtype[match(rownames(toPlot), true_subtype$sample)]
-    return(toPlot)
-}
-
-pam50 <- compile_scores(ubr2_pam50, gray_pam50, gcsi_pam50, ccle_pam50)
-
-# plot subtypes across psets
-plot_bca_subtype(pam50, "pam50")
-
-###########################################################
-# Compile and plot UBR2 across subtyping models
-###########################################################
-
-# compile subtype results
-toPlot <- rbind.fill(
-    as.data.frame(t(ubr2_pam50))[rownames(t(ubr2_pam50)) == "Subtype",],
-    as.data.frame(t(ubr2_scmgene))[rownames(t(ubr2_scmgene)) == "Subtype",],
-    as.data.frame(t(ubr2_scmod2))[rownames(t(ubr2_scmod2)) == "Subtype",]
-) |> t() |> as.data.frame()
-colnames(toPlot) <- c("PAM50", "SCMGENE", "SCMOD2")
-
-toPlot$true_subtype <- true_subtype$subtype[match(rownames(toPlot), true_subtype$sample)]
-
-plot_bca_subtype(toPlot, "UBR2")

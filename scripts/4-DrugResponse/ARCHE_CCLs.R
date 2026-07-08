@@ -23,47 +23,6 @@ source("utils/bca_drugs.R")
 source("utils/plots/ARCHE_scores_heatmap.R")
 source("utils/plots/drug_response_pdx.R")
 
-# ---------------------------------------------------------
-# Helper functions
-
-# get ARCHE scores
-get_scores <- function(filename, meta) {
-    scores <- fread(filename, data.table = FALSE) |> suppressWarnings()
-    scores$V1 <- NULL
-    rownames(scores) <- paste0("ARCHE", 1:6)
-    colnames(scores) <- sub("_peaks.*", "", colnames(scores))
-    scores <- scores[,which(colnames(scores) %in% meta$filename)]
-    colnames(scores) <- meta$sampleid[match(colnames(scores), meta$filename)]
-    if ("104987" %in% colnames(scores)) scores <- scores[, colnames(scores) != "104987"]
-    return(scores)
-}
-
-# helper function to get and filter by sum of magnitude deviations
-get_devs <- function(df, label) {
-
-    devs <- colSums(abs(df)) |> as.data.frame()
-    colnames(devs) <- "Sum"
-    devs$Type <- meta$type[match(rownames(devs), meta$sampleid)]
-
-    # calculate threshold
-    diff <- diff(range(df, na.rm = TRUE))
-    lim = diff/2
-
-    p <- ggplot(devs, aes(x = Sum)) +
-        geom_histogram(color = "black", linewidth = 0.3, fill = random_lightblue) +
-        geom_vline(xintercept = lim, linetype = "dashed", color = "gray") +
-        theme_bw() +
-        ggtitle(paste0(round(lim, 4))) + labs(y = "Count", x = "Sum of Magnitude ZScores")
-    filename <- paste0("data/results/figures/3-DataExploration/sumdev/", label, ".png")
-    ggsave(filename, p, w=5, h=4)
-
-    to_keep <- rownames(devs[devs$Sum > lim,,drop=FALSE])
-    message(paste("Removing:\n", rownames(devs[devs$Sum < lim,,drop=FALSE])))
-    df <- df[,to_keep]
-    return(df)
-}
-
-
 ###########################################################
 # Prepare metadata
 ###########################################################
@@ -83,11 +42,11 @@ c_meta <- meta[meta$type == "cell_line", ]
 ###########################################################
 
 # zscores
-zscore_cells <- get_scores(paste0("data/rawdata/all_scoring/cell_tcga.Zscore.txt"), c_meta)
+zscore_cells <- get_arche_scores(paste0("data/rawdata/all_scoring/cell_tcga.Zscore.txt"), c_meta)
 normzs_cells <- znorm(zscore_cells)
 
 # sumdevs
-zscore_cells_sumdev <- get_devs(zscore_cells, "zscore_cells")
+zscore_cells_sumdev <- get_arche_sumdevs(zscore_cells, "zscore_cells", plot = TRUE)
 normzs_cells_sumdev <- znorm(zscore_cells_sumdev)
 
 # get drug sensitivity data
@@ -202,36 +161,33 @@ get_classB <- function(PC_res, label) {
     # plot Class B biomarker associations as heatmap
     plot_ClassB_heatmap(toPlot, label)
 
+    return(unique(toPlot$pairs))
+
 }
 
-get_classB(pc_zscore_cells, "zscore")
-get_classB(pc_normzs_cells, "normzscr")
+zscore_cells_pairs <- get_classB(pc_zscore_cells, "zscore")
+normzs_cells_pairs <- get_classB(pc_normzs_cells, "normzscr")
 
-get_classB(pc_zscore_cells_sumdev, "zscore_sumdev")
-get_classB(pc_normzs_cells_sumdev, "normzscr_sumdev")
+zscore_cells_sumdev_pairs <- get_classB(pc_zscore_cells_sumdev, "zscore_sumdev")
+normzs_cells_sumdev_pairs <- get_classB(pc_normzs_cells_sumdev, "normzscr_sumdev")
 
 
 ###########################################################
 # Indiv plots for associations of interest
 ###########################################################
 
-# helper function to plot individual plots
-indiv_plots <- function(pair, pcc) {
 
-    # unnormalized ARCHE scores
-    plot_indivPlot(pair, cells_20k, "cells_20k")
-    plot_indivPlot(pair, cells_50k, "cells_50k")
-    plot_indivPlot(pair, cells_all, "cells_all")
-
-    # normalized ARCHE scores
-    plot_indivPlot(pair, norm_20k, "cells_norm20k")
-    plot_indivPlot(pair, norm_50k, "cells_norm50k")
-    plot_indivPlot(pair, norm_all, "cells_normall")
-}
 
 # create dataframe to store results
 pcc <- data.frame(matrix(nrow=0, ncol=5))
-colnames(pcc) <- c("ARCHE_Drug", "Label", "PSet", "PCC", "pvalue")
+colnames(pcc) <- c("Feature_Drug", "Label", "PSet", "PCC", "pvalue")
+
+# plot individual plots
+pair = zscore_cells_sumdev_pairs[1]
+
+plot_indivPlot("ARCHE5_Paclitaxel", zscore_cells_sumdev, "ARCHE", c_meta)
+
+
 
 # plot for pairs of interest
 #indiv_plots("ARCHE4_Etoposide")
