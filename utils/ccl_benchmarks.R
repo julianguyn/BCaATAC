@@ -17,11 +17,8 @@ format_rna <- function(rna, label, gene_list) {
     return(rna)
 }
 
-#' Subfunction to compile all_drug_sen
-get_all_drug_sen <- function(pair, signature_scores, label, meta) {
-
-    feature <- gsub("_.*", "", pair)
-    drug <- gsub(paste0(feature, "_"), "", pair)
+#' Subfunction to get all drug response
+compile_AAC <- function(drug) {
 
     # set up dataframe to store results
     all_drug_sen <- data.frame(matrix(nrow=0, ncol=3))
@@ -35,6 +32,17 @@ get_all_drug_sen <- function(pair, signature_scores, label, meta) {
     all_drug_sen <- get_doiAAC(gdsc_sen, drug, all_drug_sen, "GDSC2")
     all_drug_sen <- get_doiAAC(ccle_sen, drug, all_drug_sen, "CCLE")
     all_drug_sen <- get_doiAAC(ctrp_sen, drug, all_drug_sen, "CTRP")
+    return(all_drug_sen)
+}
+
+#' Subfunction to compile all_drug_sen
+get_all_drug_sen <- function(pair, signature_scores, label, meta) {
+
+    feature <- gsub("_.*", "", pair)
+    drug <- gsub(paste0(feature, "_"), "", pair)
+
+    # subset to keep only drug of interest
+    all_drug_sen <- compile_AAC(drug)
 
     # get signature scores
     all_drug_sen$Score <- NA
@@ -181,17 +189,19 @@ plot_rna_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
     names(cols) <- c(arche, pam50, unname(gene_list))
 
     # plot all markers
-    p <- ggplot(pcc, aes(x = PSet, y = PCC, fill = Feature, size = -log(pvalue))) +
+    p <- ggplot(pcc, aes(x = PSet, y = abs(PCC), fill = Feature, size = -log(pvalue))) +
         geom_point(alpha = 0.7, shape = 21) +
         scale_size(range = c(1, 12)) +
         scale_fill_manual(values = cols) +
         guides(fill = guide_legend(override.aes = list(size = 3))) +
+        ylim(c(0, 0.7)) +
         theme_minimal() +
         theme(
             panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
             legend.key.size = unit(0.4, 'cm'),
             legend.title = element_text(size = 10)
-        )
+        ) +
+        labs(y = "Magnitude Pearson's Correlation")
     filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug, "/all_compiled.png")
     ggsave(filename, p, width = 5.5, height = 3)
     rownames(pcc) <- NULL
@@ -260,8 +270,8 @@ plot_mut <- function(arche, drug, mut, pset, mut_df, arche_sen) {
 
 
 #' Plot mutation associations
-plot_mut_associations <- function(arche, drug, mut) {
-    arche_sen <- get_all_drug_sen(paste0(arche, "_", drug), zscore_cells_sumdev, "ARCHE", c_meta)
+plot_mut_associations <- function(arche, drug, mut, arche_scores) {
+    arche_sen <- get_all_drug_sen(paste0(arche, "_", drug), arche_scores, "ARCHE", c_meta)
 
     p1 <- plot_mut(arche, drug, mut, "GDSC2", gdsc_mut, arche_sen) + theme(legend.position = "none")
     p2 <- plot_mut(arche, drug, mut, "CCLE", ccle_mut, arche_sen) + theme(legend.position = "none") + theme(axis.title.y = element_blank())

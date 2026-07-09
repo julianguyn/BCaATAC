@@ -1,8 +1,9 @@
 # load libraries
 suppressPackageStartupMessages({
     library(data.table)
-    library(ggplot2)
+    library(tidyverse)
     library(patchwork)
+    library(ggnewscale)
     library(ggpattern)
 })
 
@@ -83,18 +84,29 @@ trastuzumab_genes <- c(
     "ENSG00000141736" = "ERBB2"
 )
 
+erlotinib_genes <- c(
+    "ENSG00000146648" = "EGFR",
+    "ENSG00000123374" = "CDK2"
+)
+
 # ARCHE2
 a2_tozasertib <- plot_rna_associations("ARCHE2", "Basal", "Tozasertib", zscore_cells_sumdev, tozasertib_genes)
 
 # ARCHE3
 a3_trastuzumab <- plot_rna_associations("ARCHE3", "Her2", "Trastuzumab", zscore_cells_sumdev, trastuzumab_genes)
 
+# ARCHE4
+a4_erlotinib <- plot_rna_associations("ARCHE4", "Basal", "Erlotinib", zscore_cells_sumdev, erlotinib_genes)
+
 # ARCHE5
 a5_paclitaxel <- plot_rna_associations("ARCHE5", "Basal", "Paclitaxel", zscore_cells_sumdev, paclitaxel_genes)
+a5_erlotinib <- plot_rna_associations("ARCHE5", "Basal", "Erlotinib", zscore_cells_sumdev, erlotinib_genes)
+
 
 ###########################################################
 # Mutations
 ###########################################################
 
 #plot_mut_associations("ARCHE3", "Alpelisib", "PIK3CA")
-plot_mut_associations("ARCHE4", "Selumetinib", "NF1")
+plot_mut_associations("ARCHE4", "Selumetinib", "NF1", zscore_cells_sumdev)
+plot_mut_associations("ARCHE4", "Erlotinib", "EGFR", zscore_cells_sumdev)

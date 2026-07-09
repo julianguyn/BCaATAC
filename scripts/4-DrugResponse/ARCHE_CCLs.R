@@ -173,70 +173,35 @@ normzs_cells_sumdev_pairs <- get_classB(pc_normzs_cells_sumdev, "normzscr_sumdev
 
 
 ###########################################################
-# Indiv plots for associations of interest
+# ARCHE2 vs ARCHE5
 ###########################################################
 
+tt <- as.data.frame(t(zscore_cells_sumdev[c("ARCHE2", "ARCHE5"),]))
+a2_cells <- rownames(tt[tt$ARCHE2 > quantile(tt$ARCHE2)["75%"],])
+a5_cells <- rownames(tt[tt$ARCHE5 > quantile(tt$ARCHE5)["75%"],])
 
+to_rm <- intersect(a2_cells, a5_cells) # two cells: CAL51 and SUM149PT, 10 unique in each
+a2_cells <- a2_cells[-which(a2_cells %in% to_rm)]
+a5_cells <- a5_cells[-which(a5_cells %in% to_rm)]
 
-# create dataframe to store results
-pcc <- data.frame(matrix(nrow=0, ncol=5))
-colnames(pcc) <- c("Feature_Drug", "Label", "PSet", "PCC", "pvalue")
-
-# plot individual plots
-pair = zscore_cells_sumdev_pairs[1]
-
-plot_indivPlot("ARCHE5_Paclitaxel", zscore_cells_sumdev, "ARCHE", c_meta)
-
-
-
-# plot for pairs of interest
-#indiv_plots("ARCHE4_Etoposide")
-
-bcl2 <- c(
-    "decitabine:navitoclax (2:1 mol/mol)",
-    "doxorubicin:navitoclax (2:1 mol/mol)",
-    "alisertib:navitoclax (2:1 mol/mol)",
-    "navitoclax:MST-312 (1:1 mol/mol)",
-    "selumetinib:navitoclax (8:1 mol/mol)"
+drug_list <- c(
+    "Carboplatinum", "Docetaxel", "Doxorubicin", "Gemcitabine", "Paclitaxel", "Cisplatin",
+    "Epirubicin", "Vinorelbine", "Cyclophosphamide", "Eribulin", "Mebendazole", "Vinorelbine"
 )
-pairs <- paste0("ARCHE2_", bcl2)
-for (pair in pairs) {
-    indiv_plots(pair)
+
+drug_list <- c("Doxorubicin", "Gemcitabine", "Docetaxel")
+
+# compile drugs of interest
+all_response <- data.frame(matrix(nrow=0, ncol=5))
+for (drug in drug_list) {
+    response <- compile_AAC(drug)
+    response <- response[response$Sample %in% c(a2_cells, a5_cells),]
+    response$ARCHE <- ifelse(response$Sample %in% a2_cells, "ARCHE2", "ARCHE5")
+    response$Drug <- drug
+    all_response <- rbind(all_response, response)
 }
 
-###########################################################
-# Compile cell line results - NOT DONE
-###########################################################
-
-cell_toPlot <- rbind(
-    pc_zscore_cells, pc_normzs_cells,
-    pc_zscore_cells_sumdev, pc_normzs_cells_sumdev
-)
-
-pair = "ARCHE4_Topotecan"
-toPlot <- cell_toPlot[cell_toPlot$pairs == pair,]
-toPlot$sig <- ifelse(toPlot$FDR < 0.1, 'FDR < 0.1', 'FDR >= 0.1')
-
-
-toPlot$pset <- factor(toPlot$pset, levels = names(PSet_pal))
-toPlot$Label <- factor(toPlot$Label, levels = c(
-    "zscore", "normzscr", "zscore_sumdev", "normzscr_sumdev")
-)
-
-ggplot(toPlot, aes(x = pset, y = Label, fill = pc, size = -log(FDR), shape = sig)) +
-    geom_point() +
-    geom_text(data = subset(toPlot, sig == 'FDR < 0.1'), aes(label = round(pc, 2)), color = "black", size = 2.5) +
-    scale_shape_manual(values = c(21, 24)) +
-    scale_size(range = c(2, 12)) +
-    scale_fill_gradient2(
-        low = "#BC4749",
-        high = "#689CB0",
-        mid = "#C2BBC9",
-        limits = c(-1, 1)
-    ) +
-    theme_bw() +
-    theme(
-        legend.key.size = unit(0.3, 'cm')
-    ) +
-    ggtitle(pair)
-
+ggplot(all_response, aes(x = ARCHE, y = AAC, fill = Drug)) +
+    geom_boxplot() +
+    geom_jitter(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.75)) +
+    facet_wrap(~PSet)
