@@ -243,4 +243,18 @@ lehmann_pal <- c(
     "BL2" = "#655151"
 )
 
+a2va5_drug_pal <- c(
+    "Dasatinib" = "#8E3B46",
+    # Antimetabolites
+    "Clofarabine" = "#DDBDD5",
+    "Cytarabine" = "#AC9FBB",
+    "Gemcitabine" = "#A784BA",
+    "decitabine:navitoclax (2:1 mol/mol)" = "#4A468A",
+    "navitoclax:gemcitabine (1:1 mol/mol)" = "#767DAB",
+    "tanespimycin:gemcitabine (1:1 mol/mol)" = "#626A8E",
+    # TopIi
+    "SN-38" = "#FCE694",
+    "Topotecan" = "#F4E9CD"
+)
+
 border_col = "#686868"

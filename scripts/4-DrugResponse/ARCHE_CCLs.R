@@ -8,10 +8,11 @@ suppressPackageStartupMessages({
     library(ggpubr)
     library(grid)
     library(gridExtra)
-    library(dplyr)
+    library(tidyverse)
     library(readxl)
     library(data.table)
     library(patchwork)
+    library(ggnewscale)
 })
 
 source("utils/get_data.R")
@@ -21,6 +22,7 @@ source("utils/plots/drug_response_ccls.R")
 source("utils/palettes.R")
 source("utils/bca_drugs.R")
 source("utils/plots/ARCHE_scores_heatmap.R")
+source("utils/ccl_benchmarks.R")
 source("utils/plots/drug_response_pdx.R")
 
 ###########################################################
@@ -176,32 +178,4 @@ normzs_cells_sumdev_pairs <- get_classB(pc_normzs_cells_sumdev, "normzscr_sumdev
 # ARCHE2 vs ARCHE5
 ###########################################################
 
-tt <- as.data.frame(t(zscore_cells_sumdev[c("ARCHE2", "ARCHE5"),]))
-a2_cells <- rownames(tt[tt$ARCHE2 > quantile(tt$ARCHE2)["75%"],])
-a5_cells <- rownames(tt[tt$ARCHE5 > quantile(tt$ARCHE5)["75%"],])
-
-to_rm <- intersect(a2_cells, a5_cells) # two cells: CAL51 and SUM149PT, 10 unique in each
-a2_cells <- a2_cells[-which(a2_cells %in% to_rm)]
-a5_cells <- a5_cells[-which(a5_cells %in% to_rm)]
-
-drug_list <- c(
-    "Carboplatinum", "Docetaxel", "Doxorubicin", "Gemcitabine", "Paclitaxel", "Cisplatin",
-    "Epirubicin", "Vinorelbine", "Cyclophosphamide", "Eribulin", "Mebendazole", "Vinorelbine"
-)
-
-drug_list <- c("Doxorubicin", "Gemcitabine", "Docetaxel")
-
-# compile drugs of interest
-all_response <- data.frame(matrix(nrow=0, ncol=5))
-for (drug in drug_list) {
-    response <- compile_AAC(drug)
-    response <- response[response$Sample %in% c(a2_cells, a5_cells),]
-    response$ARCHE <- ifelse(response$Sample %in% a2_cells, "ARCHE2", "ARCHE5")
-    response$Drug <- drug
-    all_response <- rbind(all_response, response)
-}
-
-ggplot(all_response, aes(x = ARCHE, y = AAC, fill = Drug)) +
-    geom_boxplot() +
-    geom_jitter(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.75)) +
-    facet_wrap(~PSet)
+a2va5 <- compile_diff(zscore_cells_sumdev, "ARCHE2", "ARCHE5", a2va5_drug_pal, "A2vsA5")
