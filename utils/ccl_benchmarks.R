@@ -20,7 +20,6 @@ format_rna <- function(rna, label, gene_list) {
 #' Subfunction to compile all_drug_sen
 get_all_drug_sen <- function(pair, signature_scores, label, meta) {
 
-    message(paste("Getting drug_sen for", pair))
     feature <- gsub("_.*", "", pair)
     drug <- gsub(paste0(feature, "_"), "", pair)
 
@@ -78,8 +77,6 @@ get_all_drug_sen <- function(pair, signature_scores, label, meta) {
 #' Subfunction to plot faceted scatter plots
 plot_scatter <- function(pair, all_drug_sen, label) {
 
-    message(paste("Plotting scatter for", pair))
-
     feature <- gsub("_.*", "", pair)
     drug <- gsub(paste0(feature, "_"), "", pair)
     x_label <- ifelse(label == "RNA", "Expression", "Score")
@@ -116,8 +113,6 @@ plot_scatter <- function(pair, all_drug_sen, label) {
 #' 
 get_pcc <- function(pair, all_drug_sen, pcc) {
 
-    message(paste("Getting PCC for", pair))
-
     for (pset in unique(all_drug_sen$PSet)) {
         subset <- all_drug_sen[all_drug_sen$PSet == pset,]
         if (nrow(subset) < 3) next
@@ -144,6 +139,8 @@ get_pcc <- function(pair, all_drug_sen, pcc) {
 #' 
 plot_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
 
+    dir.create(paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug))
+
     # compile gene expression
     gene_df <- rbind(
         format_rna(ubr1, "UBR1", gene_list), format_rna(ubr2, "UBR2", gene_list),
@@ -165,14 +162,12 @@ plot_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
     for (gene in unname(gene_list)) {
         pcc <- get_pcc(paste0(gene, "_", drug), get_all_drug_sen(paste0(gene, "_", drug), gene_df, "RNA", c_meta), pcc)
     }
-    message(nrow(pcc))
-    message(ncol(pcc))
 
     # plot ARCHE and PAM50
     p1 <- plot_scatter(paste0(arche, "_", drug), arche_sen, "ARCHE") + theme(legend.position = "none")
     p2 <- plot_scatter(paste0(pam50, "_", drug), pam50_sen, "PAM50") + theme(axis.title.y = element_blank())
     p <- p1 + p2
-    filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", drug, "/arche_pam50.png")
+    filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug, "/arche_pam50.png")
     ggsave(filename, p, width = 5.5, height = length(unique(pcc$PSet))+3)
 
     # format toPlot
@@ -197,7 +192,7 @@ plot_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
             legend.key.size = unit(0.4, 'cm'),
             legend.title = element_text(size = 10)
         )
-    filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", drug, "/all_compiled.png")
+    filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug, "/all_compiled.png")
     ggsave(filename, p, width = 5.5, height = 3)
     rownames(pcc) <- NULL
     return(pcc)

@@ -61,7 +61,6 @@ pam50_scores <- rbind(
 # Plot associations
 ###########################################################
 
-# compile gene expression
 paclitaxel_genes <- c(
     "ENSG00000258947" = "TUBB3",
     "ENSG00000117632" = "STMN1",
