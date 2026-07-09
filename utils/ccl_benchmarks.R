@@ -18,23 +18,9 @@ format_rna <- function(rna, label, gene_list) {
 }
 
 #' Subfunction to compile all_drug_sen
-get_all_drug_sen <- function() {
+get_all_drug_sen <- function(pair, signature_scores, label, meta) {
 
-    # set up dataframe to store results
-    all_drug_sen <- data.frame(matrix(nrow=0, ncol=3))
-    colnames(all_drug_sen) <- c("Sample", "AAC", "PSet")
-}
-
-#' Get individual associations across PSets
-#' 
-#' @param pair string. In format "<Feature>_<Drug>"
-#' @param signature_scores data.frame with Feature in rownames.
-#' @param label string.
-#' 
-get_indiv_pcc <- function(pair, signature_scores, label, meta, pcc, plot = TRUE) {
-
-    dir <- "4-DrugResponse/benchmarks/"
-
+    message(paste("Getting drug_sen for", pair))
     feature <- gsub("_.*", "", pair)
     drug <- gsub(paste0(feature, "_"), "", pair)
 
@@ -60,7 +46,6 @@ get_indiv_pcc <- function(pair, signature_scores, label, meta, pcc, plot = TRUE)
             all_drug_sen$Score[i] <-  signature_scores[,colnames(signature_scores) == all_drug_sen$Sample[i]]
         }
         all_drug_sen$Subtype <- meta$subtype[match(all_drug_sen$Sample, meta$sampleid)]
-        x_label <- "Score"
     } else if (label == "PAM50") {
         all_drug_sen$Subtype <- NA
         all_drug_sen <- all_drug_sen[all_drug_sen$Sample %in% signature_scores$Sample,]
@@ -74,7 +59,6 @@ get_indiv_pcc <- function(pair, signature_scores, label, meta, pcc, plot = TRUE)
             }
         }
         all_drug_sen <- all_drug_sen[!is.na(all_drug_sen$Score), ]
-        x_label <- "Score"
     } else if (label == "RNA") {
         all_drug_sen <- all_drug_sen[all_drug_sen$Sample %in% signature_scores$Sample,]
         for (i in 1:nrow(all_drug_sen)) {
@@ -87,53 +71,67 @@ get_indiv_pcc <- function(pair, signature_scores, label, meta, pcc, plot = TRUE)
         }
         all_drug_sen <- all_drug_sen[!is.na(all_drug_sen$Score), ]
         all_drug_sen$Subtype <- meta$subtype[match(all_drug_sen$Sample, meta$sampleid)]
-        x_label <- "Expression"
     }
+    return(all_drug_sen)
+}
 
-    # print PCC
+#' Subfunction to plot faceted scatter plots
+plot_scatter <- function(pair, all_drug_sen, label) {
+
+    message(paste("Plotting scatter for", pair))
+
+    feature <- gsub("_.*", "", pair)
+    drug <- gsub(paste0(feature, "_"), "", pair)
+    x_label <- ifelse(label == "RNA", "Expression", "Score")
+
+    all_drug_sen$PSet <- factor(all_drug_sen$PSet, levels = names(PSet_pal))
+    p <- ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = Subtype)) + 
+        geom_point(size = 2.5, shape = 21) + 
+        facet_wrap(~PSet, nrow = length(unique(all_drug_sen$PSet))) +
+        geom_smooth(method = "lm", se=TRUE, color = "black", aes(group = 1), show.legend = FALSE) + 
+        scale_fill_manual(values = subtype_pal) +
+        guides(fill = guide_legend(override.aes = list(size = 4))) +
+        theme_bw() + 
+        theme(
+            strip.background = element_rect(fill = "white"),
+            plot.title = element_text(hjust = 0.5, size = 12, face = "bold"), 
+            legend.key.size = unit(0.5, 'cm'),
+            axis.title.y = element_text(size = 11, margin = margin(r = 10))
+        ) +
+        #xlim(-x, x) + 
+        ylim(0, 1) + 
+        labs(
+            x = paste(feature, x_label), 
+            y = paste(drug, "Response (AAC)"),
+            title = label
+        )
+    return(p)
+}
+
+#' Get individual associations across PSets
+#' 
+#' @param pair string. In format "<Feature>_<Drug>"
+#' @param all_drug_sen data.frame from get_all_drug_sen
+#' @param label string.
+#' 
+get_pcc <- function(pair, all_drug_sen, pcc) {
+
+    message(paste("Getting PCC for", pair))
+
     for (pset in unique(all_drug_sen$PSet)) {
         subset <- all_drug_sen[all_drug_sen$PSet == pset,]
         if (nrow(subset) < 3) next
         pc <- cor.test(subset$Score, subset$AAC, method = "pearson", alternative = "two.sided")
 
-        # update the global pcc dataframe
-        pcc <<- rbind(pcc, data.frame(
-            ARCHE_Drug = pair,
-            Label = label,
+        pcc <- rbind(pcc, data.frame(
+            Feature_Drug = pair,
             PSet = pset,
             PCC = round(pc$estimate, 4),
             pvalue = round(pc$p.value, 4)
         ))
     }
+    return(pcc)
 
-    # get x axis limits for plotting
-    #x <- max(max(all_drug_sen$Score), abs(min(all_drug_sen$Score)))
-
-    all_drug_sen$PSet <- factor(all_drug_sen$PSet, levels = names(PSet_pal))
-
-    if (plot == TRUE) {
-        p <- ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = Subtype)) + 
-            geom_point(size = 2.5, shape = 21) + 
-            facet_wrap(~PSet, nrow = length(unique(all_drug_sen$PSet))) +
-            geom_smooth(method = "lm", se=TRUE, color = "black", aes(group = 1), show.legend = FALSE) + 
-            scale_fill_manual(values = subtype_pal) +
-            guides(fill = guide_legend(override.aes = list(size = 4))) +
-            theme_bw() + 
-            theme(
-                strip.background = element_rect(fill = "white"),
-                plot.title = element_text(hjust = 0.5, size = 12, face = "bold"), 
-                legend.key.size = unit(0.5, 'cm'),
-                axis.title.y = element_text(size = 11, margin = margin(r = 10))
-            ) +
-            #xlim(-x, x) + 
-            ylim(0, 1) + 
-            labs(
-                x = paste(feature, x_label), 
-                y = paste(drug, "Response (AAC)"),
-                title = label
-            )
-        return(p)
-    }
 }
 
 #' Plot all associations for given drug
@@ -159,14 +157,20 @@ plot_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
     colnames(pcc) <- c("Feature_Drug", "Label", "PSet", "PCC", "pvalue")
 
     # get individual associations
-    p1 <- get_indiv_pcc(paste0(arche, "_", drug), arche_scores, "ARCHE", c_meta, pcc) + theme(legend.position = "none")
-    p2 <- get_indiv_pcc(paste0(pam50, "_", drug), pam50_scores, "PAM50", c_meta, pcc) + theme(axis.title.y = element_blank())
+    arche_sen <- get_all_drug_sen(paste0(arche, "_", drug), arche_scores, "ARCHE", c_meta)
+    pam50_sen <- get_all_drug_sen(paste0(pam50, "_", drug), pam50_scores, "PAM50", c_meta)
+
+    pcc <- get_pcc(paste0(arche, "_", drug), arche_sen, pcc)
+    pcc <- get_pcc(paste0(pam50, "_", drug), pam50_sen, pcc)
     for (gene in unname(gene_list)) {
-        get_indiv_pcc(paste0(gene, "_", drug), gene_df, "RNA", c_meta, pcc, plot = FALSE)
+        pcc <- get_pcc(paste0(gene, "_", drug), get_all_drug_sen(paste0(gene, "_", drug), gene_df, "RNA", c_meta), pcc)
     }
+    message(nrow(pcc))
+    message(ncol(pcc))
 
     # plot ARCHE and PAM50
-    message(length(unique(pcc$PSet)))
+    p1 <- plot_scatter(paste0(arche, "_", drug), arche_sen, "ARCHE") + theme(legend.position = "none")
+    p2 <- plot_scatter(paste0(pam50, "_", drug), pam50_sen, "PAM50") + theme(axis.title.y = element_blank())
     p <- p1 + p2
     filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", drug, "/arche_pam50.png")
     ggsave(filename, p, width = 5.5, height = length(unique(pcc$PSet))+3)
@@ -179,7 +183,7 @@ plot_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
 
     # set colour palette
     cols <- c("#3F3244", "#208AAE", rep("#BFC3BA", length(gene_list)))
-    names(cols) <- c(arche, drug, unname(gene_list))
+    names(cols) <- c(arche, pam50, unname(gene_list))
 
     # plot all markers
     p <- ggplot(pcc, aes(x = PSet, y = PCC, fill = Feature, size = -log(pvalue))) +
@@ -195,5 +199,6 @@ plot_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
         )
     filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", drug, "/all_compiled.png")
     ggsave(filename, p, width = 5.5, height = 3)
+    rownames(pcc) <- NULL
     return(pcc)
 }

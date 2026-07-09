@@ -58,7 +58,7 @@ pam50_scores <- rbind(
 )
 
 ###########################################################
-# Paclitaxel
+# Plot associations
 ###########################################################
 
 # compile gene expression
@@ -73,6 +73,8 @@ trastuzumab_genes <- c(
     "ENSG00000141736" = "ERBB2"
 )
 
-a5_paclitaxel <- plot_associations("ARCHE5", "Basal", "Paclitaxel", zscore_cells_sumdev, paclitaxel_genes)
+# ARCHE3
+a3_trastuzumab <- plot_associations("ARCHE3", "Her2", "Trastuzumab", zscore_cells_sumdev, trastuzumab_genes)
 
-a3_trastuzumab <- plot_associations("ARCHE3", "Her2", "Trastuzumab", zscore_cells_sumdev, paclitaxel_genes)
+# ARCHE5
+a5_paclitaxel <- plot_associations("ARCHE5", "Basal", "Paclitaxel", zscore_cells_sumdev, paclitaxel_genes)
