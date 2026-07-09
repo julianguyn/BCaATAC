@@ -83,3 +83,10 @@ save_pset_rna("data/rawdata/psets/PSet_GRAY2017.rds", "data/procdata/CCLs/rna/GR
 save_pset_rna("data/rawdata/psets/gCSI.rds", "data/procdata/CCLs/rna/gCSI_RNA.tsv")
 save_pset_rna("data/rawdata/psets/GDSC2-8.2.rds", "data/procdata/CCLs/rna/GDSC2_RNA.tsv")
 save_pset_rna("data/rawdata/psets/CCLE.rds", "data/procdata/CCLs/rna/CCLE_RNA.tsv")
+
+###########################################################
+# Get mutations
+###########################################################
+
+save_pset_mut("data/rawdata/psets/GDSC2-8.2.rds", "data/procdata/CCLs/mut/GDSC2_MUT.tsv")
+save_pset_mut("data/rawdata/psets/CCLE.rds", "data/procdata/CCLs/mut/CCLE_MUT.tsv")

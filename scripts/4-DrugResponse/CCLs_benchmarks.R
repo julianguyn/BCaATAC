@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
     library(data.table)
     library(ggplot2)
     library(patchwork)
+    library(ggpattern)
 })
 
 source("utils/get_data.R")
@@ -41,6 +42,10 @@ gcsi <- get_pset_rna("gCSI")
 gdsc <- get_pset_rna("GDSC2")
 ccle <- get_pset_rna("CCLE")
 
+# load in mutation data
+gdsc_mut <- get_pset_mut("GDSC2")
+ccle_mut <- get_pset_mut("CCLE")
+
 # load in PAM50 subtyping
 load("data/results/data/3-DataExploration/ccls_subtyping_scores.RData")
 
@@ -61,6 +66,12 @@ pam50_scores <- rbind(
 # Plot associations
 ###########################################################
 
+tozasertib_genes <- c(
+    "ENSG00000087586" = "AURKA",
+    "ENSG00000178999" = "AURKB",
+    "ENSG00000105146" = "AURKC"
+)
+
 paclitaxel_genes <- c(
     "ENSG00000258947" = "TUBB3",
     "ENSG00000117632" = "STMN1",
@@ -72,8 +83,18 @@ trastuzumab_genes <- c(
     "ENSG00000141736" = "ERBB2"
 )
 
+# ARCHE2
+a2_tozasertib <- plot_rna_associations("ARCHE2", "Basal", "Tozasertib", zscore_cells_sumdev, tozasertib_genes)
+
 # ARCHE3
-a3_trastuzumab <- plot_associations("ARCHE3", "Her2", "Trastuzumab", zscore_cells_sumdev, trastuzumab_genes)
+a3_trastuzumab <- plot_rna_associations("ARCHE3", "Her2", "Trastuzumab", zscore_cells_sumdev, trastuzumab_genes)
 
 # ARCHE5
-a5_paclitaxel <- plot_associations("ARCHE5", "Basal", "Paclitaxel", zscore_cells_sumdev, paclitaxel_genes)
+a5_paclitaxel <- plot_rna_associations("ARCHE5", "Basal", "Paclitaxel", zscore_cells_sumdev, paclitaxel_genes)
+
+###########################################################
+# Mutations
+###########################################################
+
+#plot_mut_associations("ARCHE3", "Alpelisib", "PIK3CA")
+plot_mut_associations("ARCHE4", "Selumetinib", "NF1")

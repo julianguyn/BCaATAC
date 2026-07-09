@@ -120,6 +120,14 @@ get_pset_rna <- function(pset, gene.symbol = FALSE) {
     return(df)
 }
 
+#' Get CCL mutation matrix
+get_pset_mut <- function(pset) {
+    mut <- fread(paste0("data/procdata/CCLs/mut/", pset, "_MUT.tsv"), data.table = FALSE)
+    rownames(mut) <- mut$Genes
+    mut$Genes <- NULL
+    return(mut)
+}
+
 #' Get cell line subtype
 #'
 get_cell_subtype <- function() {

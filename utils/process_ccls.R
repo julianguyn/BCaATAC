@@ -71,3 +71,20 @@ save_pset_rna <- function(input, output) {
     # save
     write.table(df, file = output,  quote = F, sep = "\t", col.names = T, row.names = F)
 }
+
+
+#' Load in mutation data
+save_pset_mut <- function(input, output) {
+    pset <- readRDS(input) |> updateObject()
+    pset <- summarizeMolecularProfiles(pset, mDataType = "mutation", summary.stat = c("or"))
+    mut <- pset@assays@data$expr
+
+    # keep only cell lines being used
+    samples <- get_cells()
+    mut <- mut[,colnames(mut) %in% samples$sample]
+    df <- cbind(data.frame(Genes = rownames(mut), mut))
+    colnames(df) <- c("Genes", colnames(mut))
+
+    # save
+    write.table(df, file = output,  quote = F, sep = "\t", col.names = T, row.names = F)
+}
