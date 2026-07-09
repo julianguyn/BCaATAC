@@ -1,26 +1,15 @@
 # load libraries
 suppressPackageStartupMessages({
     library(data.table)
-
-
-    library(PharmacoGx)
-    library(survcomp)
-    library(wesanderson)
     library(ggplot2)
-    library(ggh4x)
-    library(reshape2)
-    library(meta)
-    library(ggpubr)
-    library(grid)
-    library(gridExtra)
-    library(dplyr)
-    library(readxl)
+    library(patchwork)
 })
 
 source("utils/get_data.R")
 source("utils/palettes.R")
 source("utils/mappings.R")
 source("utils/compute_drug_response.R")
+source("utils/ccl_benchmarks.R")
 
 ###########################################################
 # Prepare metadata
@@ -58,31 +47,32 @@ load("data/results/data/3-DataExploration/ccls_subtyping_scores.RData")
 # get drug sensitivity data
 load("data/procdata/CCLs/sensitivity_data.RData")
 
-
 ###########################################################
 # Compile PAM50 data
 ###########################################################
 
-format_pam50 <- function(pam50, label) {
-    pam50$Label <- label
-    pam50$Sample <- rownames(pam50)
-    rownames(pam50) <- NULL
-    return(pam50)
-}
-
 pam50_scores <- rbind(
     format_pam50(ubr1_pam50, "UBR1"), format_pam50(ubr2_pam50, "UBR2"), format_pam50(gray_pam50, "GRAY"),
-    format_pam50(gcsi_pam50, "gCSI"), format_pam50(gdsc_pam50, "GDSC2"), format_pam50(ccle_pam50, "CCLE")
+    format_pam50(gcsi_pam50, "gCSI"), format_pam50(gdsc_pam50, "GDSC2"), format_pam50(ccle_pam50, "CCLE"),
+    format_pam50(ccle_pam50, "CTRP")
 )
 
 ###########################################################
-# Indiv plots for associations of interest
+# Paclitaxel
 ###########################################################
 
-# create dataframe to store results
-pcc <- data.frame(matrix(nrow=0, ncol=5))
-colnames(pcc) <- c("Feature_Drug", "Label", "PSet", "PCC", "pvalue")
+# compile gene expression
+paclitaxel_genes <- c(
+    "ENSG00000258947" = "TUBB3",
+    "ENSG00000117632" = "STMN1",
+    "ENSG00000047849" = "MAP4",
+    "ENSG00000085563" = "ABCB1"
+)
 
-# plot individual plots
-plot_indivPlot("ARCHE5_Paclitaxel", zscore_cells_sumdev, "ARCHE", c_meta)
-plot_indivPlot("Basal_Paclitaxel", pam50_scores, "PAM50", c_meta)
+trastuzumab_genes <- c(
+    "ENSG00000141736" = "ERBB2"
+)
+
+a5_paclitaxel <- plot_associations("ARCHE5", "Basal", "Paclitaxel", zscore_cells_sumdev, paclitaxel_genes)
+
+a3_trastuzumab <- plot_associations("ARCHE3", "Her2", "Trastuzumab", zscore_cells_sumdev, paclitaxel_genes)
