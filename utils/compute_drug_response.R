@@ -291,3 +291,51 @@ compile_diff <- function(arche_scores, lab1, lab2, drug_pal, label) {
     ggsave(filename, p, w=6.5, h=5)
 
 }
+
+#' Drug repurposing pipeline
+#' 
+#' Computes spearman correlation of AAC for pairs of drugs
+#' 
+drug_repurposing <- function(sen, pset) {
+
+    spearman_res <- data.frame(matrix(nrow=0, ncol=8))
+    row_names <- rownames(sen)
+    pairs <- combn(row_names, 2, simplify = FALSE)
+
+    results <- lapply(pairs, function(p) {
+        x <- as.numeric(sen[p[1], ])
+        y <- as.numeric(sen[p[2], ])
+        
+        complete <- complete.cases(x, y)
+        x <- x[complete]
+        y <- y[complete]
+
+        qn <- round(length(x) / 3)
+        upper_x <- x[1:qn]
+        upper_y <- y[1:qn]
+        lower_x <- x[(length(x) - qn + 1):length(x)]
+        lower_y <- y[(length(x) - qn + 1):length(x)]
+
+        if (qn < 3) return(NULL)
+
+        res <- suppressWarnings(cor.test(x, y, method = "spearman"))
+        diff_upper <- sum(sum(upper_x) - sum(upper_y))
+        diff_lower <- sum(sum(lower_y) - sum(lower_x))
+
+        data.frame(
+            Drug1 = p[1],
+            Drug2 = p[2],
+            rho = unname(res$estimate),
+            pvalue = res$p.value,
+            diff = diff_upper + diff_lower,
+            n = length(x)
+        )
+    })
+
+    cor_df <- bind_rows(results)
+    spearman_res <- rbind(spearman_res, cor_df)
+    
+    spearman_res$PSet <- pset
+    write.csv(spearman_res, file = paste0("data/procdata/CCLs/drug_repurposing/", pset, ".csv"), quote = FALSE, row.names = FALSE)
+    return(spearman_res)
+}
