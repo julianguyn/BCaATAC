@@ -280,5 +280,5 @@ plot_mut_associations <- function(arche, drug, mut, arche_scores) {
     p <- wrap_elements(p1) + wrap_elements(p2) + wrap_elements(p3) + 
         plot_layout(width = c(1.05,1,1.3))
     filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug, "/mut_compiled.png")
-    ggsave(filename, p, width = 9, height = 4)
+    ggsave(filename, p, width = 9, height = 3.75)
 }
