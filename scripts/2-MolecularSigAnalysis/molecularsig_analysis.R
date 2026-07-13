@@ -140,6 +140,7 @@ row_ha <- rowAnnotation(
     ARCHE = paste0("ARCHE", 1:6),
     col = list(
         ARCHE = ARCHE_pal),
+    simple_anno_size = unit(2, "mm"),
     show_annotation_name = FALSE,
     show_legend = FALSE
 )
@@ -166,7 +167,8 @@ format_sig_corrs <- function(corr) {
 col_ha <- HeatmapAnnotation(
     Annotation = hallmark_categories$category,
     col = list(Annotation = hallmark_pal),
-    annotation_name_gp = gpar(fontsize = 9)
+    annotation_name_gp = gpar(fontsize = 9),
+    simple_anno_size = unit(3, "mm")
 )
 
 # format toPlot
@@ -186,16 +188,16 @@ ht <- Heatmap(
     column_names_gp = gpar(fontsize = 8),
     top_annotation = col_ha,
     right_annotation = row_ha,
-    border = border_col,
+    #border = border_col,
     cell_fun = function(j, i, x, y, width, height, fill) {
         if (abs(toPlot[i, j]) > 0.5) {
-            grid.text("*", x, y, gp = gpar(fontsize = 12, col = "black"))
+            grid.text("*", x, y - 0.25 * height, gp = gpar(fontsize = 11, col = "black"))
         }
     }
 )
 
 filename <- "data/results/figures/2-MolecularSigAnalysis/molecularsig/figure1_hallmarks_heatmap.png"
-png(filename, width = 9, height = 5, res = 600, units = "in")
+png(filename, width = 9, height = 4, res = 600, units = "in")
 draw(ht,
      heatmap_legend_side = "right", 
      annotation_legend_side = "right",
@@ -210,7 +212,8 @@ dev.off()
 col_ha <- HeatmapAnnotation(
     Annotation = sbs_categories$category,
     col = list(Annotation = sbs_pal),
-    annotation_name_gp = gpar(fontsize = 9)
+    annotation_name_gp = gpar(fontsize = 9),
+    simple_anno_size = unit(3, "mm")
 )
 
 # format toPlot
@@ -219,18 +222,17 @@ toPlot <- format_sig_corrs(corr_v3)
 # plot
 ht <- Heatmap(
     toPlot,
-    column_split = 6,
+    column_split = 4,
     column_title = "Mutational Signatures",
     column_title_side = "bottom",
-    column_title_gp = gpar(fontsize = 10),
+    column_title_gp = gpar(fontsize = 9),
     cluster_rows = FALSE,
     name = "Correlation",
     col = col_fun,
     row_names_gp = gpar(fontsize = 8),
     column_names_gp = gpar(fontsize = 8),
-    top_annotation = col_ha,
+    #top_annotation = col_ha,
     right_annotation = row_ha,
-    border = border_col,
     cell_fun = function(j, i, x, y, width, height, fill) {
         if (abs(toPlot[i, j]) > 0.5) {
             grid.text("*", x, y, gp = gpar(fontsize = 12, col = "black"))
@@ -239,7 +241,7 @@ ht <- Heatmap(
 )
 
 filename <- "data/results/figures/2-MolecularSigAnalysis/molecularsig/figure1_cosmic_heatmap.png"
-png(filename, width = 9, height = 4.5, res = 600, units = "in")
+png(filename, width = 8.5, height = 2, res = 600, units = "in")
 draw(ht,
      heatmap_legend_side = "right", 
      annotation_legend_side = "right",

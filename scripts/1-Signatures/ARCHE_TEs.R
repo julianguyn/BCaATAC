@@ -126,6 +126,7 @@ row_ha <- rowAnnotation(
 col_ha <- HeatmapAnnotation(
     'ARCHE' = paste0("ARCHE", 1:6),
     col = list('ARCHE' = ARCHE_pal),
+    simple_anno_size = unit(2, "mm"),
     show_annotation_name = FALSE,
     show_legend = FALSE
 )
@@ -140,16 +141,17 @@ ht <- Heatmap(
     row_names_gp = gpar(fontsize = 8),
     row_names_side = "left",
     column_names_gp = gpar(fontsize = 8),
-    column_names_rot = 0,
+    column_names_rot = 90,
     column_names_centered = TRUE,
     row_title = "TE Family",
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
     bottom_annotation = col_ha,
-    right_annotation = row_ha
+    right_annotation = row_ha,
+    rect_gp = gpar(col = "white", lwd = 0.5)
 )
 filename <- "data/results/figures/1-Signatures/TE_heatmap.png"
-png(filename, width = 6.5, height = 5, res = 600, units = "in")
+png(filename, width = 3.75, height = 5, res = 600, units = "in")
 ht
 dev.off()

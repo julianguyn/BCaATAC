@@ -115,6 +115,7 @@ col_fun <- colorRamp2(
 col_ha <- HeatmapAnnotation(
     'ARCHE' = paste0("ARCHE", 1:6),
     col = list('ARCHE' = ARCHE_pal),
+    simple_anno_size = unit(2, "mm"),
     show_annotation_name = FALSE,
     show_legend = FALSE
 )
@@ -146,17 +147,15 @@ ht <- Heatmap(
   row_names_gp = gpar(fontsize = 8),
   row_names_side = "left",
   column_names_gp = gpar(fontsize = 8),
-  column_names_rot = 0,
-  column_names_centered = TRUE,
+  column_names_rot = 90,
   row_title = "Transcription Factor",
   row_title_side = "left",
-  row_title_rot = 90,
   row_title_gp = gpar(fontsize = 9),
   bottom_annotation = col_ha,
   right_annotation = row_ha
 )
 filename <- "data/results/figures/1-Signatures/TF_heatmap.png"
-png(filename, width = 6.5, height = 5, res = 600, units = "in")
+png(filename, width = 4, height = 5, res = 600, units = "in")
 ht
 dev.off()
 

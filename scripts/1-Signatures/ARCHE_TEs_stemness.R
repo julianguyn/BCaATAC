@@ -77,22 +77,24 @@ toPlot$Subtype <- mat$subtype[match(toPlot$variable, mat$variable)]
 
 p <- ggplot(toPlot, aes(x = ARCHE, y = value)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_boxplot(aes(fill = Signature), outlier.shape = NA, 
+    geom_boxplot(aes(fill = Signature), outlier.shape = NA,
                  position = position_dodge(width = 0.75)) +
     scale_fill_manual("TE Signature", 
-        values = c("pt" = "#D1A78B", "tp" = "#E9D5C3"),
+        values = c("pt" = "#DFDFDF", "tp" = "#949396"),
         labels = c("PSC-enriched", "Tissue-enriched")
     ) +
     new_scale_fill() +
     geom_jitter(aes(fill = Subtype, group = Signature), 
                 shape = 21, colour = "black", size = 2,
-                position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.75)) +
+                position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.75)) +
     scale_fill_manual("Subtype", values = subtype_pal) +
+    guides(fill = guide_legend(override.aes = list(size = 3))) +
     labs(y = "Zscore") +
-    theme_bw() +
+    theme_classic() +
     theme(
-        axis.title.x = element_blank()
+        axis.title.x = element_blank(),
+        legend.key.size = unit(0.5, 'cm')
     )
 
 filename <- "data/results/figures/1-Signatures/TE_stemness.png"
-ggsave(filename, p, width = 6, height = 4)
+ggsave(filename, p, width = 6, height = 3)
