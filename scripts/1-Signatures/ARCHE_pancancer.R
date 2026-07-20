@@ -50,8 +50,8 @@ toPlot <- reshape2::melt(scores)
 toPlot$Cancer <- meta$cancer[match(toPlot$variable, meta$sampleid)]
 toPlot$Subtype <- meta$bca_subtype[match(toPlot$variable, meta$sampleid)]
 
-toPlot$Label <- ifelse(toPlot$Cancer == "TCGA-BRCA", "Breast Cancer", "Other Cancer")
-toPlot$Cancer[toPlot$Cancer == "TCGA-BRCA"] <- toPlot$Subtype[toPlot$Cancer == "TCGA-BRCA"]
+#toPlot$Label <- ifelse(toPlot$Cancer == "TCGA-BRCA", "Breast Cancer", "Other Cancer")
+#toPlot$Cancer[toPlot$Cancer == "TCGA-BRCA"] <- toPlot$Subtype[toPlot$Cancer == "TCGA-BRCA"]
 
 
 ###########################################################
@@ -59,10 +59,11 @@ toPlot$Cancer[toPlot$Cancer == "TCGA-BRCA"] <- toPlot$Subtype[toPlot$Cancer == "
 ###########################################################
 
 cancer_type_pal <- c(
+    "TCGA-BRCA" = random_lightblue,
     # lung
-    "TCGA-LUSC" = "#7D8491",
-    "TCGA-LUAD" = "#C0C5C1",
-    "TCGA-MESO" = "#BCBDB8",
+    "TCGA-LUSC" = "#B4436C",
+    "TCGA-LUAD" = "#D382A8",
+    "TCGA-MESO" = "#FFD9DA",
     # gastointestinal
     "TCGA-STAD" = "#412234",
     "TCGA-COAD" = "#6D466B",
@@ -77,24 +78,24 @@ cancer_type_pal <- c(
     # soft tissue
     "TCGA-TGCT" = "#F2DC5D",
     #gynecologic
-    "TCGA-UCEC" = "#60463B",
-    "TCGA-CESC" = "#856A5D",
+    "TCGA-UCEC" = "#5C95FF",
+    "TCGA-CESC" = "#0FA3B1",
     # endocrine
     "TCGA-PCPG" = "#C77573",
     "TCGA-THCA" = "#A23E48",
-    "TCGA-ACC"  = "#A43F34",
+    "TCGA-ACC"  = "#856A5D",
     #cns
     "TCGA-LGG"  = "#7180AC",
     "TCGA-GBM"  = "#2B4570",
     # head and neck
     "TCGA-HNSC" = "#A8D0DB",
-    #"TCGA-BRCA" = "white",
     # skin
-    "TCGA-SKCM" = "#A37A74"
+    "TCGA-SKCM" = "#FF9E4A",
+    "other" = "#DFDEDE"
 )
 
-toPlot$Cancer <- factor(toPlot$Cancer, levels = c(names(subtype_pal), names(cancer_type_pal)))
-toPlot <- toPlot[-which(toPlot$Cancer %in% c("Normal", "Not Available")),]
+toPlot$Cancer <- factor(toPlot$Cancer, levels = names(cancer_type_pal))
+#toPlot <- toPlot[-which(toPlot$Cancer %in% c("Normal", "Not Available")),]
 
 
 # set x axis
@@ -147,3 +148,45 @@ p <- (p1 + p2) +
 
 filename <- "data/results/figures/1-Signatures/pancancer/pancancer_boxplots.png"
 ggsave(filename, p, width = 7, height = 7)
+
+
+###########################################################
+# Other plot options
+###########################################################
+
+# try density plot
+p <- ggplot(toPlot, aes(x = value, fill = Cancer)) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    geom_density(alpha = 0.5) +
+    facet_wrap(~ARCHE, nrow = 3) +
+    scale_fill_manual(values = cancer_type_pal) +
+    theme_classic() +
+    theme(
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5)
+    ) +
+    labs(y = "Density", x = "Zscores")
+
+filename <- "data/results/figures/1-Signatures/pancancer/pancancer_density.png"
+ggsave(filename, p, width = 8, height = 5)
+
+# try coloured dot plots?
+toPlot$Label <- ifelse(toPlot$value > 50, as.character(toPlot$Cancer), "other")
+toPlot$BCa <- ifelse(toPlot$Cancer == "TCGA-BRCA", "BRCA", "Other")
+toPlot$ARCHE <- factor(toPlot$ARCHE, levels = paste0("ARCHE", 6:1))
+toPlot$Label <- factor(toPlot$Label, levels = names(cancer_type_pal))
+toPlot$Label <- droplevels(toPlot$Label)
+
+p <- ggplot(toPlot, aes(x = ARCHE, y = value, color = Label, shape = BCa)) +
+    geom_hline(yintercept = 50, linetype = "dashed", color = "gray") +
+    geom_jitter(size = 2, alpha = 0.9) +
+    scale_color_manual(values = cancer_type_pal) +
+    scale_shape_manual(values = c(4, 19)) +
+    theme_bw() +
+    theme(
+        axis.title.y = element_blank()
+    ) +
+    coord_flip() +
+    labs(y = "Zscores")
+
+filename <- "data/results/figures/1-Signatures/pancancer/pancancer_jitter.png"
+ggsave(filename, p, width = 8, height = 7)
