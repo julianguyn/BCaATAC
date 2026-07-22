@@ -81,7 +81,7 @@ assess_ARCHE_TR <- function(subset_df, arche, drug, TR, plot.indiv = FALSE) {
 #' @param dir string. Parent directory to save results
 #' @export Panel of plots.
 #' 
-assess_ARCHE_PDX <- function(df, label, dir, plot = TRUE) {
+assess_ARCHE_PDX <- function(df, label, dir, plot = TRUE, pcc_thres = 0.4) {
 
     # initialize dataframe to store results
     combinations <- matrix(data = NA, nrow = length(unique(df$drug)) * 6, ncol = 10) |> as.data.frame()
@@ -138,7 +138,7 @@ assess_ARCHE_PDX <- function(df, label, dir, plot = TRUE) {
 
         if (plot == TRUE) {
             # compile plots into panels
-            if (!is.na(p2) && !is.na(p3) && (abs(combinations$PC.BAR_median[i]) > 0.4 || abs(combinations$PC.BR_median[i]) > 0.4)) {
+            if (!is.na(p2) && !is.na(p3) && (abs(combinations$PC.BAR_median[i]) > pcc_thres || abs(combinations$PC.BR_median[i]) > pcc_thres)) {
                 filepath <- paste0("data/results/figures/4-DrugResponse/PDX/", dir, "/", label, "/", arche, "_", drug, ".png")
                 png(filepath, width=12, height=5, units='in', res = 600, pointsize=80)
                 grid::grid.draw(
@@ -151,81 +151,91 @@ assess_ARCHE_PDX <- function(df, label, dir, plot = TRUE) {
         }
     }
 
-    if (plot == TRUE) {
-        # write out combinations
-        filepath <- paste0("data/results/data/4-DrugResponse/PDX/", dir, "/", label, ".csv")
-        write.csv(combinations, file = filepath, quote = FALSE, row.names = FALSE)
-    }
-    return(combinations)
+    #if (plot == TRUE) {
+    #    # write out combinations
+    #    filepath <- paste0("data/results/data/4-DrugResponse/PDX/", dir, "/", label, ".csv")
+    #    write.csv(combinations, file = filepath, quote = FALSE, row.names = FALSE)
+    #}
+    #return(combinations)
 }
 
-#' Function to create bubble plot of PDX drug response associations
+#' Function to create bubble plots of PDX drug response associations
 #' 
-#' @param compile data.frame. Compiled from assess_ARCHE_PDX()
-#' @param TR string. 'BR' or 'BAR'
-#' @param label string. ARCHE label for figure filepath
-#' @param type string. Drug collection used ("subset" or "full")
+#' @param compile data.frame. Compiled from assess_ARCHE_PDX(), rbinded
 #' 
-plot_PDX_bubbles <- function(compile, TR, label, type = "subset") {
 
-    # get columns for needed treatment response
-    pc_col <- switch(
-        TR,
-        BR = "PC.BR_median",
-        BAR = "PC.BAR_median"
-    )
-    pval_col <- switch(
-        TR,
-        BR = "pval.BR_median",
-        BAR = "pval.BAR_median"
-    )
+plot_compiled_PDX <- function(compile) {
 
-    # figure specifications
-    h <- ifelse(type == "subset", 7, 25)
-    w <- ifelse(type == "subset", 7, 8)
-    lim <- ifelse(type == "subset", 0.8, 1)
-
-    # subset and format dataframe
-    sig <- compile[which(abs(compile[[pc_col]]) > pc & compile[[pval_col]] < pval),]
+    sig <- compile[which(abs(compile$PC.BAR_median) > 0.4 & compile$pval.BAR_median < 0.1),]
     sig_pairs <- sig$pair
     toPlot <- compile[compile$pair %in% sig_pairs,]
-    toPlot$sig <- ifelse(toPlot[[pval_col]] < pval, 'pval < 0.1', 'pval >= 0.1')
+    toPlot$sig <- ifelse(toPlot$pval.BAR_median < 0.1, 'pval < 0.1', 'pval >= 0.1')
 
-    toPlot$ARCHE_label <- factor(
-        toPlot$ARCHE_label, 
-        levels = c("PDX20k", "PDX50k", "PDXall", "PDX20k_norm", "PDX50k_norm", "PDXall_norm"),
-        labels = c("PDX20k", "PDX50k", "PDXall", "PDX20k\n(norm)", "PDX50k\n(norm)", "PDXall\n(norm)")
+    toPlot$Label <- factor(toPlot$Label, levels = c(
+        "zscore_T", "zscore_K", "normzscr_T", "normzscr_K",
+        "zscore_sumdev_T", "zscore_sumdev_K", "normzscr_sumdev_T", "normzscr_sumdev_K"
+        )
     )
 
-    # plot
-    p <- ggplot(toPlot, aes(x = ARCHE_label, y = pair, fill = .data[[pc_col]], size = -log(.data[[pval_col]]), shape = sig)) +
-        geom_point() +
-        geom_text(data = subset(toPlot, sig == 'pval < 0.1'), aes(label = sprintf("%.2f", .data[[pc_col]])), color = "black", size = 2.5) +
-        facet_grid(ARCHE~., scales = "free_y", space = "free_y") +
-        scale_shape_manual(values = c(21, 24)) +
-        scale_size(range = c(2, 12)) +
-        scale_fill_gradient2(
-            low = "#BC4749",
-            high = "#689CB0",
-            mid = "#C2BBC9",
-            limits = c(-lim, lim)
-        ) +
-        scale_y_discrete(labels = function(x) sub(".*_", "", x)) +
-        theme_minimal() +
-        theme(
-            panel.border = element_rect(color = "black", fill = NA, size = 0.5),
-            legend.key.size = unit(0.5, 'cm'),
-            legend.title = element_text(size = 10)
-        ) +
-        labs(size = "-log(p-value)", y = "ARCHE-Drug Pair", x = "", shape = "p-value\nSignificance", fill = "Pearson's\nCorrelation\nCoefficient") +
-        ggtitle(sub("PC.", "", sub("_median", "", pc_col)))
+    for (arche in paste0("ARCHE", 1:6)) {
 
-    filepath <- paste0("data/results/figures/4-DrugResponse/PDX/bubbleplots/", label, "_", TR, ".png")
-    png(filepath, width=w, height=h, units='in', res = 600, pointsize=80)
-    print(p)
-    dev.off()
+        subset <- toPlot[toPlot$ARCHE == arche,]
+        subset$score <- subset$Label
 
-    # save sig associations
-    filepath <- paste0("data/results/data/4-DrugResponse/PDX/SigAssociations/", label, "_", TR, ".csv")
-    write.csv(toPlot, file = filepath, quote = FALSE, row.names = FALSE)
+        p1 <- ggplot(subset, aes(x = drug, y = score, fill = N)) +
+            geom_tile() +
+            geom_text(aes(label = N), size = 2.5) +
+            scale_fill_gradient(high = "#B6B8D6", low = "#BBDBD1") +
+            theme_void() +
+            theme(
+                axis.text.y = element_text(size = 8, hjust = 1),
+                legend.position = "none") +
+            ggtitle(arche)
+
+        p2 <- ggplot(subset, aes(x = drug, y = Label, fill = PC.BAR_median, size = -log(pval.BAR_median), shape = sig)) +
+            geom_point() +
+            geom_text(data = subset(subset, sig == 'pval < 0.1'), aes(label = round(PC.BAR_median, 2)), color = "black", size = 2.5) +
+            scale_shape_manual(values = c(21, 24)) +
+            scale_size(range = c(2, 12)) +
+            scale_fill_gradient2(
+                low = "#BC4749",
+                high = "#689CB0",
+                mid = "#C2BBC9",
+                limits = c(-1, 1)
+            ) +
+            theme_bw() +
+            theme(
+                legend.key.size = unit(0.3, 'cm'),
+                axis.text.x = element_text(size=6, angle=25, hjust=1, vjust=1, margin = margin(t = 3))
+            ) 
+        
+        p <- p1 / p2 + plot_layout(heights = c(3, 6))
+        filename <- paste0("data/results/figures/4-DrugResponse/PDX/compiled/", arche, ".png")
+        ggsave(filename, p, w = 10, h = 5)
+    }
+
+}
+
+#' Plot ARCHE associations for ADCs 
+#' 
+#' @param scores matrix
+#' @param label string folder name
+#' @param drug string drug name
+#' @param target string Ensembl ID of gene of protein target
+#' @param threshold string percentage of quantile to use as lower bound
+#' 
+plot_ADC_ARCHE <- function(scores, label, drug, target, threshold = "25%") {
+    
+    # subset rna by gene expression
+    subset_rna <- rna[target,]
+    threshold <- quantile(as.numeric(subset_rna))[threshold]
+    high_exp <- colnames(subset_rna)[subset_rna > threshold]
+    low_exp <- colnames(subset_rna)[subset_rna <= threshold]
+
+    # subset ARCHE expression
+    toPlot <- scores[scores$drug == drug,]
+    high_exp <- toPlot[toPlot$PDX_ID %in% high_exp,]
+    low_exp <- toPlot[toPlot$PDX_ID %in% low_exp,]
+
+    assess_ARCHE_PDX(high_exp, label, "adcs", plot = TRUE, pcc_thres = 0)
 }

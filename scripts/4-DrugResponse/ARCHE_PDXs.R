@@ -57,6 +57,13 @@ normzs_k <- znorm(zscore_k)
 # pdx drug response data
 xeva <- get_xeva("full")
 
+# read in RNA
+rna <- read.csv("data/rawdata/pdx/gene_tpm_normalized_matrix.csv")
+rownames(rna) <- rna$X
+colnames(rna) <- sub("^S", "", colnames(rna))
+colnames(rna) <- map_pdx(colnames(rna))
+rna <- rna[,colnames(rna) %in% p_meta_t$sampleid]
+
 ###########################################################
 # Removing low deviation samples
 ###########################################################
@@ -115,7 +122,7 @@ x_normzs_k <- assess_ARCHE_PDX(normzs_k, "normzscr_K", plot_dir, plot = FALSE) |
 x_zscore_t_sumdev <- assess_ARCHE_PDX(zscore_t_sumdev, "zscore_sumdev_T", plot_dir, plot = FALSE) |> suppressWarnings()
 x_normzs_t_sumdev <- assess_ARCHE_PDX(normzs_t_sumdev, "normzscr_sumdev_T", plot_dir, plot = FALSE) |> suppressWarnings()
 x_zscore_k_sumdev <- assess_ARCHE_PDX(zscore_k_sumdev, "zscore_sumdev_K", plot_dir, plot = FALSE) |> suppressWarnings()
-x_normzs_k_sumdev <- assess_ARCHE_PDX(normzs_k_sumdev, "normzscr_sumdev_K", plot_dir, plot = TRUE) |> suppressWarnings()
+x_normzs_k_sumdev <- assess_ARCHE_PDX(normzs_k_sumdev, "normzscr_sumdev_K", plot_dir, plot = FALSE) |> suppressWarnings()
 
 ###########################################################
 # Compile PDX results
@@ -131,61 +138,33 @@ pdx_all_toPlot <- rbind(
 colnames(pdx_all_toPlot)[colnames(pdx_all_toPlot) == "ARCHE_label"] <- "Label"
 colnames(pdx_all_toPlot)[colnames(pdx_all_toPlot) == "pair"] <- "pairs"
 
-# last save: June 18, 2026
-#save(cell_toPlot, pdx_all_toPlot, pdx_sumdev_toPlot,
-#    file = "data/results/data/Misc/sample_tcga_ARCHE_drug_response_testing_all_scoring.RData")
-
+save(pdx_all_toPlot,
+    file = "data/results/data/4-DrugResponse/PDX/pdx_response_july222026.RData")
 
 ###########################################################
-# Plot PDX results
+# Plot compiled PDX results
 ###########################################################
 
-compile <- pdx_all_toPlot
+plot_compiled_PDX(pdx_all_toPlot)
 
-sig <- compile[which(abs(compile$PC.BAR_median) > 0.4 & compile$pval.BAR_median < 0.1),]
-sig_pairs <- sig$pair
-toPlot <- compile[compile$pair %in% sig_pairs,]
-toPlot$sig <- ifelse(toPlot$pval.BAR_median < 0.1, 'pval < 0.1', 'pval >= 0.1')
+###########################################################
+# Assess ADCs
+###########################################################
 
-toPlot$Label <- factor(toPlot$Label, levels = c(
-    "zscore_T", "zscore_K", "normzscr_T", "normzscr_K",
-    "zscore_sumdev_T", "zscore_sumdev_K", "normzscr_sumdev_T", "normzscr_sumdev_K"
-    )
-)
+plot_all_ADC_ARCHE <- function(drug, gene) {
 
-for (arche in paste0("ARCHE", 1:6)) {
+    plot_ADC_ARCHE(zscore_t, "zscore_T", drug, gene)
+    plot_ADC_ARCHE(zscore_k, "zscore_K", drug, gene)
+    plot_ADC_ARCHE(normzs_t, "normzscr_T", drug, gene)
+    plot_ADC_ARCHE(normzs_k, "normzscr_K", drug, gene)
 
-    subset <- toPlot[toPlot$ARCHE == arche,]
-    subset$score <- subset$Label
-
-    p1 <- ggplot(subset, aes(x = drug, y = score, fill = N)) +
-        geom_tile() +
-        geom_text(aes(label = N), size = 2.5) +
-        scale_fill_gradient(high = "#B6B8D6", low = "#BBDBD1") +
-        theme_void() +
-        theme(
-            axis.text.y = element_text(size = 8, hjust = 1),
-            legend.position = "none") +
-        ggtitle(arche)
-
-    p2 <- ggplot(subset, aes(x = drug, y = Label, fill = PC.BAR_median, size = -log(pval.BAR_median), shape = sig)) +
-        geom_point() +
-        geom_text(data = subset(subset, sig == 'pval < 0.1'), aes(label = round(PC.BAR_median, 2)), color = "black", size = 2.5) +
-        scale_shape_manual(values = c(21, 24)) +
-        scale_size(range = c(2, 12)) +
-        scale_fill_gradient2(
-            low = "#BC4749",
-            high = "#689CB0",
-            mid = "#C2BBC9",
-            limits = c(-1, 1)
-        ) +
-        theme_bw() +
-        theme(
-            legend.key.size = unit(0.3, 'cm'),
-            axis.text.x = element_text(size=6, angle=25, hjust=1, vjust=1, margin = margin(t = 3))
-        ) 
-    
-    p <- p1 / p2 + plot_layout(heights = c(3, 6))
-    filename <- paste0("data/results/figures/4-DrugResponse/PDX/compiled/", arche, ".png")
-    ggsave(filename, p, w = 10, h = 5)
+    plot_ADC_ARCHE(zscore_t_sumdev, "zscore_sumdev_T", drug, gene)
+    plot_ADC_ARCHE(zscore_k_sumdev, "zscore_sumdev_K", drug, gene)
+    plot_ADC_ARCHE(normzs_t_sumdev, "normzscr_sumdev_T", drug, gene)
+    plot_ADC_ARCHE(normzs_k_sumdev, "normzscr_sumdev_K", drug, gene)
 }
+
+plot_all_ADC_ARCHE("SACITUZAMAB-GOVITECAN", "ENSG00000184292")
+plot_all_ADC_ARCHE("TRASTUZUMAB-DERUXTECAN", "ENSG00000141736")
+plot_all_ADC_ARCHE("DATOPOTAMAB-DERUXTECAN", "ENSG00000184292")
+plot_all_ADC_ARCHE("AZD-8205", "ENSG00000134258")
