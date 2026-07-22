@@ -138,17 +138,15 @@ assess_ARCHE_PDX <- function(df, label, dir, plot = TRUE) {
 
         if (plot == TRUE) {
             # compile plots into panels
-            if (!is.na(p2) && !is.na(p3)) {
+            if (!is.na(p2) && !is.na(p3) && (abs(combinations$PC.BAR_median[i]) > 0.4 || abs(combinations$PC.BR_median[i]) > 0.4)) {
                 filepath <- paste0("data/results/figures/4-DrugResponse/PDX/", dir, "/", label, "/", arche, "_", drug, ".png")
                 png(filepath, width=12, height=5, units='in', res = 600, pointsize=80)
-                print(grid::grid.draw(
+                grid::grid.draw(
                     arrangeGrob(
                         p1, p2, p3, ncol = 4, nrow = 2,
                         layout_matrix = rbind(c(1,1,2,3), c(1,1,2,3))
-                    ))) # TODO:: prints NULL here, remove somehow
+                    )) # TODO:: prints NULL here, remove somehow
                 dev.off()
-            } else {
-                print("Not enough observations")
             }
         }
     }

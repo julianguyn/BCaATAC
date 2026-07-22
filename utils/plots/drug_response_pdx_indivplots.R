@@ -220,6 +220,7 @@ waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
 
     # obtain min and max values
     score <- max(abs(min(df[[arche]])), max(df[[arche]])) |> ceiling()
+    ylim <- max(abs(min(df[[TR]])), max(df[[TR]]))
 
     # create plot
     p <- ggplot(df, aes(x = rank, y = .data[[TR]], fill = .data[[arche]])) +
@@ -233,10 +234,11 @@ waterfall_TR <- function(df, arche, drug, TR, plot.indiv = F) {
             legend.justification.inside = c(1, 1),
             legend.title = element_text(size = 9),
             legend.text = element_text(size = 9),
-            legend.key.size = unit(0.5, 'cm'),
+            legend.key.size = unit(0.3, 'cm'),
             axis.text.x = element_blank(),
             axis.ticks.x = element_blank()
         ) +
+        ylim(c(-ylim, ylim)) +
         labs(x = "PDX Model", y = paste(drug, label), fill = paste(arche, "\nScore")) 
 
     # print out waterfall plot if needed
