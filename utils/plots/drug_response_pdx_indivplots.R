@@ -275,11 +275,12 @@ scatter_TR <- function(df, arche, drug, TR, plot.indiv = F) {
     pval <- round(pc$p.value, 4)
 
     # create plot
-    p <- ggplot(df, aes(x = .data[[arche]], y = .data[[TR]])) +
-        geom_smooth(method='lm', formula= y~x, color = "gray") +
-        geom_point(size = 2.5) +
+    p <- ggplot(df, aes(x = .data[[arche]], y = .data[[TR]], fill = Subtype)) +
+        geom_smooth(aes(group = 1, fill = NULL), method='lm', formula= y~x, color = "gray") +
+        geom_point(size = 2.5, shape = 21) +
+        scale_fill_manual(values = subtype_pal) +
         theme_minimal() +
-        theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5)) +
+        theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5), legend.position = "none") +
         labs(x = paste(arche, "Score"), y = paste(drug, label)) +
         ggtitle(paste("PCC:", cor, ", pval:", pval))
 

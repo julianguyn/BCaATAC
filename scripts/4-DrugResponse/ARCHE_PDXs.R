@@ -81,44 +81,54 @@ normzs_k_sumdev <- znorm(zscore_k_sumdev)
 ###########################################################
 
 # helper function
-format_ARCHE <- function(xeva, scores) {
+format_ARCHE <- function(xeva, scores, meta) {
     scores <- t(scores) |> as.data.frame()
     df <- xeva[xeva$patient.id %in% rownames(scores),]
     df$ARCHE6 <- df$ARCHE5 <- df$ARCHE4 <- df$ARCHE3 <- df$ARCHE2 <- df$ARCHE1 <- NA
+    df$Subtype <- NA
     for (i in 1:nrow(df)) {
         sample <- df$patient.id[i]
+        if (sample %in% c("NOTCH01", "REF032")) print(i)
         df$ARCHE1[i] <- scores[rownames(scores) == sample,]$ARCHE1
         df$ARCHE2[i] <- scores[rownames(scores) == sample,]$ARCHE2
         df$ARCHE3[i] <- scores[rownames(scores) == sample,]$ARCHE3
         df$ARCHE4[i] <- scores[rownames(scores) == sample,]$ARCHE4
         df$ARCHE5[i] <- scores[rownames(scores) == sample,]$ARCHE5
         df$ARCHE6[i] <- scores[rownames(scores) == sample,]$ARCHE6
-        
+        if (sample %in% meta$sampleid) df$Subtype[i] <- meta$subtype[meta$sampleid == sample]
     }
+    # manual mapping
+    df$Subtype[df$PDX_ID == "REF032"] <- "ER"
+    df$Subtype[df$PDX_ID == "REF034"] <- "ER"
+    df$Subtype[df$PDX_ID == "REF036"] <- "ER"
+    df$Subtype[df$PDX_ID == "REF038"] <- "TNBC"
+    df$Subtype[df$PDX_ID == "NOTCH01"] <- "TNBC"
+    df$Subtype[df$Subtype == "unknown"] <- "Not Available"
     return(df)
 }
 
 # get ARCHE scores
-zscore_t <- format_ARCHE(xeva, zscore_t)
-normzs_t <- format_ARCHE(xeva, normzs_t)
-zscore_k <- format_ARCHE(xeva, zscore_k)
-normzs_k <- format_ARCHE(xeva, normzs_k)
+zscore_t <- format_ARCHE(xeva, zscore_t, p_meta_t)
+normzs_t <- format_ARCHE(xeva, normzs_t, p_meta_t)
+zscore_k <- format_ARCHE(xeva, zscore_k, p_meta_k)
+normzs_k <- format_ARCHE(xeva, normzs_k, p_meta_k)
 
-zscore_t_sumdev <- format_ARCHE(xeva, zscore_t_sumdev)
-normzs_t_sumdev <- format_ARCHE(xeva, normzs_t_sumdev)
-zscore_k_sumdev <- format_ARCHE(xeva, zscore_k_sumdev)
-normzs_k_sumdev <- format_ARCHE(xeva, normzs_k_sumdev)
+zscore_t_sumdev <- format_ARCHE(xeva, zscore_t_sumdev, p_meta_t)
+normzs_t_sumdev <- format_ARCHE(xeva, normzs_t_sumdev, p_meta_t)
+zscore_k_sumdev <- format_ARCHE(xeva, zscore_k_sumdev, p_meta_k)
+normzs_k_sumdev <- format_ARCHE(xeva, normzs_k_sumdev, p_meta_k)
 
 ###########################################################
 # Compute PC of ARCHE-drug associations in PDXs
 ###########################################################
 
-plot_dir <- "indiv"
+plot_dir <- "indiv_panels"
 x_zscore_t <- assess_ARCHE_PDX(zscore_t, "zscore_T", plot_dir, plot = FALSE) |> suppressWarnings()
 x_normzs_t <- assess_ARCHE_PDX(normzs_t, "normzscr_T", plot_dir, plot = FALSE) |> suppressWarnings()
 x_zscore_k <- assess_ARCHE_PDX(zscore_k, "zscore_K", plot_dir, plot = FALSE) |> suppressWarnings()
 x_normzs_k <- assess_ARCHE_PDX(normzs_k, "normzscr_K", plot_dir, plot = FALSE) |> suppressWarnings()
 
+# last plotted: July 22, 2026
 x_zscore_t_sumdev <- assess_ARCHE_PDX(zscore_t_sumdev, "zscore_sumdev_T", plot_dir, plot = FALSE) |> suppressWarnings()
 x_normzs_t_sumdev <- assess_ARCHE_PDX(normzs_t_sumdev, "normzscr_sumdev_T", plot_dir, plot = FALSE) |> suppressWarnings()
 x_zscore_k_sumdev <- assess_ARCHE_PDX(zscore_k_sumdev, "zscore_sumdev_K", plot_dir, plot = FALSE) |> suppressWarnings()
@@ -168,3 +178,6 @@ plot_all_ADC_ARCHE("SACITUZAMAB-GOVITECAN", "ENSG00000184292")
 plot_all_ADC_ARCHE("TRASTUZUMAB-DERUXTECAN", "ENSG00000141736")
 plot_all_ADC_ARCHE("DATOPOTAMAB-DERUXTECAN", "ENSG00000184292")
 plot_all_ADC_ARCHE("AZD-8205", "ENSG00000134258")
+
+plot_all_ADC_ARCHE("TRASTUZUMAB-CONTROL", "ENSG00000141736")
+plot_all_ADC_ARCHE("DATOPOTAMAB-CONTROL", "ENSG00000184292")

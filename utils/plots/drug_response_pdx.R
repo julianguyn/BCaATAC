@@ -9,7 +9,7 @@
 assess_ARCHE_mRECIST <- function(subset_df, arche, drug, plot.indiv = FALSE) {
 
     # subset for variables of interest
-    subset_df <- subset_df[,which(colnames(subset_df) %in% c("model_group", "mRECIST", arche))]
+    subset_df <- subset_df[,which(colnames(subset_df) %in% c("model_group", "mRECIST", "Subtype", arche))]
     subset_df$mRECIST <- factor(subset_df$mRECIST, levels = c("CR", "PR", "SD", "PD"))
     subset_df <- subset_df[complete.cases(subset_df),]
     #combinations$N.mre[i] <- nrow(subset_df)
@@ -46,7 +46,7 @@ assess_ARCHE_mRECIST <- function(subset_df, arche, drug, plot.indiv = FALSE) {
 assess_ARCHE_TR <- function(subset_df, arche, drug, TR, plot.indiv = FALSE) {
 
     # subset for variables of interest
-    subset_df <- subset_df[,which(colnames(subset_df) %in% c("model_group", TR, arche))]
+    subset_df <- subset_df[,which(colnames(subset_df) %in% c("model_group", "Subtype", TR, arche))]
     subset_df[[TR]] <- as.numeric(subset_df[[TR]])
     subset_df <- subset_df[complete.cases(subset_df),]
 
@@ -81,7 +81,7 @@ assess_ARCHE_TR <- function(subset_df, arche, drug, TR, plot.indiv = FALSE) {
 #' @param dir string. Parent directory to save results
 #' @export Panel of plots.
 #' 
-assess_ARCHE_PDX <- function(df, label, dir, plot = TRUE, pcc_thres = 0.4) {
+assess_ARCHE_PDX <- function(df, label, dir, meta, plot = TRUE, pcc_thres = 0.4) {
 
     # initialize dataframe to store results
     combinations <- matrix(data = NA, nrow = length(unique(df$drug)) * 6, ncol = 10) |> as.data.frame()
