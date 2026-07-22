@@ -193,6 +193,9 @@ plot_ClassB_heatmap <- function(toPlot, label) {
         geom_tile(color = NA) +
         scale_y_discrete(labels = ylabs, drop = FALSE) +
         theme_void() + 
+        theme(
+            legend.key.size = unit(0.5, "cm")
+        ) +
         scale_fill_manual("ARCHE", values = ARCHE_pal)
 
     # BCa drug annotation
@@ -200,6 +203,9 @@ plot_ClassB_heatmap <- function(toPlot, label) {
         geom_tile(color = "gray") +
         scale_y_discrete(labels = ylabs, drop = FALSE) +
         theme_void() + 
+        theme(
+            legend.key.size = unit(0.5, "cm")
+        ) +
         scale_fill_manual("BCa Drug", values = c("#3E517A", "white"), labels = c("Yes", "No"))
 
     # main heatmap (pset~pair) PCC
@@ -219,8 +225,9 @@ plot_ClassB_heatmap <- function(toPlot, label) {
             axis.text.y = element_text(size=9, hjust=1, vjust=0.5, margin = margin(r = 6)), 
             axis.text.x = element_text(size=9, angle=90, hjust=1, vjust=0.5, margin = margin(t = 3)),
             axis.ticks = element_line(color = "gray", linewidth = 0.3),
-            axis.ticks.length = unit(2, "pt")
-            )
+            axis.ticks.length = unit(2, "pt"),
+            legend.key.size = unit(0.3, "cm")
+        )
     
     # Meta-Estimate
     p4 <- ggplot(toPlot[toPlot$meta == TRUE,], aes(x = 1, y = split, fill = estimate)) + 
@@ -230,6 +237,9 @@ plot_ClassB_heatmap <- function(toPlot, label) {
                 vjust = 0.5, size = 2.5) +
         scale_y_discrete(labels = ylabs, drop = FALSE) +
         theme_void() + 
+        theme(
+            legend.key.size = unit(0.3, "cm")
+        ) +
         scale_fill_gradient2("Meta TE", 
                             low = "#BC4749", 
                             high = "#689CB0",

@@ -44,7 +44,7 @@ c_meta <- meta[meta$type == "cell_line", ]
 ###########################################################
 
 # zscores
-zscore_cells <- get_arche_scores(paste0("data/rawdata/all_scoring/cell_tcga.Zscore.txt"), c_meta)
+zscore_cells <- get_arche_scores("data/rawdata/all_scoring/cell_tcga.Zscore.txt", c_meta)
 normzs_cells <- znorm(zscore_cells)
 
 # sumdevs
@@ -178,4 +178,7 @@ normzs_cells_sumdev_pairs <- get_classB(pc_normzs_cells_sumdev, "normzscr_sumdev
 # ARCHE2 vs ARCHE5
 ###########################################################
 
-a2va5 <- compile_diff(zscore_cells_sumdev, "ARCHE2", "ARCHE5", a2va5_drug_pal, "A2vsA5")
+# function from source("utils/compute_drug_response.R")
+
+a2va5 <- compile_diff(zscore_cells_sumdev, "ARCHE2", "ARCHE5", a2va5_drug_pal, "A2vsA5_zscore_sumdev")
+a2va5 <- compile_diff(normzs_cells_sumdev, "ARCHE2", "ARCHE5", a2va5_drug_pal, "A2vsA5_normzs_sumdev")

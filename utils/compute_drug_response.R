@@ -194,13 +194,17 @@ plot_diff_boxplots <- function(toPlot, label) {
 compile_diff <- function(arche_scores, lab1, lab2, drug_pal, label) {
 
     tt <- as.data.frame(t(arche_scores[c(lab1, lab2),]))
-    l1_cells <- rownames(tt[tt[[lab1]] > quantile(tt[[lab1]])["75%"],])
-    l2_cells <- rownames(tt[tt[[lab2]] > quantile(tt[[lab2]])["75%"],])
+    l1_cells <- rownames(tt[order(tt[[lab1]], decreasing = TRUE),])[1:15]
+    l2_cells <- rownames(tt[order(tt[[lab2]], decreasing = TRUE),])[1:15]
+    #l1_cells <- rownames(tt[tt[[lab1]] > quantile(tt[[lab1]])["75%"],])
+    #l2_cells <- rownames(tt[tt[[lab2]] > quantile(tt[[lab2]])["75%"],])
 
     to_rm <- intersect(l1_cells, l2_cells) # two cells: CAL51 and SUM149PT, 10 unique in each
-    cat("Removing:\n", to_rm, "\n")
-    l1_cells <- l1_cells[-which(l1_cells %in% to_rm)]
-    l2_cells <- l2_cells[-which(l2_cells %in% to_rm)]
+    if (length(to_rm) > 0) {
+         cat("Removing:\n", to_rm, "\n")
+        l1_cells <- l1_cells[-which(l1_cells %in% to_rm)]
+        l2_cells <- l2_cells[-which(l2_cells %in% to_rm)]
+    }
     cat("Number of cells from", lab1, ":", length(l1_cells), "\n")
     cat("Number of cells from", lab2, ":", length(l2_cells), "\n")
 

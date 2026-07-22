@@ -42,15 +42,13 @@ get_arche_scores <- function(filename, meta) {
 #' @param plot boolean.
 #' @return ARCHE scores filtered for low sumdev samples
 #' 
-get_arche_sumdevs <- function(df, label = NULL, plot = FALSE) {
+get_arche_sumdevs <- function(df, label = NULL, lim = 100, plot = FALSE) {
 
     devs <- colSums(abs(df)) |> as.data.frame()
     colnames(devs) <- "Sum"
     devs$Type <- meta$type[match(rownames(devs), meta$sampleid)]
 
     # calculate threshold
-    diff <- diff(range(df, na.rm = TRUE))
-    lim = diff/2
 
     if (plot == TRUE) {
         p <- ggplot(devs, aes(x = Sum)) +
