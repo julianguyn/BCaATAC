@@ -88,7 +88,6 @@ toPlot$name <- factor(toPlot$name, levels = unique(anno$name))
 # Plot top GO terms
 ###########################################################
 
-
 p <- ggplot(toPlot, aes(x = name, y = ARCHE, size = -log10(Hyper_Adjp_BH + 0.001), color = Hyper_Fold_Enrichment)) +
     annotate("rect", ymin = -Inf, ymax = Inf, 
         xmin = c(0.5, 7.5, 23.5, 27.5, 40.5, 48.5, 54.5),
@@ -105,3 +104,24 @@ p <- ggplot(toPlot, aes(x = name, y = ARCHE, size = -log10(Hyper_Adjp_BH + 0.001
 
 
 ggsave("data/results/figures/1-Signatures/GREAT/GREAT_50k_top10BP.png", p, width = 10.5, height = 6)
+
+###########################################################
+# Collapse by category
+###########################################################
+
+df <- aggregate(Hyper_Fold_Enrichment ~ Category + ARCHE, data = toPlot, sum)
+counts <- aggregate(ID ~ Category + ARCHE, data = toPlot, length)
+df$count <- counts$ID
+df$ARCHE <- factor(df$ARCHE, levels = paste0("ARCHE", 1:6))
+
+p <- ggplot(df, aes(x = ARCHE, y = Category, color = Hyper_Fold_Enrichment, size = count)) +
+    geom_point() +
+    scale_color_viridis_c("Sum of\nHyper Fold\nEnrichment", option = "mako", direction = -1, end = 0.9) +
+    scale_size("Count of\nGO Terms", range = c(2, 10)) +
+    theme_bw() +
+    theme(
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.25),
+        axis.title.y = element_blank(), axis.title.x = element_blank(),
+        legend.key.size = unit(0.4, "cm")
+    )
+ggsave("data/results/figures/1-Signatures/GREAT/GREAT_50k_top10BP_collapsed.png", p, width = 5, height = 4.5)
