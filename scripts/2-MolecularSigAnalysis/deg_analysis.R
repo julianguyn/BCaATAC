@@ -107,6 +107,27 @@ plot_volcano(slb, "LumB")
 #plot_volcano(sn, "Normal") # only 4 sig genes, too small sample size
 
 ###########################################################
+# Volcano of ARCHE5 TFs
+###########################################################
+
+tfs <- c("SPIB", "IRF3", "IRF8", "SPI1")
+a2$Label <- ifelse(rownames(a2) %in% tfs, "Immune TF", "Other")
+a2$Gene <- rownames(a2)
+
+p <- ggplot(a2, aes(x = log2FoldChange, y = -log(padj))) +
+  geom_point(color = "gray") +
+  geom_hline(yintercept = -log(0.05), linetype = "dashed", color = "#989898") +
+  geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "#989898") +
+  geom_point(data = a2[a2$Label == "Immune TF", ], 
+             aes(x = log2FoldChange, y = -log(padj)), color = "red") +
+  geom_text_repel(data = a2[a2$Label == "Immune TF", ],
+                   aes(x = log2FoldChange, y = -log(padj), label = Gene),
+                   color = "black", size = 3, max.overlaps = Inf) +
+  theme_bw()
+
+ggsave("data/results/figures/2-MolecularSigAnalysis/deg/ARCHE2_TF.png", p, width = 4.5, height = 4)
+
+###########################################################
 # Plot MYC volcano plots
 ###########################################################
 
