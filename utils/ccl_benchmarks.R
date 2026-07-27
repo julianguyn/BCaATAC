@@ -208,77 +208,173 @@ plot_rna_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
     return(pcc)
 }
 
-#' Helper function
-plot_mut <- function(arche, drug, mut, pset, mut_df, arche_sen) {
+#' Helper function to plot scatter plot
+#' 
+plot_scatter_drug_association <- function(toPlot, feature, feature_type, arche = "ARCHE4") {
 
-    mut_df <- as.data.frame(t(mut_df[mut,]))
-    subset <- arche_sen[arche_sen$PSet == pset & arche_sen$Sample %in% rownames(mut_df),]
-    subset$Mut <- mut_df[[mut]][match(subset$Sample, rownames(mut_df))]
-    subset <- subset[!is.na(subset$Mut),]
+    corr <- cor.test(toPlot$AAC, toPlot[[feature]], method = "pearson")
+    estimate <- round(corr$estimate, 2)
+    pval <- round(corr$p.value, 2)
 
-    subset$Mut <- factor(subset$Mut, levels = c(1, 0), labels = c("Mut", "WT"))
-    subset <- subset[order(subset$AAC, decreasing = TRUE),]
-    subset$Sample <- factor(subset$Sample, levels = unique(subset$Sample))
+    colnames(toPlot)[colnames(toPlot) == feature] <- "toPlot"
+    if (feature == "Score") feature <- arche
 
-    p1 <- ggplot(subset, aes(x = Sample, y = AAC, pattern = Mut, fill = Subtype)) +
-        geom_col_pattern(
-            alpha = 0.85,
-            pattern_fill = "black",
-            pattern_density = 0.5,
-            pattern_spacing = 0.03,
-            pattern_color = NA,
-            color = "black"
-        ) +
-        scale_pattern_manual(values = c(WT = "none", Mut = "stripe")) +
-        scale_fill_manual(values = subtype_pal) +
-        theme_void() +
-        theme(
-            axis.text.x = element_blank(),
-            plot.title = element_text(hjust = 0.5, size = 11),
-            axis.title.y = element_blank(),
-            axis.title.x = element_text(size = 9),
-            legend.position = "none"
-        ) + 
-        labs(title = pset, x = "Samples ranked by AAC")
-
-    p2 <- ggplot(subset, aes(x = Score, y = AAC, fill = Subtype)) +
+    p <- ggplot(toPlot, aes(x = toPlot, y = AAC, fill = Subtype)) +
         geom_smooth(method = "lm", se = TRUE, color = "black", aes(group = 1), show.legend = FALSE) +
         geom_point(size = 2.5, shape = 21) +
         scale_fill_manual(values = subtype_pal) +
-        new_scale_color() +
-        geom_point(data = subset[subset$Mut == "Mut",], aes(x = Score, y = AAC), size = 4, shape = 0) +
-        # for the legend
-        geom_point(data = subset, aes(x = Score, y = AAC, shape = Mut), size = 0, alpha = 0) +
-        scale_shape_manual(mut, values = c("Mut" = 0, "WT" = 1)) +
-        guides(
-            fill = guide_legend(override.aes = list(size = 4, shape = 21)),
-            shape = guide_legend(override.aes = list(size = 4, alpha = 1))
-        ) +
         theme_bw() +
         theme(
-            legend.key = element_blank(),
-            legend.key.size = unit(0.5, 'cm'),
+            legend.position = "none",
             axis.title.y = element_text(size = 9, margin = margin(r = 10)),
-            axis.title.x = element_text(size = 9)
+            axis.title.x = element_text(size = 9),
+            plot.title = element_text(hjust = 0.5, size = 7)
         ) +
         ylim(0, 0.5) +
-        labs(y = paste(drug, "Response (AAC)"), x = paste(arche, "Score"))
-
-    p <- p1 / p2 + plot_layout(height = c(1, 2))
+        labs(y = paste(drug, "Response (AAC)"), x = paste(feature, feature_type)) +
+        ggtitle(paste0("Corr: ", estimate, " | pval: ", pval))
     return(p)
 }
 
 
-#' Plot mutation associations
-plot_mut_associations <- function(arche, drug, mut, arche_scores) {
+#' Helper function
+plot_mut <- function(arche, drug, genes, pset, arche_sen) {
+
+    mut_df <- switch(
+        pset,
+        GDSC2 = gdsc_mut,
+        CCLE = ccle_mut,
+        CTRP = ccle_mut,
+        GRAY = NA,
+        gCSI = NA
+    )
+
+    rna_df <- switch(
+        pset,
+        GDSC2 = gdsc,
+        CCLE = ccle,
+        CTRP = ccle,
+        GRAY = gray,
+        gCSI = gcsi
+    )
+
+    # Plot RNA
+    rna_df <- as.data.frame(t(rna_df[unname(genes),]))
+    colnames(rna_df) <- names(genes)
+    subset <- arche_sen[arche_sen$PSet == pset & arche_sen$Sample %in% rownames(rna_df),]
+    subset[[names(genes)[1]]] <- rna_df[[names(genes)[1]]][match(subset$Sample, rownames(rna_df))]
+    subset[[names(genes)[2]]] <- rna_df[[names(genes)[2]]][match(subset$Sample, rownames(rna_df))]
+
+    p3 <- plot_scatter_drug_association(subset, names(genes)[1], "Expression")
+    p4 <- plot_scatter_drug_association(subset, names(genes)[2], "Expression")
+
+    # ---------- With mutation data
+    if (class(mut_df) == "data.frame") {
+
+        mut_df <- as.data.frame(t(mut_df[names(genes),]))
+        subset <- arche_sen[arche_sen$PSet == pset & arche_sen$Sample %in% rownames(mut_df),]
+        subset$Mut <- rowSums(mut_df)[match(subset$Sample, names(rowSums(mut_df)))]
+        subset <- subset[!is.na(subset$Mut),]
+        subset$Mut <- ifelse(subset$Mut > 0, 1, 0)
+        for (gene in names(genes)) {
+            subset[[gene]] <- mut_df[[gene]][match(subset$Sample, rownames(mut_df))]
+        }
+
+        subset$Mut <- factor(subset$Mut, levels = c(1, 0), labels = c("Mut", "WT"))
+        subset <- subset[order(subset$AAC, decreasing = TRUE),]
+        subset$Sample <- factor(subset$Sample, levels = unique(subset$Sample))
+        subset$dummy <- c("BRAF", "NF1", rep("WT", nrow(subset)-2))
+
+        p1 <- ggplot(subset, aes(x = Sample, y = AAC, pattern = Mut, fill = Subtype)) +
+            geom_col_pattern(
+                alpha = 0.85, pattern_fill = "black",
+                pattern_density = 0.5, pattern_spacing = 0.03,
+                pattern_color = NA, color = "black"
+            ) +
+            scale_pattern_manual(values = c(WT = "none", Mut = "stripe")) +
+            scale_fill_manual(values = subtype_pal) +
+            theme_void() +
+            theme(
+                axis.text.x = element_blank(),
+                plot.title = element_text(hjust = 0.5, size = 11),
+                axis.title.y = element_blank(), axis.title.x = element_text(size = 9),
+                legend.position = "none"
+            ) + 
+            labs(title = pset, x = "Samples ranked by AAC")
+
+        corr <- cor.test(subset$AAC, subset$Score, method = "pearson")
+        estimate <- round(corr$estimate, 2)
+        pval <- round(corr$p.value, 2)
+        subset$Subtype <- factor(subset$Subtype, levels = names(subtype_pal))
+
+        p2 <- ggplot(subset, aes(x = Score, y = AAC, fill = Subtype)) +
+            geom_smooth(method = "lm", se = TRUE, color = "black", aes(group = 1), show.legend = FALSE) +
+            geom_point(size = 2.5, shape = 21) +
+            scale_fill_manual(values = subtype_pal) +
+            new_scale_color() +
+            geom_point(data = subset[subset$BRAF == 1,], aes(x = Score, y = AAC), size = 4, shape = 0) +
+            geom_point(data = subset[subset$NF1 == 1,], aes(x = Score, y = AAC), size = 4, shape = 5) +
+            # for the legend
+            geom_point(data = subset, aes(x = Score, y = AAC, shape = dummy), size = 0, alpha = 0) +
+            scale_shape_manual("Mutation", values = c("BRAF" = 0, "NF1" = 5, "WT" = 1)) +
+            guides(
+                fill = guide_legend(override.aes = list(size = 4, shape = 21)),
+                shape = guide_legend(override.aes = list(size = 4, alpha = 1))
+            ) +
+            theme_bw() +
+            theme(
+                #legend.key = element_blank(),
+                #legend.key.size = unit(0.5, 'cm'),
+                legend.position = "none",
+                axis.title.y = element_text(size = 9, margin = margin(r = 10)),
+                axis.title.x = element_text(size = 9),
+                plot.title = element_text(hjust = 0.5, size = 7)
+            ) +
+            ylim(0, 0.5) +
+            labs(y = paste(drug, "Response (AAC)"), x = paste(arche, "Score")) +
+        ggtitle(paste0("Corr: ", estimate, " | pval: ", pval))
+
+
+    } else { # ---------- Without mutation data
+
+        subset <- arche_sen[arche_sen$PSet == pset,]
+        subset$Mut <- c("Mut", rep("WT", nrow(subset)-1))
+
+        p1 <- ggplot(subset, aes(x = Sample, y = AAC, pattern = Mut, fill = Subtype)) +
+            geom_col_pattern(
+                alpha = 0.85, pattern_fill = "black",
+                pattern_density = 0.5, pattern_spacing = 0.03,
+                pattern_color = NA, color = "black"
+            ) +
+            scale_pattern_manual(values = c(WT = "none", Mut = "stripe")) +
+            scale_fill_manual(values = subtype_pal) +
+            theme_void() +
+            theme(
+                axis.text.x = element_blank(),
+                plot.title = element_text(hjust = 0.5, size = 11),
+                axis.title.y = element_blank(), axis.title.x = element_text(size = 9),
+                legend.position = "none"
+            ) + 
+            labs(title = pset, x = "Samples ranked by AAC")
+        p2 <- plot_scatter_drug_association(subset, "Score", "Score")
+    }
+
+    p <- p1 / p2 / p3 / p4 + plot_layout(height = c(1, 2, 2, 2))
+    return(p)
+}
+
+
+#' Plot mutation and gene associations
+plot_mut_associations <- function(arche, drug, genes, arche_scores, pset1, pset2, pset3) {
     arche_sen <- get_all_drug_sen(paste0(arche, "_", drug), arche_scores, "ARCHE", c_meta)
 
-    p1 <- plot_mut(arche, drug, mut, "GDSC2", gdsc_mut, arche_sen) + theme(legend.position = "none")
-    p2 <- plot_mut(arche, drug, mut, "CCLE", ccle_mut, arche_sen) + theme(legend.position = "none") + theme(axis.title.y = element_blank())
-    p3 <- plot_mut(arche, drug, mut, "CTRP", ccle_mut, arche_sen) + theme(axis.title.y = element_blank())
+    p1 <- plot_mut(arche, drug, genes, pset1, arche_sen) + theme(legend.position = "none")
+    p2 <- plot_mut(arche, drug, genes, pset2, arche_sen) + theme(legend.position = "none") + theme(axis.title.y = element_blank())
+    p3 <- plot_mut(arche, drug, genes, pset3, arche_sen) + theme(axis.title.y = element_blank())
 
     p <- wrap_elements(p1) + wrap_elements(p2) + wrap_elements(p3) + 
-        plot_layout(width = c(1.05,1,1.3))
+        #plot_layout(width = c(1.05,1,1.3))
+        plot_layout(width = c(1,1,1))
     filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug, "/mut_compiled.png")
-    ggsave(filename, p, width = 9, height = 3.75)
+    ggsave(filename, p, width = 8, height = 6)
 }
