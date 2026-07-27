@@ -13,6 +13,8 @@ suppressPackageStartupMessages({
     library(data.table)
     library(patchwork)
     library(ggnewscale)
+    library(circlize)
+    library(ComplexHeatmap)
 })
 
 source("utils/get_data.R")
@@ -53,6 +55,12 @@ normzs_cells_sumdev <- znorm(zscore_cells_sumdev)
 
 # get drug sensitivity data
 load("data/procdata/CCLs/sensitivity_data.RData")
+
+###########################################################
+# Plot heatmaps
+###########################################################
+
+plot_ARCHE_scores_heatmap(zscore_cells_sumdev, "zscore_cells_sumdev", c_meta)
 
 ###########################################################
 # Compute PC of ARCHE-drug associations

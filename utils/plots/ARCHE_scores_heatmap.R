@@ -15,15 +15,18 @@ znorm <- function(df) {
 plot_ARCHE_scores_heatmap <- function(df, label, meta, folder = "3-DataExploration") {
 
     # unnormalized
+    sumdev <- colSums(abs(df))
 
     # set colours for plotting
     lim <- max(c(abs(min(df)), max(df)))
     score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+    count_pal <- colorRamp2(seq(min(sumdev), max(sumdev), length = 3), c("#DFDFDF", "#989898", "#202020"))
 
     ha <- HeatmapAnnotation(
         Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
         Tech = meta[match(colnames(df), meta$sampleid),]$tech,
-        col = list(Subtype = subtype_pal, Tech = tech_pal))
+        SumDevs = sumdev,
+        col = list(Subtype = subtype_pal, Tech = tech_pal, SumDevs = count_pal))
 
     filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_unnorm.png")
     #png(filename, width = 10, height = 4, res = 600, units = "in")
@@ -45,7 +48,8 @@ plot_ARCHE_scores_heatmap <- function(df, label, meta, folder = "3-DataExplorati
     ha <- HeatmapAnnotation(
         Subtype = meta[match(colnames(df), meta$sampleid),]$subtype,
         Tech = meta[match(colnames(df), meta$sampleid),]$tech,
-        col = list(Subtype = subtype_pal, Tech = tech_pal))
+        SumDevs = sumdev,
+        col = list(Subtype = subtype_pal, Tech = tech_pal, SumDevs = count_pal))
 
     filename <- paste0("data/results/figures/", folder, "/ARCHEheatmaps/", label, "_ARCHE_scores_norm.png")
     #png(filename, width = 10, height = 4, res = 600, units = "in")
