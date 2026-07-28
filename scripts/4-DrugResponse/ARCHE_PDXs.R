@@ -118,6 +118,12 @@ normzs_t_sumdev <- format_ARCHE(xeva, normzs_t_sumdev, p_meta_t)
 zscore_k_sumdev <- format_ARCHE(xeva, zscore_k_sumdev, p_meta_k)
 normzs_k_sumdev <- format_ARCHE(xeva, normzs_k_sumdev, p_meta_k)
 
+# save for benchmarking
+save(zscore_t, normzs_t, zscore_k, normzs_k,
+    zscore_t_sumdev, normzs_t_sumdev, zscore_k_sumdev, normzs_k_sumdev,
+    file = "data/results/data/4-DrugResponse/PDX/pdx_xeva_july272026.RData")
+
+
 ###########################################################
 # Compute PC of ARCHE-drug associations in PDXs
 ###########################################################

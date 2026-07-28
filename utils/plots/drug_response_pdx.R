@@ -43,7 +43,7 @@ assess_ARCHE_mRECIST <- function(subset_df, arche, drug, plot.indiv = FALSE) {
 #' @param plot.indiv boolean. TRUE if waterfall plot should be saved as an individual file.
 #' @export Panel of two plots.
 #' 
-assess_ARCHE_TR <- function(subset_df, arche, drug, TR, plot.indiv = FALSE) {
+assess_ARCHE_TR <- function(subset_df, arche, drug, TR, label = "default", plot.indiv = FALSE) {
 
     # subset for variables of interest
     subset_df <- subset_df[,which(colnames(subset_df) %in% c("model_group", "Subtype", TR, arche))]
@@ -56,10 +56,16 @@ assess_ARCHE_TR <- function(subset_df, arche, drug, TR, plot.indiv = FALSE) {
         p2 <- scatter_TR(subset_df, arche, drug, TR)
         p <- ggarrange(p1, p2, ncol = 1, nrow = 2)
 
+        if (label == "default") {
+            label <- paste0(arche, "_", drug)
+        } else {
+            label <- paste0(label, "_", arche, "_", drug)
+        }
+
         # print out plot if needed
         if (plot.indiv == TRUE) {
-            path <- paste0("data/results/figures/4-DrugResponse/PDX/indiv_plots/", arche, "_", drug, ".png")
-            png(path, width=3.5, height=5, units='in', res = 600, pointsize=80)
+            path <- paste0("data/results/figures/4-DrugResponse/PDX/indiv_plots/", label , "_", TR, ".png")
+            png(path, width=3, height=5, units='in', res = 600, pointsize=80)
             print(p)
             dev.off()
         }
@@ -156,7 +162,7 @@ assess_ARCHE_PDX <- function(df, label, dir, meta, plot = TRUE, pcc_thres = 0.4)
     #    filepath <- paste0("data/results/data/4-DrugResponse/PDX/", dir, "/", label, ".csv")
     #    write.csv(combinations, file = filepath, quote = FALSE, row.names = FALSE)
     #}
-    #return(combinations)
+    return(combinations)
 }
 
 #' Function to create bubble plots of PDX drug response associations
