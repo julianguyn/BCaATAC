@@ -12,6 +12,8 @@ suppressPackageStartupMessages({
     library(readxl)
     library(data.table)
     library(patchwork)
+    library(circlize)
+    library(ComplexHeatmap)
 })
 
 source("utils/get_data.R")
@@ -75,6 +77,12 @@ zscore_k_sumdev <- get_arche_sumdevs(zscore_k, "zscore_pdx_k", plot = TRUE)
 # normalize
 normzs_t_sumdev <- znorm(zscore_t_sumdev)
 normzs_k_sumdev <- znorm(zscore_k_sumdev)
+
+###########################################################
+# Plot heatmaps
+###########################################################
+
+plot_ARCHE_scores_heatmap(normzs_t_sumdev , "zscore_pdxs_sumdev", p_meta_t)
 
 ###########################################################
 # Assign ARCHE scores to PDX xeva

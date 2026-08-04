@@ -13,7 +13,10 @@ rank=sys.argv[1]
 print("working for rank",int(rank))
 
 #A= pd.read_table('data/rawdata/tcga/BCa_binary.2.matrix', header=0,index_col=0).T
-A = pd.read_table("data/rawdata/misc/pdo_tnbc.matrix", header=0, index_col=0).T
+
+# for Parisa:
+#A = pd.read_table("data/rawdata/misc/pdo_tnbc.matrix", header=0, index_col=0).T
+A = pd.read_table("data/rawdata/misc/preclin_tnbc.matrix", header=0, index_col=0).T
 
 
 # rename columns and remove genomic locations
@@ -29,7 +32,9 @@ a = OONMF.NMFobject(theNcomps=Nc)
 a.performNMF(data=A, randomseed=seed, theinit='nndsvd')
 #a.writeNMF_CSV(Basis_foutname= str(Nc)+'Rank_NNDSVD_Basis.tsv', Mixture_foutname=str(Nc)+'Rank_NNDSVD_Mixture.tsv')
 #a.writeNMF(Basis_foutname= 'data/procdata/NMF/'+str(Nc)+'Rank_NNDSVD_Basis.npy', Mixture_foutname='data/procdata/NMF/'+str(Nc)+'Rank_NNDSVD_Mixture.npy')
-a.writeNMF(Basis_foutname= 'data/results/data/Misc/PDO_TNBC/'+str(Nc)+'Rank_NNDSVD_Basis.npy', Mixture_foutname='data/results/data/Misc/PDO_TNBC/'+str(Nc)+'Rank_NNDSVD_Mixture.npy')
+#a.writeNMF(Basis_foutname= 'data/results/data/Misc/PDO_TNBC/'+str(Nc)+'Rank_NNDSVD_Basis.npy', Mixture_foutname='data/results/data/Misc/PDO_TNBC/'+str(Nc)+'Rank_NNDSVD_Mixture.npy')
+a.writeNMF(Basis_foutname= 'data/results/data/Misc/Preclin_TNBC/'+str(Nc)+'Rank_NNDSVD_Basis.npy', Mixture_foutname='data/results/data/Misc/Preclin_TNBC/'+str(Nc)+'Rank_NNDSVD_Mixture.npy')
+
 print("basis")
 print(a.Basis.shape)
 print("mixture")

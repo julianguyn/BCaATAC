@@ -7,9 +7,11 @@ library(ComplexHeatmap)
 library(circlize)
 
 
-bin <- readRDS("data/rawdata/misc/pdo_tnbc.consensus.Binarymat.rds")
+#bin <- readRDS("data/rawdata/misc/pdo_tnbc.consensus.Binarymat.rds")
+bin <- readRDS("data/rawdata/misc/preclin_tnbc.consensus.Binarymat.rds")
 colnames(bin)[1:3] <- c("V1", "V2", "V3")
-write.table(bin, file = "data/rawdata/misc/pdo_tnbc.matrix", sep = "\t", quote = FALSE, row.names = FALSE)
+#write.table(bin, file = "data/rawdata/misc/pdo_tnbc.matrix", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(bin, file = "data/rawdata/misc/preclin_tnbc.matrix", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 df <- fread('data/rawdata/tcga/BCa_binary.2.matrix')
@@ -19,7 +21,8 @@ df <- fread("data/rawdata/misc/pdo_tnbc.matrix")
 
 # make heatmap
 
-df <- read.table("data/results/data/Misc/PDO_TNBC/rank5.png.order.matrix", header = T)
+#df <- read.table("data/results/data/Misc/PDO_TNBC/rank5.png.order.matrix", header = T)
+df <- read.table("data/results/data/Misc/Preclin_TNBC/rank7.png.order.matrix", header = T)
 rownames(df) <- paste0("Signature", 1:nrow(df))
 
 # make colour palette
@@ -43,7 +46,7 @@ ht1 <- Heatmap(
     column_names_gp = gpar(fontsize = 8)
 )
 
-filename <- "data/results/figures/pdo_tnbc_rank5_heatmap.png"
+filename <- "data/results/data/Misc/Preclin_TNBC/preclin_tnbc_rank7_heatmap.png"
 png(filename, width = 5, height = 4, res = 600, units = "in")
 ht1
 dev.off()
