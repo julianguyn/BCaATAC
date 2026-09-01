@@ -24,7 +24,7 @@ pam50_scores <- as.data.frame(pam50$subtype.proba)
 pam50_scores$assigned <- as.character(pam50$subtype)
 
 ###########################################################
-# Load in predicted ARCHE scores
+# Correlate ARCHE-G and PAM50 scores
 ###########################################################
 
 pattern <- "_full_cohort_predictions.csv"
@@ -91,6 +91,66 @@ ht <- Heatmap(
     left_annotation = row_ha,
 )
 filename <- "data/results/figures/1-Signatures/ARCHE-G_subtype_heatmap.png"
+png(filename, width = 3, height = 2, res = 600, units = "in")
+ht
+dev.off()
+
+###########################################################
+# Assign ARCHE-G
+###########################################################
+
+pattern <- "_full_cohort_predictions.csv"
+
+compiled <- data.frame(matrix(nrow=0, ncol=0))
+files <- list.files(dir, pattern = pattern)
+
+for (file in files) {
+    df <- read.csv(paste0(dir, "/", file))
+    df$ARCHE <- toupper(sub(pattern, "", file))
+    compiled <- rbind(compiled, df)
+}
+
+archeG <- data.frame(Sample = unique(compiled$sample))
+archeG$ARCHEG <- archeG$Score <- NA
+
+for (sample in archeG$Sample) {
+    subset <- compiled[compiled$sample == sample,]
+    top <- subset[subset$y_pred == max(subset$y_pred),]
+    archeG$ARCHEG[archeG$Sample == sample] <- top$ARCHE
+    archeG$Score[archeG$Sample == sample] <- top$y_pred
+}
+archeG$PAM50 <- pam50_scores$assigned[match(archeG$Sample, rownames(pam50_scores))]
+
+for (arche in paste0("ARCHE", 1:6)) {
+    subset <- archeG[archeG$ARCHEG == arche,]
+    print(arche)
+    print(table(subset$PAM50))
+}
+toPlot <- t(as.matrix(table(archeG$ARCHEG, archeG$PAM50)))
+
+cols <- colorRampPalette(c("#EBEBEB", "#75BFB2", "#008A8C"))(9)
+col_fun <- colorRamp2(seq(0,275,length.out = 9),cols)
+
+ht <- Heatmap(
+    toPlot,
+    column_title_gp = gpar(fontsize = 9),
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    name = "No. Samples",
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    rect_gp = gpar(col = "white", lwd = 0.5),
+    bottom_annotation = col_ha,
+    left_annotation = row_ha,
+    cell_fun = function(j, i, x, y, width, height, fill) {
+        if (toPlot[i, j] > 0) {
+            grid.text(toPlot[i, j], x, y, gp = gpar(fontsize = 7, col = "black"))
+        }
+    }
+)
+filename <- "data/results/figures/1-Signatures/ARCHE-G_subtype_count_heatmap.png"
 png(filename, width = 3, height = 2, res = 600, units = "in")
 ht
 dev.off()
