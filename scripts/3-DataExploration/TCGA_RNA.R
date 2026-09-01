@@ -22,6 +22,12 @@ rna <- get_tcga_rna()
 colnames(rna) <- gsub("\\.", "-", colnames(rna))
 rna <- t(rna)
 
+# load in full cohort RNA matrix
+full_rna <- fread("data/rawdata/tcga/Human__TCGA_BRCA__UNC__RNAseq__HiSeq_RNA__01_28_2016__BI__Gene__Firehose_RSEM_log2.cct", data.table = FALSE)
+rownames(full_rna) <- full_rna$attrib_name
+full_rna$attrib_name <- NULL
+full_rna <- t(full_rna)
+
 # load in genefu subtyping models
 data(pam50.robust)
 data(scmgene.robust)
@@ -60,3 +66,12 @@ pam50_res <- molecular.subtyping(
 )
 
 saveRDS(pam50_res, file = "data/procdata/TCGA/pam50_subtyping.rds")
+
+pam50_full <- molecular.subtyping(
+  sbt.model = "pam50",
+  data = full_rna,
+  annot = annot,
+  do.mapping = TRUE
+)
+
+saveRDS(pam50_full, file = "data/procdata/TCGA/pam50_subtyping_full_cohort.rds")
