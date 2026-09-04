@@ -1,6 +1,7 @@
 # load libraries
 suppressPackageStartupMessages({
     library(data.table)
+    library(readxl)
     library(ggplot2)
     library(matrixStats)
     library(patchwork)
@@ -10,12 +11,49 @@ suppressPackageStartupMessages({
 source("utils/get_data.R")
 source("utils/palettes.R")
 
+# read in meta data file
+meta <- read.csv("data/rawdata/TCGA/TCGA_sourcefiles.csv")
+
+# ------------------------ Stemness Scores and ARCHEs ------------------------
+
 ###########################################################
 # Load in data
 ###########################################################
 
-# read in meta data file
-meta <- read.csv("data/rawdata/TCGA/TCGA_sourcefiles.csv")
+# load in stemness scores
+read_si <- function(sheet) {
+  si <- read_excel("data/rawdata/lineages/1-s2.0-S0092867418303581-mmc1.xlsx", sheet = sheet) |> as.data.frame()
+  si <- si[si$cancer.type == "BRCA",]
+  si$sampleID <- sub("^((?:[^-]+-){2}[^-]+).*", "\\1", si$TCGAlong.id)
+  si$sampleID <- gsub("-", ".", si$sampleID)
+  return(si)
+}
+rna_si <- read_si(1)
+dna_si <- read_si(2)
+
+###########################################################
+# Add SI scores
+###########################################################
+
+toPlot <- meta[,colnames(meta) %in% c("Sample.Name", "ARCHE")]
+toPlot$mRNAsi <- rna_si$mRNAsi[match(toPlot$Sample.Name, rna_si$sampleID)]
+toPlot$'EREG-mRNAsi' <- rna_si$'EREG-mRNAsi'[match(toPlot$Sample.Name, rna_si$sampleID)]
+toPlot$mDNAsi <- dna_si$mDNAsi[match(toPlot$Sample.Name, dna_si$sampleID)]
+
+ggplot(toPlot, aes(x = ARCHE, y = mRNAsi)) +
+  geom_boxplot()
+
+ggplot(toPlot, aes(x = ARCHE, y = .data[["EREG-mRNAsi"]])) +
+  geom_boxplot()
+
+ggplot(toPlot, aes(x = ARCHE, y = mDNAsi)) +
+  geom_boxplot()
+
+# ------------------------ Lineage Gene Signatures ------------------------
+
+###########################################################
+# Load in data
+###########################################################
 
 # load in tumour gene counts matrix
 t_counts <- get_tcga_rna()
