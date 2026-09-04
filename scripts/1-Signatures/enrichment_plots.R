@@ -113,15 +113,17 @@ df <- aggregate(Hyper_Fold_Enrichment ~ Category + ARCHE, data = toPlot, sum)
 counts <- aggregate(ID ~ Category + ARCHE, data = toPlot, length)
 df$count <- counts$ID
 df$ARCHE <- factor(df$ARCHE, levels = paste0("ARCHE", 1:6))
+df$Category <- factor(df$Category, levels = rev(unique(anno$category)))
 
 p <- ggplot(df, aes(x = ARCHE, y = Category, color = Hyper_Fold_Enrichment, size = count)) +
     geom_point() +
     scale_color_viridis_c("Sum of\nHyper Fold\nEnrichment", option = "mako", direction = -1, end = 0.9) +
-    scale_size("Count of\nGO Terms", range = c(2, 10)) +
+    scale_size("Count of\nGO Terms", range = c(2, 8)) +
     theme_bw() +
     theme(
         axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.25),
         axis.title.y = element_blank(), axis.title.x = element_blank(),
-        legend.key.size = unit(0.4, "cm")
+        legend.key.size = unit(0.3, "cm"),
+        legend.title = element_text(size = 10)
     )
-ggsave("data/results/figures/1-Signatures/GREAT/GREAT_50k_top10BP_collapsed.png", p, width = 5, height = 4.5)
+ggsave("data/results/figures/1-Signatures/GREAT/GREAT_50k_top10BP_collapsed.png", p, width = 5, height = 3.5)

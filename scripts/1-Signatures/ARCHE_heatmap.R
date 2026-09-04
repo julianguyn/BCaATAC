@@ -44,7 +44,11 @@ rna_df <- as.data.frame(get_tcga_rna())
 colnames(rna_df) <- gsub("\\.", "-", colnames(rna_df))
 
 # load in pam50 subtyping
-pam50_subtyping <- readRDS("data/procdata/TCGA/pam50_subtyping.rds")
+#pam50_subtyping <- readRDS("data/procdata/TCGA/pam50_subtyping.rds")
+pam50 <- readRDS("data/procdata/TCGA/pam50_subtyping_full_cohort.rds")
+pam50_scores <- as.data.frame(pam50$subtype.proba)
+pam50_scores$assigned <- as.character(pam50$subtype)
+rownames(pam50_scores) <- gsub("\\.", "-", rownames(pam50_scores))
 
 # load in TE zscores
 tes <- read.table("data/rawdata/TCGA_TEs/tcga_TE.Zscore.txt")
@@ -79,7 +83,14 @@ toPlot <- toPlot %>%
 ###########################################################
 
 assigned_ARCHE <- unique(mat[,c(2,4)])$signature_assign
-subtype <- unique(mat[,c(2,5)])$subtype
+
+# get subtype
+rownames(pam50_scores)[rownames(pam50_scores) == "TCGA-A2-A0T4"] <- 'TCGA-A2-A0T4-1'
+to_add <- pam50_scores['TCGA-A2-A0T4-1',]
+rownames(to_add) <- 'TCGA-A2-A0T4-2'
+pam50_scores <- rbind(pam50_scores, to_add)
+
+subtype <- pam50_scores$assigned[match(unique(mat$variable), rownames(pam50_scores))]
 
 ###########################################################
 # Format mutation data
@@ -108,7 +119,8 @@ format_rna <- function(rna) {
     return(rna)
 }
 
-pam50 <- as.data.frame(t(pam50_subtyping$subtype.proba))
+pam50 <- as.data.frame(t(pam50$subtype.proba))
+colnames(pam50) <- gsub("\\.", "-", colnames(pam50))
 pam50 <- format_rna(pam50)
 
 ###########################################################
@@ -269,6 +281,9 @@ ht5 <- Heatmap(
     row_title_side = "left",
     row_title_rot = 90,
     row_title_gp = gpar(fontsize = 10),
+    column_title = "Tumour Samples",
+    column_title_side = "bottom",
+    column_title_gp = gpar(fontsize = 10),
     border = border_col
 )
 
@@ -277,7 +292,7 @@ ht5 <- Heatmap(
 ###########################################################
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
-png(filename, width = 11, height = 8, res = 600, units = "in")
+png(filename, width = 11, height = 7, res = 600, units = "in")
 ht1 %v% ht2 %v% ht3 %v% ht4 %v% ht5
 dev.off()
 
