@@ -422,3 +422,19 @@ Enriched TEs from https://aacrjournals.org/cancerdiscovery/article/13/11/2470/72
 
 TE regions from Lupien Lab (A.N.)
 ```
+### data/rawdata/lineages
+
+```markdown
+## Lineage Associated Genes
+
+File: 43018_2024_773_MOESM2_ESM.xlsx - S5 Supplementary Table 5.csv
+Source: https://www.nature.com/articles/s43018-024-00773-6
+
+```
+```markdown
+## Stemness Scores TCGA
+
+File: 1-s2.0-S0092867418303581-mmc1.xlsx
+Source: https://pubmed.ncbi.nlm.nih.gov/29625051/
+
+```
