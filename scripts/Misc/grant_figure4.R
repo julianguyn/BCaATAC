@@ -37,6 +37,40 @@ preclinical$Sample <- sub("_merged", "", sub("_30", "", preclinical$Sample))
 preclinical$Sample[preclinical$Sample == "CAMA1_mouse_ctDNA"] <- "CAMA1_xeno"
 
 ###########################################################
+# Plot preclinical scores
+###########################################################
+
+preclinical$Sample <- factor(
+    preclinical$Sample,
+    levels = c("CAMA1_xeno", "CAMA1", "MCF7", "BPTO95"),
+    labels = c("Xenograft (CAMA-1)", "CCL (CAMA-1)", "CCL (MCF-7)", "Organoid"))
+
+filename <- "data/results/figures/Misc/preclinical_scores_time.png"
+
+p1 <- ggplot(preclinical, aes(x = ARCHE, y = Score, fill = Sample)) + 
+    geom_bar(stat = "identity", position = position_dodge(), color = "black") + 
+    geom_hline(yintercept = 0) + 
+    scale_fill_manual(
+        "Sample Type",
+        values = c("#655560", "#C57B57", "#F1AB86", "#F7DBA7"),
+        labels = ) +
+    scale_y_continuous(limits = c(-0.01, 0.55), expand = c(0,0)) +
+    theme_bw() +
+    theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        legend.position = "inside",
+        legend.position.inside = c(0.98, 0.98),
+        legend.justification = c("right", "top"),
+        legend.background = element_rect(color = "black", linewidth = 0.2), 
+        plot.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
+    ) + 
+    labs(y = "ARCHE Score")
+p <- p1 / p2 + plot_layout(height = c(20, 1))
+ggsave(filename, p, width = 4, height = 3.5)
+
+###########################################################
 # Plot CICADA scores
 ###########################################################
 
@@ -48,46 +82,33 @@ cicada$time <- cicada_meta$time_id[match(cicada$Sample, cicada_meta$sample_id)]
 cicada <- cicada[complete.cases(cicada),]
 
 filename <- "data/results/figures/Misc/cicada_scores_time.png"
-png(filename, width=6, height=4, units='in', res = 600, pointsize=80)
-ggplot(cicada, aes(x = ARCHE, y = Score, fill = time)) +
+
+p1 <- ggplot(cicada, aes(x = ARCHE, y = Score, fill = time)) +
     geom_boxplot() + 
-    geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
     geom_jitter(aes(fill = time), shape = 21, stroke = 0.2,
                 position = position_jitterdodge(jitter.width = 0.2)) +
     scale_fill_manual("Sample Type", values = c("#73937E", "#CEB992")) +
-    theme_minimal() +
+    theme_bw() +
     theme(
-        axis.title.x = element_blank(),
-        panel.border = element_rect(),
-        legend.key.size = unit(0.7, 'cm')
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.title.x = element_blank(),
+      legend.position = "inside",
+      legend.position.inside = c(0.98, 0.98),
+      legend.justification = c("right", "top"),
+      legend.background = element_rect(color = "black", linewidth = 0.2), 
+      plot.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
     ) +
     labs(y = "ARCHE Score")
-dev.off()
 
-###########################################################
-# Plot preclinical scores
-###########################################################
-
-preclinical$Sample <- factor(
-    preclinical$Sample,
-    levels = c("CAMA1_xeno", "CAMA1", "MCF7", "BPTO95"),
-    labels = c("Xenograft (CAMA-1)", "CCL (CAMA-1)", "CCL (MCF-7)", "Organoid"))
-
-filename <- "data/results/figures/Misc/preclinical_scores_time.png"
-png(filename, width=6, height=4, units='in', res = 600, pointsize=80)
-ggplot(preclinical, aes(x = ARCHE, y = Score, fill = Sample)) + 
-    geom_bar(stat = "identity", position = position_dodge(), color = "black") + 
-    geom_hline(yintercept = 0) + 
-    scale_fill_manual(
-        "Sample Type",
-        values = c("#655560", "#C57B57", "#F1AB86", "#F7DBA7"),
-        labels = ) +
-    scale_y_continuous(limits = c(-0.03, 0.55)) +
-    theme_minimal() +
+p2 <- ggplot(cicada, aes(x = ARCHE, y = "", fill = ARCHE)) +  
+    geom_tile(color = "black") +
+    scale_fill_manual(values = ARCHE_pal) +
+    theme_void() +
     theme(
-        axis.title.x = element_blank(),
-        panel.border = element_rect(),
-        legend.key.size = unit(0.7, 'cm')
-    ) + 
-    labs(y = "ARCHE Score")
-dev.off()
+      axis.text.x = element_text(size = 9, vjust = 0),
+      legend.position = "none",
+      plot.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
+    )
+p <- p1 / p2 + plot_layout(height = c(20, 1))
+ggsave(filename, p, width = 4, height = 3.5)

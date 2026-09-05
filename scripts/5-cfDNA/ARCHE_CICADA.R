@@ -127,8 +127,6 @@ coverage_panel("CICADA-BloodvsER-25", meta)
 # Compare matched baseline and progression samples
 ###########################################################
 
-df <- c_bloodvser_10k
-
 # helper function to compare baseline and progression
 plot_score_progression <- function(df, label) {
 

@@ -29,6 +29,7 @@ subtype_pal <- c(
     "unknown" = "gray",
     "TNBC" = "#AF4C5B",
     "ER" = "#363E62",
+    "ER+" = "#363E62",
     "HER2" = "#EED4D3",
     "TPBC" = "#B3B4D0",
     "Basal/TNBC" = "#AF4C5B",

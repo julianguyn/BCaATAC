@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
   library(ComplexHeatmap)
   library(circlize)
   library(matrixStats)
+  library(patchwork)
 })
 
 source("utils/score_arche_cfDNA.R")
@@ -60,6 +61,53 @@ low_TF <- tf$Sample[tf$Tumour_Fraction < 0.05] #24 out of 58
 reflect <- reflect[-which(reflect$Sample %in% low_TF),] #34 samples left
 
 ###########################################################
+# PLOTS FOR CIHR
+###########################################################
+
+plot_scores <- function(scores, group) {
+
+  scores <- scores[scores$Subtype != "HER2",]
+  scores <- scores[scores$Subset == group,]
+  scores$Score[scores$ARCHE == "ARCHE1"] <- scores$Score[scores$ARCHE == "ARCHE1"] - 0.2
+
+  p1 <- ggplot(scores, aes(x = ARCHE, y = Score + 0.04, fill = Subtype)) +
+    geom_boxplot(outlier.shape = NA, alpha = 0.85) +
+    geom_jitter(
+          shape = 21,
+          position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.75)
+      ) +
+    scale_fill_manual(values = subtype_pal) +
+    theme_bw() +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.title.x = element_blank(),
+      legend.position = "inside",
+      legend.position.inside = c(0.98, 0.98),
+      legend.justification = c("right", "top"),
+      legend.background = element_rect(color = "black", linewidth = 0.2), 
+      plot.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
+    ) + labs(y = "ARCHE Score")
+
+  p2 <- ggplot(scores, aes(x = ARCHE, y = "", fill = ARCHE)) +  
+    geom_tile(color = "black") +
+    scale_fill_manual(values = ARCHE_pal) +
+    theme_void() +
+    theme(
+      axis.text.x = element_text(size = 9, vjust = 0),
+      legend.position = "none",
+      plot.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
+    )
+
+  p <- p1 / p2 + plot_layout(height = c(20, 1))
+  filename <- paste0("data/results/figures/5-cfDNA/REFLECT/scores/CIHR2026_", group, "_", analysis, "_scores.png")
+  ggsave(filename, p, width = 4, height = 3.5)
+}
+
+plot_scores(reflect, "10k")
+plot_scores(reflect, "20k")
+
+###########################################################
 # Plot heatmap
 ###########################################################
 
@@ -78,14 +126,16 @@ plot_heatmap <- function(scores, group) {
     t() %>% as.data.frame()
 
   # set colours for plotting
-  lim <- max(c(abs(min(df)), max(df)))
-  score_pal = colorRamp2(seq(-lim, lim, length = 3), c("#C3BFCC", "#F8F1F8", "#077293"))
+  score_pal = colorRamp2(seq(0, 1, length = 5), c("#EBBE9B", "#E7A977", "#C7CB85", "#7EA172", "#502419"))
   
   ha <- HeatmapAnnotation(
       Subtype = meta$Subtype_final[match(colnames(df), meta$id_6b)],
       SeqBatch = meta$batch_num[match(colnames(df), meta$id_6b)],
       PipelineBatch = meta$Pipeline_batch[match(colnames(df), meta$id_6b)],
       col = list(Subtype = cfDNA_subtype_pal))
+  ht <- Heatmap(df, cluster_rows = FALSE, name = "ARCHE\nScore", col = score_pal,
+            column_title = "Samples", column_title_side = "bottom", column_names_gp = gpar(fontsize = 9),
+            row_names_gp = gpar(fontsize = 10), top_annotation = ha)
 
     filename <- paste0("data/results/figures/5-cfDNA/REFLECT/scores/", group, "_", analysis, "_heatmap.png")
     png(filename, width = 9, height = 4, res = 600, units = "in")
