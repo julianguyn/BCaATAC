@@ -34,6 +34,31 @@ pam50_scores <- as.data.frame(pam50$subtype.proba)
 pam50_scores$assigned <- as.character(pam50$subtype)
 
 ###########################################################
+# Load in CV predictions
+###########################################################
+
+compiled <- data.frame(matrix(nrow=0, ncol=0))
+
+R2 <- c()
+
+for (file in list.files(dir, pattern = "en_predictions.csv")) {
+    arche <- toupper(sub("_.*", "", file))
+    df <- read.csv(paste0(dir, "/", file))
+    df$ARCHE <- arche
+    df$error <- df$y_true - df$y_pred
+
+    errors <- c()
+    y_true <- c()
+
+    for (sample in unique(df$sample)) {
+        subset_df <- df[df$sample == sample,]
+        errors <- c(errors, subset_df$error[abs(subset_df$error) == min(abs(subset_df$error))])
+        y_true <- c(y_true, subset_df$y_true[subset_df$error == min(subset_df$error)])
+    }
+    R2 <- c(R2, 1 - sum(errors^2) / sum((y_true - mean(y_true))^2))
+}
+
+###########################################################
 # Correlate ARCHE-G and PAM50 scores
 ###########################################################
 
