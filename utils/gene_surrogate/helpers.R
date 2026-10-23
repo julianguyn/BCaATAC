@@ -16,7 +16,7 @@ calculate_HR <- function(df, group, ref) {
 }
 
 # helper function to plot survival plot
-indiv_plot_survival <- function(df, group, ref, cutoff, pal) {
+indiv_plot_survival <- function(df, group, ref, cutoff, pal, outdir = "data/results/figures/1-Signatures/ARCHEG_survivalplots") {
 
     df$ref <- ifelse(df[[ref]] == group, group, "Other")
     df$ref <- factor(df$ref, levels = c("Other", group))
@@ -43,14 +43,15 @@ indiv_plot_survival <- function(df, group, ref, cutoff, pal) {
         )
     p$table <- p$table + theme(plot.title = element_text(size = 12))
 
-    filename <- paste0("data/results/figures/1-Signatures/ARCHEG_survivalplots/", group, "_", as.character(cutoff/365), ".png")
+    filename <- paste0(outdir, "/", group, "_", as.character(cutoff/365), ".png")
     png(filename, width=4.5, height=5, units='in', res = 600, pointsize=80)
     print(p)
     dev.off()
 }
 
 # function to plot survival plots
-plot_survival <- function(archeG, pheno, cutoff) {
+# highlight shades the rows that were significant in tcga
+plot_survival <- function(archeG, pheno, cutoff, outdir = "data/results/figures/1-Signatures/ARCHEG_survivalplots", highlight = TRUE) {
 
     cutoff <- cutoff*365
     pheno$time_cutoff <- pmin(pheno$overall_survival, cutoff)
@@ -63,12 +64,12 @@ plot_survival <- function(archeG, pheno, cutoff) {
     HR_res <- data.frame(matrix(nrow=0, ncol=0))
 
     for (arche in paste0("ARCHE", 1:6)) {
-        indiv_plot_survival(archeG, arche, "ARCHEG", cutoff, pal = ARCHE_pal)
+        indiv_plot_survival(archeG, arche, "ARCHEG", cutoff, pal = ARCHE_pal, outdir = outdir)
         HR_res <- rbind(HR_res, calculate_HR(archeG, arche, "ARCHEG"))
     }
 
     for (subtype in unique(archeG$PAM50)) {
-        indiv_plot_survival(archeG, subtype, "PAM50", cutoff, pal = subtype_pal)
+        indiv_plot_survival(archeG, subtype, "PAM50", cutoff, pal = subtype_pal, outdir = outdir)
         HR_res <- rbind(HR_res, calculate_HR(archeG, subtype, "PAM50"))
     }
     
@@ -87,11 +88,18 @@ plot_survival <- function(archeG, pheno, cutoff) {
     toPlot$n <- count$N[match(toPlot$Group, rownames(count))]
 
 
+    shade <- function(xmin, xmax) {
+        if (!highlight) return(NULL)
+        list(
+            annotate("rect", xmin = xmin, xmax = xmax, ymin =2.5, ymax = 3.5, fill = "#CAE2BC", alpha = 0.5),
+            annotate("rect", xmin = xmin, xmax = xmax, ymin =5.5, ymax = 6.5, fill = "#CAE2BC", alpha = 0.5),
+            annotate("rect", xmin = xmin, xmax = xmax, ymin =6.5, ymax = 7.5, fill = "#C17F7F", alpha = 0.5),
+            annotate("rect", xmin = xmin, xmax = xmax, ymin =8.5, ymax = 9.5, fill = "#C17F7F", alpha = 0.5)
+        )
+    }
+
     p1 <- ggplot(toPlot, aes(x = HR, y = Group)) +
-        annotate("rect", xmin = 0.3, xmax = 5.2, ymin =2.5, ymax = 3.5, fill = "#CAE2BC", alpha = 0.5) +
-        annotate("rect", xmin = 0.3, xmax = 5.2, ymin =5.5, ymax = 6.5, fill = "#CAE2BC", alpha = 0.5) +
-        annotate("rect", xmin = 0.3, xmax = 5.2, ymin =6.5, ymax = 7.5, fill = "#C17F7F", alpha = 0.5) +
-        annotate("rect", xmin = 0.3, xmax = 5.2, ymin =8.5, ymax = 9.5, fill = "#C17F7F", alpha = 0.5) +
+        shade(0.3, 5.2) +
         geom_vline(xintercept = 1, linetype = "dashed", color = "grey50") +
         geom_errorbarh(aes(xmin = lower, xmax = upper), width = 0.15, linewidth = 0.8) +
         geom_point(aes(size = n, fill = Group), shape = 22, color = "black") +
@@ -112,22 +120,18 @@ plot_survival <- function(archeG, pheno, cutoff) {
         )
 
     p2 <- ggplot(toPlot, aes(x = 0, y = Group, label = label_hr)) +
-        annotate("rect", xmin = 0, xmax = 1.5, ymin =2.5, ymax = 3.5, fill = "#CAE2BC", alpha = 0.5) +
-        annotate("rect", xmin = 0, xmax = 1.5, ymin =5.5, ymax = 6.5, fill = "#CAE2BC", alpha = 0.5) +
-        annotate("rect", xmin = 0, xmax = 1.5, ymin =6.5, ymax = 7.5, fill = "#C17F7F", alpha = 0.5) +
-        annotate("rect", xmin = 0, xmax = 1.5, ymin =8.5, ymax = 9.5, fill = "#C17F7F", alpha = 0.5) +
+        shade(0, 1.5) +
         geom_text(hjust = 0, size = 4.5) + scale_x_continuous(limits = c(0, 1.5), expand = c(0, 0)) + theme_void() 
     p3 <- ggplot(toPlot, aes(x = 0, y = Group, label = label_p)) +
-        annotate("rect", xmin = 0, xmax = 0.6, ymin =2.5, ymax = 3.5, fill = "#CAE2BC", alpha = 0.5) +
-        annotate("rect", xmin = 0, xmax = 0.6, ymin =5.5, ymax = 6.5, fill = "#CAE2BC", alpha = 0.5) +
-        annotate("rect", xmin = 0, xmax = 0.6, ymin =6.5, ymax = 7.5, fill = "#C17F7F", alpha = 0.5) +
-        annotate("rect", xmin = 0, xmax = 0.6, ymin =8.5, ymax = 9.5, fill = "#C17F7F", alpha = 0.5) +
+        shade(0, 0.6) +
         geom_text(hjust = 0, size = 4.5) + scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) + theme_void() +
         theme(plot.margin = margin(5, 0, 5, 5))
 
     p <- p1 + p2 + p3 + plot_layout(width = c(2, 1, 1))
 
-    filename <- paste0("data/results/figures/1-Signatures/ARCHEG_survivalplots/HR_", as.character(cutoff/365), ".png")
+    filename <- paste0(outdir, "/HR_", as.character(cutoff/365), ".png")
     ggsave(filename, p, width = 6, height = 4)
+
+    return(HR_res)
 
 }

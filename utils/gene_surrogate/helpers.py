@@ -5,6 +5,7 @@ from sklearn import linear_model
 from sklearn.metrics import root_mean_squared_error, mean_absolute_error, make_scorer
 from scipy.stats import spearmanr, pearsonr
 from collections import Counter
+import joblib
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 newcmp = mcolors.LinearSegmentedColormap.from_list("custom", ["blue", "red"])
@@ -70,6 +71,15 @@ def corr_features(X_subset, thres):
 
     return X_subset
 
+def zscore_genes(df):
+    """
+    Z-score each gene (column) within a cohort, dropping genes with no variance
+    """
+    sd = df.std(axis=0)
+    df = df.loc[:, sd > 0]
+    return (df - df.mean(axis=0)) / sd[sd > 0]
+
+
 def spearman_scorer(y_true, y_pred):
     """
     Helper function to create scorer
@@ -77,7 +87,7 @@ def spearman_scorer(y_true, y_pred):
     return spearmanr(y_true, y_pred).correlation
 
 
-def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=True):
+def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=True, save_model=True):
 
     # initialize variables to store results
     fold_preds = []
@@ -188,6 +198,15 @@ def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=Tr
         "y_pred": y_pred.values
     })
     full_preds.to_csv(("data/results/data/"+path+"full_cohort_predictions.csv"), index=False)
+
+    # save final model with its ordered feature list to apply to new cohorts
+    if save_model:
+        joblib.dump({
+            "model": final_model,
+            "features": list(X.columns),
+            "params": final_params,
+            "target": y.name
+        }, f"data/results/data/{path}model.joblib")
 
     if features:
         feature_freq = pd.DataFrame.from_dict(feature_counter, orient='index', columns=['count'])

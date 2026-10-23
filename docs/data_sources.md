@@ -438,3 +438,13 @@ File: 1-s2.0-S0092867418303581-mmc1.xlsx
 Source: https://pubmed.ncbi.nlm.nih.gov/29625051/
 
 ```
+
+### data/rawdata/metabric
+
+```markdown
+## Metabric Clinical and Genomics Data
+
+Date: October 23, 2026
+Source: https://www.cbioportal.org/study/summary?id=brca_metabric
+
+```
