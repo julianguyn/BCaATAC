@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
     library(ComplexHeatmap)
     library(circlize)
     library(matrixStats)
+    library(TCGAbiolinks)
 })
 
 source("utils/plots/signatures.R")
@@ -28,6 +29,11 @@ set.seed(123)
 # load in metadata
 meta <- read.csv("data/rawdata/TCGA/TCGA_sourcefiles.csv")
 meta$Sample.Name <- gsub("\\.", "-", meta$Sample.Name)
+
+# read in tcga clinical data
+pheno <- read.table("data/rawdata/tcga/Human__TCGA_BRCA__MS__Clinical__Clinical__01_28_2016__BI__Clinical__Firehose.tsi", header = TRUE, row.names = 1)
+pheno <- t(pheno) |> as.data.frame()
+rownames(pheno) <- gsub("\\.", "-", rownames(pheno))
 
 # get signature scores from NMF
 mat <- get_arche_tcga()
@@ -91,6 +97,30 @@ rownames(to_add) <- 'TCGA-A2-A0T4-2'
 pam50_scores <- rbind(pam50_scores, to_add)
 
 subtype <- pam50_scores$assigned[match(unique(mat$variable), rownames(pam50_scores))]
+
+# get histological type
+toBind <- pheno[rownames(pheno) == "TCGA-A2-A0T4",]
+pheno <- rbind(pheno, toBind, toBind)
+rownames(pheno) <- c(rownames(pheno)[1:1097], "TCGA-A2-A0T4-1", "TCGA-A2-A0T4-2")
+
+histo <- pheno$histological_type[match(unique(mat$variable), rownames(pheno))]
+histo[histo == "infiltratingductalcarcinoma"] <- "Infiltrating Ductal Carcinoma"
+histo[histo == "infiltratinglobularcarcinoma"] <- "Infiltrating Lobular Carcinoma"
+histo[histo == "metaplasticcarcinoma"] <- "Metaplastic Carcinoma"
+histo[histo == "mixedhistology(pleasespecify)"] <- "Mixed Histology"
+histo[histo == "other,specify"] <- "Other"
+
+# get receptor status (last downloaded Oct27, 2026)
+query <- GDCquery(project = "TCGA-BRCA", data.category = "Clinical",
+                  data.type = "Clinical Supplement", data.format = "BCR Biotab")
+GDCdownload(query)
+clin <- GDCprepare(query)$clinical_patient_brca |> as.data.frame()
+clin <- clin[-c(1:2),colnames(clin) %in% c("bcr_patient_barcode", "er_status_by_ihc", "pr_status_by_ihc", "her2_status_by_ihc")]
+toBind <- clin[clin$bcr_patient_barcode == "TCGA-A2-A0T4",]
+clin <- rbind(clin, toBind, toBind)
+clin$bcr_patient_barcode[1098:1099] <- c("TCGA-A2-A0T4-1", "TCGA-A2-A0T4-2")
+
+clin <- clin[match(unique(mat$variable), clin$bcr_patient_barcode),]
 
 ###########################################################
 # Format mutation data
@@ -158,12 +188,36 @@ col_fun <- colorRamp2(
     cols
 )
 
+receptor_pal <- c(
+    "Positive" = "#5A628A",
+    "Negative" = "#E7E7E7",
+    "Equivocal" = "#82A7A6",
+    "Indeterminate" = "#031926",
+    "[Not Evaluated]" = "#A4A4A4"
+)
+
 # subtype annotation
 ha1 <- HeatmapAnnotation(
     'ARCHE' = assigned_ARCHE,
     'PAM50' = subtype,
+    'ER Status' = clin$er_status_by_ihc,
+    'PR Status' = clin$pr_status_by_ihc,
+    'HER2 Status' = factor(clin$her2_status_by_ihc, levels = names(receptor_pal)),
+    'Histological Type' = histo,
     'gap_spacer' = anno_empty(border = FALSE, height = unit(1, "mm")),
-    col = list('ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal),
+    col = list(
+        'ARCHE' = ARCHE_pal, 'PAM50' = subtype_pal, 'Histological Type' = histo_pal,
+        'ER Status' = receptor_pal, 'PR Status' = receptor_pal, 'HER2 Status' = receptor_pal
+    ),
+    show_legend = c('ER Status' = FALSE, 'PR Status' = FALSE),
+    annotation_legend_param = list(
+        'HER2 Status' = list(
+            title = "IHC Status",
+            at = names(receptor_pal)
+        )
+    ),
+    annotation_height = unit(c(5, 5, 3.5, 3.5, 3.5, 3.5, 0.5), "mm"), # smaller clinical bars
+    gap = unit(c(0.5, 1, 0.3, 0.3, 0.5, 0), "mm"), # gap between subtype and clinical bars
     annotation_name_side = "left",
     annotation_name_gp = gpar(fontsize = 9)
 )
