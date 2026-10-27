@@ -123,6 +123,14 @@ pam50 <- as.data.frame(t(pam50$subtype.proba))
 colnames(pam50) <- gsub("\\.", "-", colnames(pam50))
 pam50 <- format_rna(pam50)
 
+# format claudin scores (mean z-scored expression)
+cl_z <- t(scale(t(rna_df[c(claudin_low_up, claudin_low_down),])))
+claudin <- rbind(
+    "CL-up genes" = colMeans(cl_z[claudin_low_up,]),
+    "CL-down genes" = colMeans(cl_z[claudin_low_down,])
+)
+claudin <- format_rna(as.data.frame(claudin))
+
 ###########################################################
 # Format Lehmann data
 ###########################################################
@@ -175,7 +183,7 @@ ht1 <- Heatmap(
     row_title = "ARCHEs",
     row_title_side = "left",
     row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10),
+    row_title_gp = gpar(fontsize = 8),
     border = border_col
 )
 
@@ -205,7 +213,37 @@ ht2 <- Heatmap(
     row_title = "PAM50",
     row_title_side = "left",
     row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10),
+    row_title_gp = gpar(fontsize = 8),
+    border = border_col
+)
+
+###########################################################
+# Claudin score heatmap
+###########################################################
+
+# make colour palette
+n <- max(abs(claudin), na.rm = TRUE)
+cols <- colorRampPalette(c("#6878C9", "#9FA8D6", "#F7FCFD", "#ECC5A2", "#BB8E77"))(9)
+col_fun <- colorRamp2(
+    seq(2,-2,
+        length.out = 9),
+    cols
+)
+
+ht3 <- Heatmap(
+    claudin,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    name = "Claudin\nZScore",
+    column_split = assigned_ARCHE,
+    col = col_fun,
+    row_names_gp = gpar(fontsize = 8),
+    row_names_side = "left",
+    column_names_gp = gpar(fontsize = 8),
+    row_title = "Claudin",
+    row_title_side = "left",
+    row_title_rot = 90,
+    row_title_gp = gpar(fontsize = 8),
     border = border_col
 )
 
@@ -213,7 +251,7 @@ ht2 <- Heatmap(
 # Lehmann heatmap
 ###########################################################
 
-ht3 <- Heatmap(
+ht4 <- Heatmap(
     lm,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
@@ -226,7 +264,7 @@ ht3 <- Heatmap(
     row_title = "Lehmann",
     row_title_side = "left",
     row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10),
+    row_title_gp = gpar(fontsize = 8),
     border = border_col
 )
 
@@ -234,7 +272,7 @@ ht3 <- Heatmap(
 # Mutation heatmap
 ###########################################################
 
-ht4 <- Heatmap(
+ht5 <- Heatmap(
     mut_bin,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
@@ -247,7 +285,7 @@ ht4 <- Heatmap(
     row_title = "Mutations",
     row_title_side = "left",
     row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10),
+    row_title_gp = gpar(fontsize = 8),
     border = border_col
 )
 
@@ -256,7 +294,8 @@ ht4 <- Heatmap(
 ###########################################################
 
 tes <- tes[,match(colnames(toPlot), colnames(tes))] |> as.matrix()
-rownames(tes) <- c("", "")
+tes <- tes[1,,drop=FALSE] # both the same
+rownames(tes) <- "All hg38"
 
 cols <- rev(brewer.pal(9, "PuOr"))
 col_fun <- colorRamp2(
@@ -267,7 +306,7 @@ col_fun <- colorRamp2(
 )
 
 
-ht5 <- Heatmap(
+ht6 <- Heatmap(
     tes,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
@@ -280,7 +319,7 @@ ht5 <- Heatmap(
     row_title = "TEs",
     row_title_side = "left",
     row_title_rot = 90,
-    row_title_gp = gpar(fontsize = 10),
+    row_title_gp = gpar(fontsize = 8),
     column_title = "Tumour Samples",
     column_title_side = "bottom",
     column_title_gp = gpar(fontsize = 10),
@@ -292,8 +331,8 @@ ht5 <- Heatmap(
 ###########################################################
 
 filename <- "data/results/figures/1-Signatures/figure1_heatmap.png"
-png(filename, width = 11, height = 7, res = 600, units = "in")
-ht1 %v% ht2 %v% ht3 %v% ht4 %v% ht5
+png(filename, width = 11, height = 7.5, res = 600, units = "in")
+ht1 %v% ht2 %v% ht3 %v% ht4 %v% ht5 %v% ht6
 dev.off()
 
 ###########################################################
