@@ -37,6 +37,12 @@ rownames(pheno) <- gsub("\\.", "-", rownames(pheno))
 # load in TMB
 tmb <- readRDS("data/procdata/TCGA/tmb.rds")
 
+# load in pam50 subtyping
+pam50 <- readRDS("data/procdata/TCGA/pam50_subtyping_full_cohort.rds")
+pam50_scores <- as.data.frame(pam50$subtype.proba)
+pam50_scores$assigned <- as.character(pam50$subtype)
+rownames(pam50_scores) <- gsub("\\.", "-", rownames(pam50_scores))
+
 ###########################################################
 # Merge clinical variables and format
 ###########################################################
@@ -44,10 +50,11 @@ tmb <- readRDS("data/procdata/TCGA/tmb.rds")
 for (column in colnames(pheno)) {
     meta[[column]] <- pheno[[column]][match(meta$Sample.Name, rownames(pheno))]
 }
+meta$Subtype <- pam50_scores$assigned[match(meta$Sample.Name, rownames(pam50_scores))]
 
 # format clinical vars
-meta$Subtype <- factor(meta$Subtype, levels = rev(names(subtype_pal)))
-meta$ARCHE <- factor(meta$ARCHE, levels = rev(names(ARCHE_pal)))
+meta$Subtype <- factor(meta$Subtype, levels = names(subtype_pal))
+meta$ARCHE <- factor(meta$ARCHE, levels = names(ARCHE_pal))
 meta$Tumor_purity <- as.numeric(meta$Tumor_purity)
 meta$years_to_birth <- as.numeric(meta$years_to_birth)
 meta$overall_survival <- as.numeric(meta$overall_survival)
@@ -58,56 +65,24 @@ meta$pathologic_stage <- factor(meta$pathologic_stage, levels = rev(names(stage_
 # Plot subtype/ARCHE
 ###########################################################
 
-p <- ggplot(meta, aes(y = .data[[ref]], fill = .data[[ref]])) +
+p4 <- ggplot(meta, aes(x = .data[[ref]], fill = .data[[ref]])) +
   geom_bar(color = "black", width = 0.95, linewidth = 0.3) +
   geom_text(
     stat = "count",
-    aes(label = after_stat(count), colour = .data[[ref]] %in% c("Basal", "LumB")),
-    x = 1.25,
-    hjust = 0,
-    vjust = 0.5,
+    aes(label = after_stat(count), colour = .data[[ref]] %in% c("Basal", "LumB", "Normal", "ARCHE1", "ARCHE5")),
+    y = 2.5,
     size = 3
   ) +
+  scale_y_continuous(limits = c(0, 24), expand = c(0,0)) +
   scale_fill_manual(values = main_pal) +
   scale_colour_manual(values = c("FALSE" = "black", "TRUE" = "white"), guide = "none") +
-  theme_bw() +
+  theme_classic() +
   theme(
     legend.position = "none",
-    axis.title.y = element_blank(),
-    axis.title.x = element_text(size = 10)) +
-  labs(x = "Tumour Sample Count")
-
-ggsave(paste0(OUTDIR, ".png"), p, width = 3, height = 2, bg = "transparent")
-
-###########################################################
-# Plot stage and ARCHE score
-###########################################################
-
-# helper function to plot proportions
-plot_prop <- function(column_name, legend_title, pal, filename) {
-    p <- ggplot(meta, aes(y = .data[[ref]], fill = .data[[column_name]])) +
-        geom_bar(position = "fill", color = "black", width = 0.95, linewidth = 0.3) +
-        scale_x_continuous(labels = scales::percent, limits = c(-0.05, 1.05)) +
-        scale_fill_manual(values = pal) +
-        theme_bw() +
-        theme(
-            axis.title.y = element_blank(),
-            axis.text.y = element_blank(),
-            axis.ticks.y = element_blank(),
-            axis.title.x = element_text(size = 10),
-            legend.position = "none"
-        ) +
-        labs(x = "Proportion", fill = legend_title)
-
-    ggsave(paste0(OUTDIR, filename), p, width = 2, height = 2, bg = "transparent")
-}
-
-plot_prop("pathologic_stage", "Stage", stage_pal, "stage.png")
-if (ref == "Subtype") {
-    plot_prop("ARCHE", "ARCHE", comp_pal, "ARCHE.png")
-} else {
-    plot_prop("Subtype", "Subtype", comp_pal, "subtype.png")
-}
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(angle = 90, hjust=1, vjust = 0.5),
+    axis.title.y = element_text(size = 10)) +
+  labs(y = "No. Samples")
 
 ###########################################################
 # Plot distribution of other clinical variables
@@ -116,50 +91,80 @@ if (ref == "Subtype") {
 # helper function to plot boxplots
 plot_boxplot <- function(column_name, axis_name, filename) {
 
-    p <- ggplot(meta, aes(y = .data[[ref]], x = .data[[column_name]], fill = .data[[ref]])) +
-        geom_boxplot() +
-        geom_jitter(height = 0.1) +
+    p <- ggplot(meta, aes(x = .data[[ref]], y = .data[[column_name]], fill = .data[[ref]])) +
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = 0.1, alpha = 0.6) +
         scale_fill_manual(values = main_pal) +
-        theme_bw() +
+        theme_classic() +
         theme(
             legend.position = "none",
-            axis.title.y = element_blank(),
-            axis.text.y = element_blank(),
-            axis.ticks.y = element_blank(),
-            axis.title.x = element_text(size = 10)
+            axis.title.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.title.y = element_text(size = 9)
         ) +
-        labs(x = axis_name)
-
-    ggsave(paste0(OUTDIR, filename), p, width = 2, height = 2, bg = "transparent")
-
+        labs(y = axis_name) 
+    return(p)
 }
 
-plot_boxplot("Tumor_purity", "Tumour Purity", "purity.png")
-plot_boxplot("years_to_birth", "Age", "age.png")
-plot_boxplot("overall_survival", "OS (Days)", "os.png")
+p1 <- plot_boxplot("Tumor_purity", "Tumour Purity", "purity.png") + ylim(c(0.4, 1.05))
+p2 <- plot_boxplot("years_to_birth", "Age", "age.png")
 
 ###########################################################
 # Plot TMB box plots
 ###########################################################
 
-tmb$Subtype <- factor(tmb$Subtype, levels = rev(names(subtype_pal)))
-tmb$ARCHE <- factor(tmb$ARCHE, levels = rev(names(ARCHE_pal)))
+tmb$Subtype <- pam50_scores$assigned[match(tmb$Sample_ID, rownames(pam50_scores))]
+tmb$Subtype <- factor(tmb$Subtype, levels = names(subtype_pal))
+tmb$ARCHE <- factor(tmb$ARCHE, levels = names(ARCHE_pal))
 
-p <- ggplot(tmb, aes(y = .data[[ref]], x = total_perMB_log, fill = .data[[ref]])) +
-        geom_boxplot() +
-        geom_jitter(height = 0.1) +
+p3 <- ggplot(tmb, aes(y = .data[[ref]], x = total_perMB_log, fill = .data[[ref]])) +
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(height = 0.1, alpha = 0.6) +
         scale_fill_manual(values = main_pal) +
-        scale_x_continuous(limits = c(-0.9, 0.9), breaks = seq(-0.8, 0.8, by = 0.4)) +
-        theme_bw() +
+        scale_x_continuous(limits = c(-0.85, 1), breaks = seq(-0.8, 0.8, by = 0.4)) +
+        theme_classic() +
         theme(
             legend.position = "none",
-            axis.title.y = element_blank(),
-            axis.text.y = element_blank(),
-            axis.ticks.y = element_blank(),
-            axis.title.x = element_text(size = 10)
+            axis.title.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.title.y = element_text(size = 9)
         ) +
-        labs(x = "TMB/MB (log10)")
-ggsave(paste0(OUTDIR, "tmb.png"), p, width = 2, height = 2, bg = "transparent")
+        labs(x = "TMB/MB (log10)") +
+        coord_flip()
+
+
+###########################################################
+# ANOVA and Tukey
+###########################################################
+
+TukeyHSD(aov(Tumor_purity ~ ARCHE, data = meta)) # largest ARCHE5 p is 0.006
+TukeyHSD(aov(years_to_birth ~ ARCHE, data = meta))
+TukeyHSD(aov(total_perMB_log ~ ARCHE, data = tmb)) # ARCHE3-6 p is 0.0097
+
+TukeyHSD(aov(Tumor_purity ~ Subtype, data = meta))
+TukeyHSD(aov(years_to_birth ~ Subtype, data = meta))
+TukeyHSD(aov(total_perMB_log ~ Subtype, data = tmb)) # LumA-Basal p = 0.021, LumA-HER2 p = 0.00004, LumB-HER2 p = 0.04 
+
+if (ref == "ARCHE") {
+    p1 <- p1 + annotate("text", x = "ARCHE5", y = 1, label = "**", size = 4)
+    p3 <- p3 + geom_signif(y_position = 0.77, xmin = 3, xmax = 6, annotation = "*", tip_length = 0, textsize = 4, vjust = 0.55)
+} else {
+    p3 <- p3 +
+        geom_signif(y_position = 0.7, xmin = 2, xmax = 3, annotation = "**", tip_length = 0, textsize = 4, vjust = 0.55) +
+        geom_signif(y_position = 0.84, xmin = 1, xmax = 3, annotation = "*", tip_length = 0, textsize = 4, vjust = 0.55) +
+        geom_signif(y_position = 0.98, xmin = 2, xmax = 4, annotation = "*", tip_length = 0, textsize = 4, vjust = 0.55)
+}
+
+###########################################################
+# Merge all plots
+###########################################################
+
+p <- p1 / p3 / p2 / p4 + plot_layout(height = c(2,2,2,1))
+w <- switch(ref, ARCHE = 2, Subtype = 1.8)
+h <- switch(ref, ARCHE = 6, Subtype = 5.9)
+ggsave(paste0(OUTDIR, "boxplots.png"), p, width = w, height = h, bg = "transparent")
 
 ###########################################################
 # Plot survival plots
