@@ -107,7 +107,7 @@ toPlot$ARCHE <- factor(toPlot$ARCHE, levels = paste0("ARCHE", 1:6))
 
 # format cancer type labels
 names(cancer_type_pal) <- sub("TCGA-", "", names(cancer_type_pal))
-toPlot$Label <- ifelse(toPlot$value > 50, sub("TCGA-", "", as.character(toPlot$Cancer)), "ZScore < 50")
+toPlot$Label <- ifelse(toPlot$value > 50, sub("TCGA-", "", as.character(toPlot$Cancer)), "other")
 toPlot$Label <- factor(toPlot$Label, levels = names(cancer_type_pal))
 toPlot$Label <- droplevels(toPlot$Label)
 
