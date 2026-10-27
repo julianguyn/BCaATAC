@@ -208,6 +208,14 @@ hallmark_pal <- c(
     "Signaling" = "#EBC4C6"
 )
 
+histo_pal <- c(
+    "Infiltrating Ductal Carcinoma" = "#9498bb",
+    "Infiltrating Lobular Carcinoma" = "#613F75",
+    "Metaplastic Carcinoma" = "#efb787",
+    "Mixed Histology" = "#E5C3D1",
+    "Other" = na_value
+)
+
 sbs_pal <- c(
   "Clock-like"             = "#999999",
   "APOBEC"                 = "#EBC4C6",
