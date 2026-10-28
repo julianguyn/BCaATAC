@@ -221,54 +221,27 @@ decorate_heatmap_body("Z-score", {
 
 dev.off()
 
+
 ###########################################################
-# Dot plot
+# Volcano plots of downregulation-driven ARCHEs
 ###########################################################
 
-# notable downregulated genes for each ARCHE
-down_genes <- list(
-  ARCHE1 = c("SOX11"),
-  ARCHE2 = c("FOXA1", "AR", "INPP4B"),
-  ARCHE3 = c("PGR", "BCL2"),
-  ARCHE4 = c("ELF5", "PROM1", "SLPI", "PPARGC1A"),
-  ARCHE5 = c("GATA2", "OGN")
+# ARCHE4: loss of luminal progenitor/secretory programme
+# ARCHE2: loss of luminal programme
+volcano_genes <- list(
+  ARCHE4 = c("ELF5", "PROM1", "SLPI", "PPARGC1A", "CLCA2", "PLA2G2A", "SAA1", "LTF", "KRT17", "TRIM29", "IGF1R", "TRH"),
+  ARCHE2 = c("FOXA1", "AR", "INPP4B", "XBP1", "SPDEF", "AGR2", "ERBB4", "TFF3", "MLPH", "FOXC1", "SOX10"),
+  # IO biomarkers to evaluate in ARCHE5
+  ARCHE5 = c("PDCD1", "CD274", "PDCD1LG2", "CTLA4", "HAVCR2", "LAG3", "TIGIT")
 )
 
-# mean z-scored expression per ARCHE
-z <- t(scale(t(log2(counts[unlist(down_genes), meta$Sample.Name] + 1))))
-dots <- do.call(rbind, lapply(names(ARCHE_pal), function(a) {
+for (a in names(volcano_genes)) {
   deg <- read.csv(paste0(dir, "ARCHE_", a, "_vs_Other.csv"))
-  data.frame(
-    gene = rownames(z),
-    ARCHE = a,
-    expr = rowMeans(z[, meta$ARCHE == a]),
-    padj = deg$padj[match(rownames(z), deg$X)]
-  )
-}))
-dots$group <- factor(rep(names(down_genes), lengths(down_genes)), levels = names(down_genes))
-dots$gene <- factor(dots$gene, levels = rev(unlist(down_genes)))
+  plot_volcano_down(deg, a, volcano_genes[[a]])
+}
 
-p <- ggplot(dots, aes(x = ARCHE, y = gene, fill = expr, size = -log10(padj))) +
-  geom_point(shape = 21) +
-  ggh4x::facet_grid2(
-    group ~ ., scales = "free_y", space = "free_y",
-    strip = ggh4x::strip_themed(
-      background_y = ggh4x::elem_list_rect(fill = ARCHE_pal[names(down_genes)])
-    )
-  ) +
-  scale_fill_gradientn(colors = rev(cols), limits = c(-2, 2), oob = scales::squish, name = "Mean\nZ-score") +
-  scale_size_continuous(range = c(2, 7), name = "-log10(padj)") +
-  theme_bw() +
-  theme(
-    axis.title = element_blank(),
-    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
-    strip.text.y = element_text(size = 0, margin = margin(0, 1, 0, 1, "mm")), # narrow coloured strip, no label
-    panel.spacing = unit(1, "mm"),
-    legend.key.size = unit(0.4, 'cm'),
-    legend.title = element_text(size = 10),
-    panel.grid.minor = element_blank()
-  )
-ggsave("data/results/figures/2-MolecularSigAnalysis/deg/ARCHE_down_genes_dotplot.png", p, width = 3.5, height = 4)
+
+### - old code
 
 ###########################################################
 # Volcano plots

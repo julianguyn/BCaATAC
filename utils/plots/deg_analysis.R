@@ -136,3 +136,52 @@ plot_volcano_select_genes <- function(toPlot, genes, label, subset = FALSE) {
     )
     dev.off()
 }
+#' Plot volcano plots highlighting downregulated genes
+#' 
+#' Volcano plot with significant genes coloured by direction, the number of
+#' up/downregulated genes annotated, and selected genes labeled
+#' @param deg dataframe. DEG results with gene names in column X
+#' @param label string. Label for title and filename
+#' @param genes string. Vector of genes to label
+#' @param fc_thres int. Threshold for abs(logFC) significance
+#' @param x_cap int. abs(logFC) beyond this is drawn at the axis edge
+#' 
+plot_volcano_down <- function(deg, label, genes, fc_thres = 2, x_cap = 10) {
+
+    deg <- deg[complete.cases(deg$padj),]
+    deg$dir <- "NS"
+    deg$dir[deg$log2FoldChange > fc_thres & deg$padj < 0.05] <- "Up"
+    deg$dir[deg$log2FoldChange < -fc_thres & deg$padj < 0.05] <- "Down"
+    deg$dir <- factor(deg$dir, levels = c("Down", "Up", "NS"))
+
+    # number of up/downregulated genes
+    n_down <- sum(deg$dir == "Down")
+    n_up <- sum(deg$dir == "Up")
+    ymax <- max(-log10(deg$padj))
+
+    to_label <- deg[deg$X %in% genes,]
+
+    p <- ggplot(deg, aes(x = log2FoldChange, y = -log10(padj), color = dir)) +
+        geom_point(data = deg[deg$dir == "NS",], size = 0.6) +
+        geom_point(data = deg[deg$dir != "NS",], size = 0.9) +
+        geom_point(data = to_label, size = 1.8, shape = 21, fill = NA, color = "black", stroke = 0.6) +
+        geom_hline(yintercept = -log10(0.05), linetype = "dashed", linewidth = 0.3) +
+        geom_vline(xintercept = c(-fc_thres, fc_thres), linetype = "dashed", linewidth = 0.3) +
+        geom_label_repel(data = to_label, aes(label = X), color = "black", size = 3,
+                        fill = alpha("white", 0.7), linewidth = 0, label.padding = unit(0.1, "lines"),
+                        max.overlaps = Inf, min.segment.length = 0, segment.size = 0.3, box.padding = 0.4) +
+        annotate("text", x = -Inf, y = Inf, label = paste0(n_down, " down"), hjust = -0.2, vjust = 1.5,
+                 size = 3.5, color = binary_pal3[2], fontface = "bold") +
+        annotate("text", x = Inf, y = Inf, label = paste0(n_up, " up"), hjust = 1.2, vjust = 1.5,
+                 size = 3.5, color = binary_pal3[1], fontface = "bold") +
+        scale_color_manual(values = c("Down" = binary_pal3[2], "Up" = binary_pal3[1], "NS" = "grey85"), guide = "none") +
+        scale_x_continuous(limits = c(-x_cap, x_cap), oob = scales::squish) + # extreme logFC from near-zero counts
+        scale_y_continuous(expand = expansion(mult = c(0.02, 0.1))) +
+        theme_classic() +
+        theme(plot.title = element_text(hjust = 0.5, size = 11)) +
+        labs(x = "log2 Fold Change", y = "-log10(padj)", title = paste(label, "vs Other"))
+
+    filename <- paste0("data/results/figures/2-MolecularSigAnalysis/deg/volcano_down_", label, "vsOther.png")
+    print(paste("Saved to", filename))
+    ggsave(filename, p, width = 3.5, height = 3.5)
+}

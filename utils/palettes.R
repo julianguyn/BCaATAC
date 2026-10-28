@@ -66,6 +66,11 @@ binary_pal2 <- c(
     "#A94745"
 )
 
+binary_pal3 <- c(
+    "#899DA4", 
+    "#D77375"
+)
+
 cohort_pal <- c(
     "Baseline" = "#D07C7B", 
     "On treatment control" = "#F5C6C6",
