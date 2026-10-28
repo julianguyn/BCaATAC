@@ -185,7 +185,8 @@ top_clusters$label <- owned_terms$name[match(top_clusters$cluster, owned_terms$c
 relabel <- c(
     "negative regulation of pri-miRNA transcription from RNA polymerase II promoter" = "negative regulation of miRNA transcription",
     "positive regulation of metanephros development" = "regulation of metanephros development",
-    "regulation of cell activation" = "regulation of leukocyte activation"
+    "regulation of cell activation" = "regulation of leukocyte activation",
+    "pyrimidine-containing compound metabolic process" = "pyrimidine nucleotide biosynthetic process"
 )
 top_clusters$label <- ifelse(top_clusters$label %in% names(relabel), relabel[top_clusters$label], top_clusters$label)
 
@@ -225,4 +226,4 @@ p <- ggplot(toPlot, aes(x = ARCHE, y = label, color = mean_FE, size = -log10(bes
         panel.grid.minor = element_blank()
     )
 
-ggsave("data/results/figures/1-Signatures/GREAT/GREAT_50k_rrvgo_collapsed.png", p, width = 5, height = 4)
+ggsave("data/results/figures/1-Signatures/GREAT/GREAT_50k_rrvgo_collapsed.png", p, width = 4.5, height = 4)
