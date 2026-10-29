@@ -94,6 +94,21 @@ a4 <- read.csv(paste0(dir, "ARCHE_ARCHE4_vs_Other.csv"))
 a5 <- read.csv(paste0(dir, "ARCHE_ARCHE5_vs_Other.csv"))
 a6 <- read.csv(paste0(dir, "ARCHE_ARCHE6_vs_Other.csv"))
 
+# format for BETA
+formatDEGforBETA <- function(deg, label) {
+
+  deg <- deg[,c("X", "log2FoldChange", "padj")]
+  colnames(deg) <- c("#Gene", "log2FC", "FDR")
+  deg <- deg[!is.na(deg$FDR),]
+  write.table(deg, file = paste0("data/results/data/2-MolecularSigAnalysis/DEGforBETA/", label, ".txt"), quote = FALSE, row.names = FALSE, sep = "\t")
+}
+
+formatDEGforBETA(a1, "ARCHE1")
+formatDEGforBETA(a2, "ARCHE2")
+formatDEGforBETA(a3, "ARCHE3")
+formatDEGforBETA(a4, "ARCHE4")
+formatDEGforBETA(a5, "ARCHE5")
+formatDEGforBETA(a6, "ARCHE6")
 
 ###########################################################
 # Subset and format DEGs

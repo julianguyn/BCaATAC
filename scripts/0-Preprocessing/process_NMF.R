@@ -122,15 +122,12 @@ createBEDforGriffin("ARCHE5_50k", n)
 createBEDforGriffin("ARCHE6_50k", n)
 
 ###########################################################
-# TODO: Create BEDs for BETA
+# Create BEDs for BETA
 ###########################################################
 
-# function to format bed file
-formatBed <- function(bed) {
-  colnames(bed) <- c("CHROM", "START", "END")
-  bed$CHROM <- paste0("chr", bed$CHROM)
-  bed$NAME <- paste(bed$CHROM, bed$START, bed$END, sep = ":")
-  #bed$SCORE <- (nrow(bed):1) / 100
-  bed$SCORE <- "."
-  return(bed)
-}
+createBEDforBETA(a1, "ARCHE1_50k")
+createBEDforBETA(a2, "ARCHE2_50k")
+createBEDforBETA(a3, "ARCHE3_50k")
+createBEDforBETA(a4, "ARCHE4_50k")
+createBEDforBETA(a5, "ARCHE5_50k")
+createBEDforBETA(a6, "ARCHE6_50k")

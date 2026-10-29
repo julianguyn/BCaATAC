@@ -143,3 +143,16 @@ createBEDforGriffin <- function(filename, num_windows = 10000) {
   filename <- paste0("data/procdata/ARCHEs/GriffinSites/", filename, ".txt")
   write.table(sites, file = filename, quote = F, sep = "\t", col.names = T, row.names = F)
 }
+
+#' Create BED file for BETA
+#' 
+#' @param filename string. ARCHEx_n
+#' 
+createBEDforBETA <- function(peaks, filename) {
+  split_strings <- strsplit(rownames(peaks), ":")
+  bed <- as.data.frame(t(sapply(split_strings, function(x) unlist(x))))
+  bed$V4 <- paste0("peak_", seq_len(nrow(bed)))
+  bed$V5 <- 1.0
+  filename <- paste0("data/procdata/ARCHEs/BETAbeds/", filename, ".bed")
+  write.table(bed, file = filename, quote = F, sep = "\t", col.names = F, row.names = F)
+}
