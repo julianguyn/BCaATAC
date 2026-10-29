@@ -14,6 +14,13 @@ source("utils/palettes.R")
 # read in meta data file
 meta <- read.csv("data/rawdata/TCGA/TCGA_sourcefiles.csv")
 
+# load in pam50 subtyping
+pam50 <- readRDS("data/procdata/TCGA/pam50_subtyping_full_cohort.rds")
+pam50_scores <- as.data.frame(pam50$subtype.proba)
+pam50_scores$assigned <- as.character(pam50$subtype)
+
+meta$Subtype <- pam50_scores$assigned[match(meta$Sample.Name, rownames(pam50_scores))]
+
 # ------------------------ Stemness Scores and ARCHEs ------------------------
 
 ###########################################################
@@ -35,19 +42,46 @@ dna_si <- read_si(2)
 # Add SI scores
 ###########################################################
 
-toPlot <- meta[,colnames(meta) %in% c("Sample.Name", "ARCHE")]
+toPlot <- meta[,colnames(meta) %in% c("Sample.Name", "ARCHE", "Subtype")]
 toPlot$mRNAsi <- rna_si$mRNAsi[match(toPlot$Sample.Name, rna_si$sampleID)]
 toPlot$'EREG-mRNAsi' <- rna_si$'EREG-mRNAsi'[match(toPlot$Sample.Name, rna_si$sampleID)]
 toPlot$mDNAsi <- dna_si$mDNAsi[match(toPlot$Sample.Name, dna_si$sampleID)]
+toPlot$'EREG-mDNAsi' <- dna_si$'EREG-mDNAsi'[match(toPlot$Sample.Name, dna_si$sampleID)]
+toPlot$DMPsi <- dna_si$DMPsi[match(toPlot$Sample.Name, dna_si$sampleID)]
+toPlot$ENHsi <- dna_si$ENHsi[match(toPlot$Sample.Name, dna_si$sampleID)]
 
-ggplot(toPlot, aes(x = ARCHE, y = mRNAsi)) +
-  geom_boxplot()
+plot_si_score <- function(toPlot, score) {
+  p <- ggplot(toPlot, aes(x = ARCHE, y = .data[[score]])) +
+    #geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+    geom_boxplot(aes(fill = ARCHE), outlier.shape = NA) + 
+    scale_fill_manual(values = ARCHE_pal) +
+    new_scale_fill() +
+    geom_jitter(aes(fill = Subtype), 
+      shape = 21, colour = "black", size = 1.5, width = 0.3, alpha = 0.9
+      ) +
+    scale_fill_manual("Subtype", values = subtype_pal) +
+    theme_bw() +
+    theme(
+        legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        axis.title.y = element_text(size = 9)
+    ) +
+    labs(y = score)
+  return(p)
+}
+  
 
-ggplot(toPlot, aes(x = ARCHE, y = .data[["EREG-mRNAsi"]])) +
-  geom_boxplot()
+p1 <- plot_si_score(toPlot, "mRNAsi") + theme(axis.text.x = element_blank())
+p2 <- plot_si_score(toPlot, "EREG-mRNAsi") + theme(axis.text.x = element_blank())
+p3 <- plot_si_score(toPlot, "mDNAsi")
+p4 <- plot_si_score(toPlot, "EREG-mDNAsi") + theme(axis.text.x = element_blank())
+p5 <- plot_si_score(toPlot, "DMPsi") + theme(axis.text.x = element_blank())
+p6 <- plot_si_score(toPlot, "ENHsi")
 
-ggplot(toPlot, aes(x = ARCHE, y = mDNAsi)) +
-  geom_boxplot()
+p <- (p1 + p4) / (p2 + p5) / (p3 + p6)
+ggsave("data/results/figures/1-Signatures/ARCHE_stemness_indices.png", p, width = 4, height = 5)
+
 
 # ------------------------ Lineage Gene Signatures ------------------------
 
@@ -61,6 +95,7 @@ t_counts <- get_tcga_rna()
 ###########################################################
 # Load in gene signatures
 ###########################################################
+# source: https://www.nature.com/articles/s43018-024-00773-6
 
 # read in lineage genes
 genes <- read.csv("data/rawdata/lineages/43018_2024_773_MOESM2_ESM.xlsx - S5 Supplementary Table 5.csv", skip = 1)
@@ -159,21 +194,23 @@ plot_lineage_score <- function(score, label) {
         scale_fill_manual(values = ARCHE_pal) +
         new_scale_fill() +
         geom_jitter(aes(fill = Subtype), 
-                    shape = 21, colour = "black", size = 2, width = 0.3
+                    shape = 21, colour = "black", size = 1.5, width = 0.3, alpha = 0.9
                     ) +
         scale_fill_manual("Subtype", values = subtype_pal) +
         theme_bw() +
         theme(
             legend.position = "none",
-            axis.title.x = element_blank()
+            axis.title.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+            axis.title.y = element_text(size = 9)
         ) +
-        labs(y = paste(label, "\nscore"))
+        labs(y = sub("_", " ", label))
     return(p)
 }
 
-p1 <- plot_lineage_score(score, "Basal_myoepithelial")
-p2 <- plot_lineage_score(score, "Luminal_mature")
+p1 <- plot_lineage_score(score, "Basal_myoepithelial") + theme(axis.text.x = element_blank())
+p2 <- plot_lineage_score(score, "Luminal_mature") + theme(axis.text.x = element_blank())
 p3 <- plot_lineage_score(score, "Luminal_progenitor")
 
 p <- p1 / p2 / p3
-ggsave("data/results/figures/1-Signatures/ARCHE_lineages.png", p, width = 5, height = 7)
+ggsave("data/results/figures/1-Signatures/ARCHE_lineages.png", p, width = 2, height = 5)
