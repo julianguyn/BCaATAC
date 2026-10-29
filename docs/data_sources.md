@@ -448,3 +448,13 @@ Date: October 23, 2026
 Source: https://www.cbioportal.org/study/summary?id=brca_metabric
 
 ```
+
+### data/rawdata/signatures/IO
+
+```markdown
+## BHKLab Compiled IO Gene Signatures
+
+Date: October 28, 2026
+Source: https://github.com/bhklab/SignatureSets/blob/main/data-raw/signature_information_io.csv
+
+```
