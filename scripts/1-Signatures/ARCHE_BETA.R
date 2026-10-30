@@ -2,7 +2,9 @@
 
 # load libraries
 suppressPackageStartupMessages({
-  library(patchwork)
+    library(ggplot2)
+    library(ggrepel)
+    library(patchwork)
 })
 
 source("utils/palettes.R")
@@ -24,39 +26,42 @@ a6 <- read.table(paste0(dir, "ARCHE6", "_uptarget.txt"), header = TRUE)
 # Load in shortlist from deg_analysis.R (TODO: put this into a script)
 ###########################################################
 
-shortlist <- list(
+deg_list <- list(
   ARCHE1 = c("NPY1R", "RERG", "CITED1"),
-  ARCHE2 = c("FOXC1", "ELF5", "VGLL1", "SOX10", "KRT5", "KRT17", "CRYAB", "ACTR3B"),
-  ARCHE3 = c("ERBB2", "C17orf37", "GSDMB", "PPP1R1B", "S100A8", "DMBT1"),
+  ARCHE2 = c("FOXC1", "ELF5", "VGLL1", "EN1", "SOX10", "KRT5", "KRT17", "CRYAB", "ACTR3B"),
+  ARCHE3 = c("ERBB2", "GRB7", "STARD3", "PPP1R1B", "PGAP3", "C17orf37", "GSDMB", "S100A8", "DMBT1"),
   ARCHE4 = c("IGF1R", "TRH"),
   ARCHE5 = c("SPIB", "CD274", "LAG3", "IDO1", "GZMB", "IFNG", "CXCL10", "VCAM1"),
   ARCHE6 = c("FOXJ1", "CDC20B", "IGFALS", "CXCL14")
 )
 
-###########################################################
+beta_list <- list(
+  ARCHE2 = c("FOXC1", "EN1", "SOX10", "NFIB", "NFIX", "SOX9", "BCL11A", "ZNF462", "EPHB3"),
+  ARCHE3 = c("ERBB2", "GRB7", "STARD3", "PPP1R1B", "PGAP3"),
+  ARCHE4 = c("SLC9A3R1", "LLGL2", "TOB1", "PLEKHF2", "RAB37", "WWP1"),
+  ARCHE5 = c("TNF", "LTA", "LTB", "TNFRSF1B", "IL10RA", "IL12RB1"),
+  ARCHE6 = c("NTN4", "STC2", "PDCD4", "BTG2")
+)
+
+##########################################################:#
 # BETA plot
 ###########################################################
 
 plot_BETA <- function(beta, arche) {
-    genes <- unlist(unname(shortlist[arche]))
+    deg_genes <- unlist(unname(deg_list[arche]))
+    beta_genes <- unlist(unname(beta_list[arche]))
     toPlot <- beta[beta$padj < 0.05,]
     toPlot$label <- NA_character_
 
-    # get shortlist genes
-    toPlot$label[toPlot$GeneSymbol %in% genes & toPlot$log2FC >= 1] <- "DEG-Function"
+    # get deg_list genes
+    toPlot$label[toPlot$GeneSymbol %in% deg_genes & toPlot$log2FC >= 1] <- "DEG"
 
-    # get top 10 RP genes
-    top_rp_genes <- head(
-        toPlot$GeneSymbol[order(toPlot$reg_potential, decreasing = TRUE)],
-        10
-    )
-
-    # Assign top RP and overlap labels
-    toPlot$label[toPlot$GeneSymbol %in% top_rp_genes &
+    # assign top RP and overlap labels
+    toPlot$label[toPlot$GeneSymbol %in% beta_genes &
                 is.na(toPlot$label) & toPlot$log2FC >= 1] <- "Top RP"
 
-    toPlot$label[toPlot$GeneSymbol %in% top_rp_genes &
-                toPlot$GeneSymbol %in% genes &
+    toPlot$label[toPlot$GeneSymbol %in% beta_genes &
+                toPlot$GeneSymbol %in% deg_genes &
                 toPlot$log2FC >= 1] <- "Overlap"
 
     p <- ggplot(toPlot, aes(x = reg_potential, y = log2FC)) +
@@ -81,7 +86,7 @@ plot_BETA <- function(beta, arche) {
             box.padding = 0.4
         ) +
         scale_color_manual(values = c(
-            "DEG-Function" = "#5E4C5A",
+            "DEG" = "#5E4C5A",
             "Top RP" = "#55917F",
             "Overlap" = "#D99B42"
         ), na.translate = FALSE) +
@@ -107,11 +112,11 @@ plot_BETA <- function(beta, arche) {
 ###########################################################
 
 p2 <- plot_BETA(a2, "ARCHE2")
-p3 <- plot_BETA(a3, "ARCHE3")
+p3 <- plot_BETA(a3, "ARCHE3") + theme(legend.position = "none")
 p4 <- plot_BETA(a4, "ARCHE4") + theme(legend.position = "none")
 p5 <- plot_BETA(a5, "ARCHE5") + theme(legend.position = "none")
 p6 <- plot_BETA(a6, "ARCHE6") + theme(legend.position = "none")
 
 
 p <- p2 / p3 / p4 / p5 / p6 + plot_layout(ncol = 1, guides = "collect")
-ggsave("data/results/figures/1-Signatures/BETA/scatterplots.png", p, width = 4, height = 12)
+ggsave("data/results/figures/1-Signatures/BETA/scatterplots.png", p, width = 3.5, height = 12)
