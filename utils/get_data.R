@@ -235,7 +235,8 @@ get_xeva <- function(type) {
     file <- switch(
         type,
         limited = "data/rawdata/pdx/PDX_Response_Sept2025.csv",
-        full = "data/rawdata/pdx/PDX_BR_BAR_grouped.csv"
+        full = "data/rawdata/pdx/PDX_BR_BAR_grouped.csv",
+        azd8205 = "data/rawdata/pdx/merged_analysis_dataset.csv"
     )
 
     # read in file
@@ -246,11 +247,13 @@ get_xeva <- function(type) {
     xeva$patient.id <- map_pdx(xeva$PDX_ID)
 
     # create instances for NOTCH01 passages
-    notch4 <- notch6 <- xeva[xeva$patient.id %in% c("NOTCH01"),]
-    notch4$patient.id <- "NOTCH01P4"
-    notch6$patient.id <- "NOTCH01P6"
-    xeva <- xeva[-which(xeva$patient.id %in% c("NOTCH01")),]
-    xeva <- rbind(xeva, notch4, notch6)
+    if (type == "full") {
+        notch4 <- notch6 <- xeva[xeva$patient.id %in% c("NOTCH01"),]
+        notch4$patient.id <- "NOTCH01P4"
+        notch6$patient.id <- "NOTCH01P6"
+        xeva <- xeva[-which(xeva$patient.id %in% c("NOTCH01")),]
+        xeva <- rbind(xeva, notch4, notch6)
+    }
 
     # create model_group
     xeva$model_group <- paste(xeva$patient.id, xeva$drug, sep = "_")

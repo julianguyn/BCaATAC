@@ -245,3 +245,57 @@ plot_ADC_ARCHE <- function(scores, label, drug, target, threshold = "25%") {
 
     assess_ARCHE_PDX(high_exp, label, "adcs", plot = TRUE, pcc_thres = 0)
 }
+
+# ------- Plots for ARCHE4 ADC associatiosn with IHC scores
+
+#' Helper function for correlation plots
+plot_a4_adc_corr <- function(toPlot, label) {
+    res <- cor.test(toPlot$BAR_median, toPlot$ARCHE4, method = "pearson")
+    corr <- round(res$estimate, 2)
+    pval <- round(res$p.value, 2)
+
+    p <- ggplot(toPlot, aes(x = ARCHE4, y = BAR_median)) +
+        geom_smooth(method = "lm", color = "gray") +
+        geom_point(aes(fill = Subtype), shape = 21, size = 3) +
+        scale_fill_manual(values = subtype_pal) +
+        theme_bw() +
+        ggtitle(paste0("PCC: ", corr, " (p = ", pval, ")\n", label)) +
+        theme(plot.title = element_text(size = 11)) +
+        labs(x = "ARCHE4 Expression", y = "Median BAR")
+    return(p)
+}
+
+#' Plot ARCHE4~ADC stratified by TROP2 IHC scores
+#' 
+eval_TROP2 <- function(scores, drug, label) {
+
+    # get TROP2 IHC scores
+    mapping <- read_excel("data/rawdata/pdx/HER2TROP2_TNBC_PDX_models_2026-06-02.xlsx", sheet = 1)
+    ihc <- read_excel("data/rawdata/pdx/HER2TROP2_TNBC_PDX_models_2026-06-02.xlsx", sheet = 2) |> as.data.frame()
+    ihc$PDX_ID <- mapping$PDX_ID[match(ihc$'Block ID', mapping$'Block ID')]
+
+    scores$Hscore <- ihc$'H-score'[match(scores$PDX_ID, ihc$PDX_ID)]
+    scores <- scores[scores$drug == drug,]
+    scores <- scores[!is.na(scores$Hscore),] # remove REF063 with no IHC info
+    scores$Subtype <- factor(scores$Subtype, levels = names(subtype_pal))
+
+    # create subsets
+    mid_H <- scores[scores$Hscore > 100,]
+    high_H <- scores[scores$Hscore > 200,]
+
+    p1 <- plot_a4_adc_corr(scores, "All samples")
+    p2 <- plot_a4_adc_corr(mid_H, "Mid H samples")
+    p3 <- plot_a4_adc_corr(high_H, "High H samples")
+
+    p <- p1 + p2 + p3 + plot_layout(guides = "collect") + plot_annotation(
+        title = paste0(drug, " (", label, ")"),
+        theme = theme(
+            plot.title = element_text(
+                size = 12,
+                face = "bold",
+                hjust = 0.5
+            )
+        ))
+    filename <- paste0("data/results/figures/4-DrugResponse/PDX/trop2_adcs/", drug, "_", label, ".png")
+    ggsave(filename, p, width = 9, height = 2.5, unit = "in")
+}

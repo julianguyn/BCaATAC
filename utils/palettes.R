@@ -25,15 +25,15 @@ subtype_pal <- c(
     "LumA" = "#B3B4D0", 
     "LumB" = "#363E62", 
     "Normal" = "#6365AF", 
-    "Not Available" = "#eFeBF7",
-    "unknown" = "gray",
     "TNBC" = "#AF4C5B",
     "ER" = "#363E62",
     "ER+" = "#363E62",
     "HER2" = "#EED4D3",
     "TPBC" = "#B3B4D0",
     "Basal/TNBC" = "#AF4C5B",
-    "Luminal/ER+" = "#363E62"
+    "Luminal/ER+" = "#363E62",
+    "Not Available" = "#eFeBF7",
+    "unknown" = "gray"
 )
 
 sample_type_pal <- c(

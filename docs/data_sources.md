@@ -182,6 +182,24 @@ Includes all data from `data/rawdata/`
 ### data/rawdata/pdx
 
 ```markdown
+## HER2TROP2_TNBC_PDX_models_2026-06-02.xlsx (Internal)
+
+- **Name**: IHC data
+- **Access Date**: 2026-07-17
+- **Source**: Cescon Lab (M.E.)
+```
+
+
+```markdown
+## merged_analysis_dataset.csv (Internal)
+
+- **Name**: Updated PDX response data
+- **Access Date**: 2026-07-17
+- **Source**: Cescon Lab (M.E.)
+```
+
+
+```markdown
 ## gene_tpm_normalized_matrix.xlsx (Internal)
 
 - **Name**: PDX TPM counts

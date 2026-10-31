@@ -58,6 +58,7 @@ normzs_k <- znorm(zscore_k)
 
 # pdx drug response data
 xeva <- get_xeva("full")
+#xeva_azd <- get_xeva("azd8205")
 
 # read in RNA
 rna <- read.csv("data/rawdata/pdx/gene_tpm_normalized_matrix.csv")
@@ -82,7 +83,7 @@ normzs_k_sumdev <- znorm(zscore_k_sumdev)
 # Plot heatmaps
 ###########################################################
 
-plot_ARCHE_scores_heatmap(normzs_t_sumdev , "zscore_pdxs_sumdev", p_meta_t)
+#plot_ARCHE_scores_heatmap(normzs_t_sumdev , "zscore_pdxs_sumdev", p_meta_t)
 
 ###########################################################
 # Assign ARCHE scores to PDX xeva
@@ -170,6 +171,22 @@ save(pdx_all_toPlot,
 ###########################################################
 
 plot_compiled_PDX(pdx_all_toPlot)
+
+###########################################################
+# Assess ADCs with TROP2 IHC
+###########################################################
+
+for (drug in c("SACITUZAMAB-GOVITECAN", "DATOPOTAMAB-DERUXTECAN", "DATOPOTAMAB-CONTROL")) {
+    eval_TROP2(zscore_t, drug, "zscore_t")
+    eval_TROP2(zscore_k, drug, "zscore_K")
+    eval_TROP2(normzs_t, drug, "normzscr_T")
+    eval_TROP2(normzs_k, drug, "normzscr_K")
+
+    eval_TROP2(zscore_t_sumdev, drug, "zscore_sumdev_T")
+    eval_TROP2(zscore_k_sumdev, drug, "zscore_sumdev_K")
+    eval_TROP2(normzs_t_sumdev, drug, "normzscr_sumdev_T")
+    eval_TROP2(normzs_k_sumdev, drug, "normzscr_sumdev_K")
+}
 
 ###########################################################
 # Assess ADCs
