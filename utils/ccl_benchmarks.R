@@ -90,9 +90,18 @@ plot_scatter <- function(pair, all_drug_sen, label) {
     x_label <- ifelse(label == "RNA", "Expression", "Score")
 
     all_drug_sen$PSet <- factor(all_drug_sen$PSet, levels = names(PSet_pal))
+
+    # Pearson's correlation per PSet, shown in the facet titles
+    pset_labels <- sapply(levels(droplevels(all_drug_sen$PSet)), function(pset) {
+        subset <- all_drug_sen[all_drug_sen$PSet == pset,]
+        if (nrow(subset) < 3) return(paste0(pset, " (n = ", nrow(subset), ")"))
+        pc <- cor.test(subset$Score, subset$AAC, method = "pearson")
+        sprintf("%s (r = %.2f, p = %.2g, n = %d)", pset, pc$estimate, pc$p.value, nrow(subset))
+    })
+
     p <- ggplot(all_drug_sen, aes(x = Score, y = AAC, fill = Subtype)) + 
         geom_point(size = 2.5, shape = 21) + 
-        facet_wrap(~PSet, nrow = length(unique(all_drug_sen$PSet))) +
+        facet_wrap(~PSet, nrow = length(unique(all_drug_sen$PSet)), labeller = labeller(PSet = pset_labels)) +
         geom_smooth(method = "lm", se=TRUE, color = "black", aes(group = 1), show.legend = FALSE) + 
         scale_fill_manual(values = subtype_pal) +
         guides(fill = guide_legend(override.aes = list(size = 4))) +
@@ -144,17 +153,27 @@ get_pcc <- function(pair, all_drug_sen, pcc) {
 #' @param drug string. Drug
 #' @param arche_scores dataframe. ARCHE scores
 #' @param gene_list vector of genes
+#' @param target named vector (Ensembl ID = symbol) of the drug's target gene. If given,
+#'   target gene expression is used as the comparator instead of the PAM50 subtype score
 #' 
-plot_rna_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
+plot_rna_associations <- function(arche, pam50, drug, arche_scores, gene_list, target = NULL) {
 
     dir.create(paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug))
 
+    # targeted therapies: compare against target gene expression instead of PAM50
+    if (!is.null(target)) {
+        gene_list <- gene_list[!gene_list %in% target]
+        all_genes <- c(target, gene_list)
+    } else {
+        all_genes <- gene_list
+    }
+
     # compile gene expression
     gene_df <- rbind(
-        format_rna(ubr1, "UBR1", gene_list), format_rna(ubr2, "UBR2", gene_list),
-        format_rna(gray, "GRAY", gene_list), format_rna(gcsi, "gCSI", gene_list),
-        format_rna(gdsc, "GDSC2", gene_list), format_rna(ccle, "CCLE", gene_list),
-        format_rna(ccle, "CTRP", gene_list)
+        format_rna(ubr1, "UBR1", all_genes), format_rna(ubr2, "UBR2", all_genes),
+        format_rna(gray, "GRAY", all_genes), format_rna(gcsi, "gCSI", all_genes),
+        format_rna(gdsc, "GDSC2", all_genes), format_rna(ccle, "CCLE", all_genes),
+        format_rna(ccle, "CTRP", all_genes)
     )
 
     # create dataframe to store results
@@ -163,20 +182,30 @@ plot_rna_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
 
     # get individual associations
     arche_sen <- get_all_drug_sen(paste0(arche, "_", drug), arche_scores, "ARCHE", c_meta)
-    pam50_sen <- get_all_drug_sen(paste0(pam50, "_", drug), pam50_scores, "PAM50", c_meta)
+    if (!is.null(target)) {
+        comparator <- unname(target)
+        comp_label <- "RNA"
+        comp_sen <- get_all_drug_sen(paste0(comparator, "_", drug), gene_df, "RNA", c_meta)
+    } else {
+        comparator <- pam50
+        comp_label <- "PAM50"
+        comp_sen <- get_all_drug_sen(paste0(pam50, "_", drug), pam50_scores, "PAM50", c_meta)
+    }
 
     pcc <- get_pcc(paste0(arche, "_", drug), arche_sen, pcc)
-    pcc <- get_pcc(paste0(pam50, "_", drug), pam50_sen, pcc)
+    pcc <- get_pcc(paste0(comparator, "_", drug), comp_sen, pcc)
     for (gene in unname(gene_list)) {
         pcc <- get_pcc(paste0(gene, "_", drug), get_all_drug_sen(paste0(gene, "_", drug), gene_df, "RNA", c_meta), pcc)
     }
 
-    # plot ARCHE and PAM50
+    # plot ARCHE and comparator (PAM50 or target gene expression)
     p1 <- plot_scatter(paste0(arche, "_", drug), arche_sen, "ARCHE") + theme(legend.position = "none")
-    p2 <- plot_scatter(paste0(pam50, "_", drug), pam50_sen, "PAM50") + theme(axis.title.y = element_blank())
+    p2 <- plot_scatter(paste0(comparator, "_", drug), comp_sen, comp_label) + theme(axis.title.y = element_blank())
     p <- p1 + p2
-    filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug, "/arche_pam50.png")
-    ggsave(filename, p, width = 5.5, height = length(unique(pcc$PSet))+3)
+    filename <- paste0("data/results/figures/4-DrugResponse/benchmarks/", arche, "_", drug, "/arche_",
+                       ifelse(is.null(target), "pam50", "target"), ".png")
+    n_psets <- max(length(unique(arche_sen$PSet)), length(unique(comp_sen$PSet)))
+    ggsave(filename, p, width = 6.5, height = 1.6 * n_psets + 1.2) # fixed height per PSet panel
 
     # format toPlot
     pcc$Feature <- sub("_.*", "", pcc$Feature_Drug)
@@ -186,7 +215,7 @@ plot_rna_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
 
     # set colour palette
     cols <- c("#3F3244", "#208AAE", rep("#BFC3BA", length(gene_list)))
-    names(cols) <- c(arche, pam50, unname(gene_list))
+    names(cols) <- c(arche, comparator, unname(gene_list))
 
     # plot all markers
     p <- ggplot(pcc, aes(x = PSet, y = abs(PCC), fill = Feature, size = -log(pvalue))) +
@@ -210,7 +239,7 @@ plot_rna_associations <- function(arche, pam50, drug, arche_scores, gene_list) {
 
 #' Helper function to plot scatter plot
 #' 
-plot_scatter_drug_association <- function(toPlot, feature, feature_type, arche = "ARCHE4") {
+plot_scatter_drug_association <- function(toPlot, feature, feature_type, drug, arche = "ARCHE4") {
 
     corr <- cor.test(toPlot$AAC, toPlot[[feature]], method = "pearson")
     estimate <- round(corr$estimate, 2)
@@ -265,8 +294,8 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
     subset[[names(genes)[1]]] <- rna_df[[names(genes)[1]]][match(subset$Sample, rownames(rna_df))]
     subset[[names(genes)[2]]] <- rna_df[[names(genes)[2]]][match(subset$Sample, rownames(rna_df))]
 
-    p3 <- plot_scatter_drug_association(subset, names(genes)[1], "Expression")
-    p4 <- plot_scatter_drug_association(subset, names(genes)[2], "Expression")
+    p3 <- plot_scatter_drug_association(subset, names(genes)[1], "Expression", drug = drug)
+    p4 <- plot_scatter_drug_association(subset, names(genes)[2], "Expression", drug = drug)
 
     # ---------- With mutation data
     if (class(mut_df) == "data.frame") {

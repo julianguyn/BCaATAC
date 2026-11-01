@@ -194,7 +194,7 @@ plot_ClassB_heatmap <- function(toPlot, label) {
         scale_y_discrete(labels = ylabs, drop = FALSE) +
         theme_void() + 
         theme(
-            legend.key.size = unit(0.5, "cm")
+            legend.key.size = unit(0.3, "cm")
         ) +
         scale_fill_manual("ARCHE", values = ARCHE_pal)
 
@@ -204,7 +204,7 @@ plot_ClassB_heatmap <- function(toPlot, label) {
         scale_y_discrete(labels = ylabs, drop = FALSE) +
         theme_void() + 
         theme(
-            legend.key.size = unit(0.5, "cm")
+            legend.key.size = unit(0.3, "cm")
         ) +
         scale_fill_manual("BCa Drug", values = c("#3E517A", "white"), labels = c("Yes", "No"))
 
@@ -248,10 +248,10 @@ plot_ClassB_heatmap <- function(toPlot, label) {
 
     filename <- paste0("data/results/figures/4-DrugResponse/ClassB/heatmap_", label, ".png")
     p <- p1 + p2 + p3 + p4 + 
-        plot_layout(widths = c(1,1, 8, 2), guides = "collect") &
+        plot_layout(widths = c(1,1, 9, 3), guides = "collect") &
         theme(legend.position = "right",
                 legend.box = "vertical")
-    ggsave(filename, p, width = 5, height = 9)
+    ggsave(filename, p, width = 4.5, height = 9)
     
 }
 

@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
     library(patchwork)
     library(ggnewscale)
     library(ggpattern)
+    library(matrixStats)
 })
 
 source("utils/get_data.R")
@@ -12,6 +13,7 @@ source("utils/palettes.R")
 source("utils/mappings.R")
 source("utils/compute_drug_response.R")
 source("utils/ccl_benchmarks.R")
+source("utils/plots/ARCHE_scores_heatmap.R")
 
 ###########################################################
 # Prepare metadata
@@ -31,9 +33,10 @@ c_meta <- meta[meta$type == "cell_line", ]
 # Load in cell line data
 ###########################################################
 
-# sumdev zscores
-zscore_cells <- get_arche_scores(paste0("data/rawdata/all_scoring/cell_tcga.Zscore.txt"), c_meta)
-zscore_cells_sumdev <- get_arche_sumdevs(zscore_cells)
+# get normzs_cells_sumdev
+zscore_cells <- get_arche_scores("data/rawdata/all_scoring/cell_tcga.Zscore.txt", c_meta)
+zscore_cells_sumdev <- get_arche_sumdevs(zscore_cells, "zscore_cells", plot = TRUE)
+normzs_cells_sumdev <- znorm(zscore_cells_sumdev)
 
 # load in RNA
 ubr1 <- get_pset_rna("UBR1")
@@ -101,25 +104,29 @@ PD_0325901_genes <- c(
     "ENSG00000169032" = "MAP2K1"
 )
 
+# drug targets (targeted therapies are compared against target gene expression instead of PAM50)
+tozasertib_target <- c("ENSG00000087586" = "AURKA")
+topotecan_target <- c("ENSG00000198900" = "TOP1")
+trastuzumab_target <- c("ENSG00000141736" = "ERBB2")
+erlotinib_target <- c("ENSG00000146648" = "EGFR")
+mek_target <- c("ENSG00000169032" = "MAP2K1") # PD-0325901 and trametinib
+
 # ARCHE2
-a2_tozasertib <- plot_rna_associations("ARCHE2", "Basal", "Tozasertib", zscore_cells_sumdev, tozasertib_genes)
-a2_topotecan <- plot_rna_associations("ARCHE2", "Basal", "Topotecan", zscore_cells_sumdev, topotecan_genes)
+a2_tozasertib <- plot_rna_associations("ARCHE2", "Basal", "Tozasertib", normzs_cells_sumdev, tozasertib_genes, tozasertib_target)
+a2_topotecan <- plot_rna_associations("ARCHE2", "Basal", "Topotecan", normzs_cells_sumdev, topotecan_genes, topotecan_target)
 
 # ARCHE3
-a3_trastuzumab <- plot_rna_associations("ARCHE3", "Her2", "Trastuzumab", zscore_cells_sumdev, trastuzumab_genes)
+a3_trastuzumab <- plot_rna_associations("ARCHE3", "Her2", "Trastuzumab", normzs_cells_sumdev, trastuzumab_genes, trastuzumab_target)
 
 # ARCHE4
-a4_erlotinib <- plot_rna_associations("ARCHE4", "Basal", "Erlotinib", zscore_cells_sumdev, erlotinib_genes)
-a4_topotecan <- plot_rna_associations("ARCHE4", "Basal", "Topotecan", zscore_cells_sumdev, topotecan_genes)
-a4_topotecan <- plot_rna_associations("ARCHE4", "Basal", "Topotecan", zscore_cells_sumdev, topotecan_genes)
-a4_PD_0325901 <- plot_rna_associations("ARCHE4", "LumA", "PD-0325901", zscore_cells_sumdev, PD_0325901_genes)
-a4_trametinib <- plot_rna_associations("ARCHE4", "Basal", "Trametinib", zscore_cells_sumdev, PD_0325901_genes)
-
+a4_erlotinib <- plot_rna_associations("ARCHE4", "Basal", "Erlotinib", normzs_cells_sumdev, erlotinib_genes, erlotinib_target)
+a4_topotecan <- plot_rna_associations("ARCHE4", "Basal", "Topotecan", normzs_cells_sumdev, topotecan_genes, topotecan_target)
+a4_PD_0325901 <- plot_rna_associations("ARCHE4", "LumA", "PD-0325901", normzs_cells_sumdev, PD_0325901_genes, mek_target)
+a4_trametinib <- plot_rna_associations("ARCHE4", "Basal", "Trametinib", normzs_cells_sumdev, PD_0325901_genes, mek_target)
 
 # ARCHE5
-a5_paclitaxel <- plot_rna_associations("ARCHE5", "Basal", "Paclitaxel", zscore_cells_sumdev, paclitaxel_genes)
-a5_erlotinib <- plot_rna_associations("ARCHE5", "Basal", "Erlotinib", zscore_cells_sumdev, erlotinib_genes)
-
+a5_paclitaxel <- plot_rna_associations("ARCHE5", "Basal", "Paclitaxel", normzs_cells_sumdev, paclitaxel_genes) # chemotherapy: PAM50
+a5_erlotinib <- plot_rna_associations("ARCHE5", "Basal", "Erlotinib", normzs_cells_sumdev, erlotinib_genes, erlotinib_target)
 
 ###########################################################
 # Mutations
@@ -131,6 +138,6 @@ a5_erlotinib <- plot_rna_associations("ARCHE5", "Basal", "Erlotinib", zscore_cel
 
 genes <- c("NF1" = "ENSG00000196712", "BRAF" = "ENSG00000157764")
 
-plot_mut_associations("ARCHE4", "Selumetinib", genes, zscore_cells_sumdev, "GDSC2", "CCLE", "CTRP")
-plot_mut_associations("ARCHE4", "PD-0325901", genes, zscore_cells_sumdev, "gCSI", "GDSC2", "CCLE")
-plot_mut_associations("ARCHE4", "Trametinib", genes, zscore_cells_sumdev, "GRAY", "GDSC2", "CTRP")
+plot_mut_associations("ARCHE4", "Selumetinib", genes, normzs_cells_sumdev, "GDSC2", "CCLE", "CTRP")
+plot_mut_associations("ARCHE4", "PD-0325901", genes, normzs_cells_sumdev, "gCSI", "GDSC2", "CCLE")
+plot_mut_associations("ARCHE4", "Trametinib", genes, normzs_cells_sumdev, "GRAY", "GDSC2", "CTRP")
