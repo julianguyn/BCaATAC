@@ -256,7 +256,7 @@ plot_a4_adc_corr <- function(toPlot, label) {
 
     p <- ggplot(toPlot, aes(x = ARCHE4, y = BAR_median)) +
         geom_smooth(method = "lm", color = "gray") +
-        geom_point(aes(fill = Subtype), shape = 21, size = 3) +
+        geom_point(aes(fill = Subtype), shape = 21, size = 2) +
         scale_fill_manual(values = subtype_pal) +
         theme_bw() +
         ggtitle(paste0("PCC: ", corr, " (p = ", pval, ")\n", label)) +
@@ -288,7 +288,7 @@ eval_TROP2 <- function(scores, drug, label) {
     p3 <- plot_a4_adc_corr(high_H, "High H samples")
 
     p <- p1 + p2 + p3 + plot_layout(guides = "collect") + plot_annotation(
-        title = paste0(drug, " (", label, ")"),
+        title = paste0(drug),
         theme = theme(
             plot.title = element_text(
                 size = 12,

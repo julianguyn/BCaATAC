@@ -177,15 +177,15 @@ plot_compiled_PDX(pdx_all_toPlot)
 ###########################################################
 
 for (drug in c("SACITUZAMAB-GOVITECAN", "DATOPOTAMAB-DERUXTECAN", "DATOPOTAMAB-CONTROL")) {
-    eval_TROP2(zscore_t, drug, "zscore_t")
-    eval_TROP2(zscore_k, drug, "zscore_K")
-    eval_TROP2(normzs_t, drug, "normzscr_T")
-    eval_TROP2(normzs_k, drug, "normzscr_K")
+    #eval_TROP2(zscore_t, drug, "zscore_t")
+    #eval_TROP2(zscore_k, drug, "zscore_K")
+    #eval_TROP2(normzs_t, drug, "normzscr_T")
+    #eval_TROP2(normzs_k, drug, "normzscr_K")
 
-    eval_TROP2(zscore_t_sumdev, drug, "zscore_sumdev_T")
-    eval_TROP2(zscore_k_sumdev, drug, "zscore_sumdev_K")
+    #eval_TROP2(zscore_t_sumdev, drug, "zscore_sumdev_T")
+    #eval_TROP2(zscore_k_sumdev, drug, "zscore_sumdev_K")
     eval_TROP2(normzs_t_sumdev, drug, "normzscr_sumdev_T")
-    eval_TROP2(normzs_k_sumdev, drug, "normzscr_sumdev_K")
+    #eval_TROP2(normzs_k_sumdev, drug, "normzscr_sumdev_K")
 }
 
 ###########################################################
