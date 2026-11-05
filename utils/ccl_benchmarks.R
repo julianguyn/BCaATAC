@@ -385,7 +385,7 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
                 legend.position = "none"
             ) + 
             labs(title = pset, x = "Samples ranked by AAC")
-        p2 <- plot_scatter_drug_association(subset, "Score", "Score") + theme(axis.title.y = element_blank())
+        p2 <- plot_scatter_drug_association(subset, "Score", "Score", drug) + theme(axis.title.y = element_blank())
     }
 
     p <- p1 / p2 / p3 / p4 + plot_layout(height = c(1, 2, 2, 2))
