@@ -295,7 +295,7 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
     subset[[names(genes)[2]]] <- rna_df[[names(genes)[2]]][match(subset$Sample, rownames(rna_df))]
 
     p3 <- plot_scatter_drug_association(subset, names(genes)[1], "Expression", drug = drug)
-    p4 <- plot_scatter_drug_association(subset, names(genes)[2], "Expression", drug = drug)
+    p4 <- plot_scatter_drug_association(subset, names(genes)[2], "Expression", drug = drug) + theme(axis.title.y = element_blank())
 
     # ---------- With mutation data
     if (class(mut_df) == "data.frame") {
@@ -355,7 +355,7 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
                 #legend.key = element_blank(),
                 #legend.key.size = unit(0.5, 'cm'),
                 legend.position = "none",
-                axis.title.y = element_text(size = 9, margin = margin(r = 10)),
+                axis.title.y = element_blank(),
                 axis.title.x = element_text(size = 9),
                 plot.title = element_text(hjust = 0.5, size = 7)
             ) +
@@ -385,7 +385,7 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
                 legend.position = "none"
             ) + 
             labs(title = pset, x = "Samples ranked by AAC")
-        p2 <- plot_scatter_drug_association(subset, "Score", "Score")
+        p2 <- plot_scatter_drug_association(subset, "Score", "Score") + theme(axis.title.y = element_blank())
     }
 
     p <- p1 / p2 / p3 / p4 + plot_layout(height = c(1, 2, 2, 2))
@@ -398,7 +398,7 @@ plot_mut_associations <- function(arche, drug, genes, arche_scores, pset1, pset2
     arche_sen <- get_all_drug_sen(paste0(arche, "_", drug), arche_scores, "ARCHE", c_meta)
 
     p1 <- plot_mut(arche, drug, genes, pset1, arche_sen) + theme(legend.position = "none")
-    p2 <- plot_mut(arche, drug, genes, pset2, arche_sen) + theme(legend.position = "none") + theme(axis.title.y = element_blank())
+    p2 <- plot_mut(arche, drug, genes, pset2, arche_sen) + theme(legend.position = "none")
     p3 <- plot_mut(arche, drug, genes, pset3, arche_sen) + theme(axis.title.y = element_blank())
 
     p <- wrap_elements(p1) + wrap_elements(p2) + wrap_elements(p3) + 
