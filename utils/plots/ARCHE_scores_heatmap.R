@@ -10,6 +10,44 @@ znorm <- function(df) {
     return(norm_df)
 }
 
+#' Plot subtype enrichment of ARCHE scores
+#' 
+plot_subtype_enrichment <- function(scores, meta, label) {
+
+    scores$ARCHE <- rownames(scores)
+    toPlot <- reshape2::melt(scores)
+    toPlot$Subtype <- meta$subtype[match(toPlot$variable, meta$sampleid)]
+
+    p1 <- ggplot(toPlot, aes(x = ARCHE, y = value, group = variable, fill = Subtype)) +
+        geom_line(aes(color = Subtype), alpha = 0.5) +
+        geom_point(shape = 21, size = 2) +
+        scale_fill_manual(values = subtype_pal) +
+        scale_color_manual(values = subtype_pal) +
+        theme_classic() +
+        theme(
+            axis.title.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            legend.key.size = unit(0.5, "mm")
+        ) + 
+        labs(y = "ARCHE Score")
+
+    p2 <- ggplot(toPlot, aes(x = ARCHE, y = 1, fill = ARCHE)) +
+        geom_tile() +
+        scale_fill_manual(values = ARCHE_pal) +
+        theme_void() +
+        theme(
+            legend.position = "none",
+            axis.text.x = element_text(size = 8)
+        )
+
+    p <- p1 / p2 + plot_layout(height = c(20, 1))
+    
+    filename <- paste0("data/results/figures/2.5-PreclinicalVal/samplescoring/", label, ".png")
+    ggsave(filename, p, width = 5, height = 3)
+
+}
+
 #' Plot ARCHE scores per ARCHE ~ sample
 #' 
 plot_ARCHE_scores_heatmap <- function(df, label, meta, folder = "3-DataExploration") {
