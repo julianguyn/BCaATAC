@@ -249,25 +249,25 @@ plot_ADC_ARCHE <- function(scores, label, drug, target, threshold = "25%") {
 # ------- Plots for ARCHE4 ADC associatiosn with IHC scores
 
 #' Helper function for correlation plots
-plot_a4_adc_corr <- function(toPlot, label) {
-    res <- cor.test(toPlot$BAR_median, toPlot$ARCHE4, method = "pearson")
+plot_arche_adc_corr <- function(toPlot, label, arche) {
+    res <- cor.test(toPlot$BAR_median, toPlot[[arche]], method = "pearson")
     corr <- round(res$estimate, 2)
     pval <- round(res$p.value, 2)
 
-    p <- ggplot(toPlot, aes(x = ARCHE4, y = BAR_median)) +
+    p <- ggplot(toPlot, aes(x = .data[[arche]], y = BAR_median)) +
         geom_smooth(method = "lm", color = "gray") +
         geom_point(aes(fill = Subtype), shape = 21, size = 2) +
         scale_fill_manual(values = subtype_pal) +
         theme_bw() +
         ggtitle(paste0("PCC: ", corr, " (p = ", pval, ")\n", label)) +
         theme(plot.title = element_text(size = 11)) +
-        labs(x = "ARCHE4 Expression", y = "Median BAR")
+        labs(x = paste(arche, "Expression"), y = "Median BAR")
     return(p)
 }
 
 #' Plot ARCHE4~ADC stratified by TROP2 IHC scores
 #' 
-eval_TROP2 <- function(scores, drug, label) {
+eval_TROP2 <- function(scores, drug, label, arche) {
 
     # get TROP2 IHC scores
     mapping <- read_excel("data/rawdata/pdx/HER2TROP2_TNBC_PDX_models_2026-06-02.xlsx", sheet = 1)
@@ -283,9 +283,9 @@ eval_TROP2 <- function(scores, drug, label) {
     mid_H <- scores[scores$Hscore > 100,]
     high_H <- scores[scores$Hscore > 200,]
 
-    p1 <- plot_a4_adc_corr(scores, "All samples")
-    p2 <- plot_a4_adc_corr(mid_H, "Mid H samples")
-    p3 <- plot_a4_adc_corr(high_H, "High H samples")
+    p1 <- plot_arche_adc_corr(scores, "All samples", arche)
+    p2 <- plot_arche_adc_corr(mid_H, "Mid H samples", arche)
+    p3 <- plot_arche_adc_corr(high_H, "High H samples", arche)
 
     p <- p1 + p2 + p3 + plot_layout(guides = "collect") + plot_annotation(
         title = paste0(drug),
@@ -296,6 +296,6 @@ eval_TROP2 <- function(scores, drug, label) {
                 hjust = 0.5
             )
         ))
-    filename <- paste0("data/results/figures/4-DrugResponse/PDX/trop2_adcs/", drug, "_", label, ".png")
+    filename <- paste0("data/results/figures/4-DrugResponse/PDX/trop2_adcs/", arche, "_", drug, "_", label, ".png")
     ggsave(filename, p, width = 9, height = 2.5, unit = "in")
 }

@@ -184,7 +184,8 @@ for (drug in c("SACITUZAMAB-GOVITECAN", "DATOPOTAMAB-DERUXTECAN", "DATOPOTAMAB-C
 
     #eval_TROP2(zscore_t_sumdev, drug, "zscore_sumdev_T")
     #eval_TROP2(zscore_k_sumdev, drug, "zscore_sumdev_K")
-    eval_TROP2(normzs_t_sumdev, drug, "normzscr_sumdev_T")
+    eval_TROP2(normzs_t_sumdev, drug, "normzscr_sumdev_T", "ARCHE4")
+    eval_TROP2(normzs_t_sumdev, drug, "normzscr_sumdev_T", "ARCHE5")
     #eval_TROP2(normzs_k_sumdev, drug, "normzscr_sumdev_K")
 }
 
