@@ -9,6 +9,6 @@ cd /Users/julianguyen/Documents/BCaATAC
 OUT="data/results/data/1-Signatures/geneSurrogates"
 
 # METABRIC
-python3 scripts/1-Signatures/apply_ARCHE-G_surrogates.py \
+python3 scripts/1-Signatures/GenomicSurrogates/apply_ARCHE-G_surrogates.py \
     data/procdata/metabric/METABRIC_BRCA_Illumina_HT12v3_microarray_log2.cct \
     $OUT/metabric

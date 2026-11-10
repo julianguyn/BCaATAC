@@ -16,7 +16,7 @@ source("utils/gene_surrogate/helpers.R")
 
 set.seed(123)
 
-dir <- "data/results/data/1-Signatures/geneSurrogates"
+dir <- "data/results/data/1-Signatures/geneSurrogates/tcga"
 
 ###########################################################
 # Load in data

@@ -87,7 +87,7 @@ def spearman_scorer(y_true, y_pred):
     return spearmanr(y_true, y_pred).correlation
 
 
-def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=True, save_model=True):
+def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=True, save_model=True, model_path=""):
 
     # initialize variables to store results
     fold_preds = []
@@ -181,7 +181,7 @@ def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=Tr
 
     # save results to dataframe
     results_df = pd.DataFrame(results)
-    results_df.to_csv(("data/results/data/"+path+"en_folds.csv"), index=False)
+    results_df.to_csv(("data/results/data/1-Signatures/geneSurrogates/"+path+"en_folds.csv"), index=False)
 
     # get most common hyperparameters
     params_df = pd.DataFrame(hyperparams_list)
@@ -197,7 +197,7 @@ def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=Tr
         "sample": full_cohort.index,
         "y_pred": y_pred.values
     })
-    full_preds.to_csv(("data/results/data/"+path+"full_cohort_predictions.csv"), index=False)
+    full_preds.to_csv(("data/results/data/1-Signatures/geneSurrogates/"+path+"full_cohort_predictions.csv"), index=False)
 
     # save final model with its ordered feature list to apply to new cohorts
     if save_model:
@@ -206,14 +206,14 @@ def run_elastic_net(X, y, path, full_cohort, repeats=10, preds=True, features=Tr
             "features": list(X.columns),
             "params": final_params,
             "target": y.name
-        }, f"data/results/data/{path}model.joblib")
+        }, f"data/results/data/1-Signatures/geneSurrogates/{model_path}model.joblib")
 
     if features:
         feature_freq = pd.DataFrame.from_dict(feature_counter, orient='index', columns=['count'])
         feature_freq['frequency'] = feature_freq['count'] / total_models
         feature_freq = feature_freq.sort_values(by='frequency', ascending=False)
-        feature_freq.to_csv(f"data/results/data/{path}en_feature_stability.csv")
+        feature_freq.to_csv(f"data/results/data/1-Signatures/geneSurrogates/{path}en_feature_stability.csv")
 
     if preds:
         fold_preds_df = pd.concat(fold_preds)
-        fold_preds_df.to_csv(f"data/results/data/{path}en_predictions.csv")
+        fold_preds_df.to_csv(f"data/results/data/1-Signatures/geneSurrogates/{path}en_predictions.csv")
