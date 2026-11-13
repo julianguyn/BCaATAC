@@ -3,7 +3,11 @@ suppressPackageStartupMessages({
   library(readxl)
   library(reshape2)
   library(stringr)
+  library(Xeva)
 })
+
+# ---------------------------------------------------------
+# Process internal xeva data
 
 ###########################################################
 # Load in data
@@ -68,3 +72,44 @@ colnames(rec) <- c("drug", "patient.id", "mRECIST")
 
 write.csv(auc, file = "data/procdata/PDXs/drugresponse/auc_reps.csv", quote = F, row.names = F)
 write.csv(rec, file = "data/procdata/PDXs/drugresponse/mRECIST_reps.csv", quote = F, row.names = F)
+
+
+# ---------------------------------------------------------
+# Process PDXE
+
+pdxe <- readRDS("data/rawdata/pdx/Xeva_PDXE.rds")
+
+###########################################################
+# Process drug response
+###########################################################
+
+# get drug response
+drug <- pdxe@model
+bin <- drug[grep("binimetinib", drug$drug),]
+model.ids <- bin$model.id[bin$oncotree.code == "BREAST"]
+#tra <- drug[grep("trametinib", drug$drug),] # this is only PDAC and CRC
+sen <- pdxe@sensitivity$model
+sen <- sen[sen$model.id %in% model.ids,]
+sen$model.id <- sub("\\.", "-", sub(".biib", "", sen$model.id))
+
+###########################################################
+# Process molecular profiles
+###########################################################
+
+# get molecular profiles
+rna <- pdxe@molecularProfiles$RNASeq@assayData$exprs
+mut <- pdxe@molecularProfiles$mutation@assayData$exprs
+
+# keep samples (n=38)
+keep <- intersect(colnames(rna), sen$model.id)
+rna <- rna[,keep]
+mut <- mut[,keep]
+sen <- sen[match(keep, sen$model.id),]
+
+###########################################################
+# Save profiles
+###########################################################
+
+write.csv(rna, file = "data/procdata/PDXs/pdxe/rna.csv", quote = F, row.names = T)
+write.csv(mut, file = "data/procdata/PDXs/pdxe/mut.csv", quote = F, row.names = T)
+write.csv(sen, file = "data/procdata/PDXs/pdxe/sen.csv", quote = F, row.names = T)

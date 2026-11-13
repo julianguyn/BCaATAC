@@ -1,10 +1,10 @@
 """
-Apply trained ARCHE-G surrogate models (from ARCHE-G_surrogates.ipynb) to a new cohort.
+Apply trained ARCHE-G surrogate models to a new cohort
 
 Input is a genes x samples .cct file (first column gene symbols, log2 expression).
 Genes are z-scored within the cohort to match how the models were trained.
 
-usage: python scripts/1-Signatures/apply_ARCHE-G_surrogates.py <cohort.cct> <out_dir>
+usage: python scripts/1-Signatures/apply_ARCHE-G_surrogates.py <cohort.cct> <model_dir> <out_dir>
 """
 import os
 import sys
@@ -16,10 +16,11 @@ os.chdir(dir)
 sys.path.insert(0, dir)
 from utils.gene_surrogate.helpers import zscore_genes
 
-model_dir = "data/results/data/1-Signatures/geneSurrogates"
 
-cct, out_dir = sys.argv[1], sys.argv[2]
+cct, model_dir, out_dir = sys.argv[1], sys.argv[2]
 os.makedirs(out_dir, exist_ok=True)
+
+model_dir = f"data/results/data/1-Signatures/geneSurrogates/{model_dir}"
 
 # load in cohort and z-score genes within cohort
 rna = pd.read_csv(cct, sep='\t', index_col=0).T

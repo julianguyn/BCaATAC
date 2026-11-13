@@ -73,15 +73,15 @@ plot_survival <- function(archeG, pheno, cutoff, outdir = "data/results/figures/
         HR_res <- rbind(HR_res, calculate_HR(archeG, subtype, "PAM50"))
     }
     
-        toPlot <- HR_res %>%
-            mutate(
-                label_hr = sprintf("%.2f (%.2f-%.2f)", HR, lower, upper),
-                label_p  = case_when(
-                pvalue < 0.001 ~ "p < 0.001",
-                TRUE      ~ sprintf("p = %.3f", pvalue)
-                ),
-                Group = factor(Group, levels = c(rev(names(subtype_pal)[1:5]), paste0("ARCHE", 6:1)))  # keeps order top-to-bottom
-            )
+    toPlot <- HR_res %>%
+        mutate(
+            label_hr = sprintf("%.2f (%.2f-%.2f)", HR, lower, upper),
+            label_p  = case_when(
+            pvalue < 0.001 ~ "p < 0.001",
+            TRUE      ~ sprintf("p = %.3f", pvalue)
+            ),
+            Group = factor(Group, levels = c(rev(names(subtype_pal)[1:5]), paste0("ARCHE", 6:1)))  # keeps order top-to-bottom
+        )
 
     count <- rbind(as.matrix(table(archeG$ARCHEG)), as.matrix(table(archeG$PAM50))) |> as.data.frame()
     colnames(count) <- "N"

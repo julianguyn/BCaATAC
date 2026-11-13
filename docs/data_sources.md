@@ -182,6 +182,14 @@ Includes all data from `data/rawdata/`
 ### data/rawdata/pdx
 
 ```markdown
+## Xeva_PDXE.rds
+
+- **Name**: PDXE RNA-seq
+- **Access Date**: 2026-11-13
+- **Source**: https://www.orcestra.ca/xevaset/69cbe00a7a099594465dcf9b
+```
+
+```markdown
 ## HER2TROP2_TNBC_PDX_models_2026-06-02.xlsx (Internal)
 
 - **Name**: IHC data
