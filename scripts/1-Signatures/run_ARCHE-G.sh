@@ -8,11 +8,12 @@ cd /Users/julianguyen/Documents/BCaATAC
 
 OUT="data/results/data/1-Signatures/geneSurrogates"
 
-# PDXE
+# PDXE (linear expression, so log2 transform first)
 python3 scripts/1-Signatures/GenomicSurrogates/apply_ARCHE-G_surrogates.py \
     data/procdata/PDXs/pdxe/rna.csv \
     rna_model \
-    $OUT/pdxe
+    $OUT/pdxe \
+    log2
 
 # METABRIC
 python3 scripts/1-Signatures/GenomicSurrogates/apply_ARCHE-G_surrogates.py \

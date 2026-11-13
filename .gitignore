@@ -8,3 +8,4 @@ log.txt
 sites.yaml
 utils/pdx_drug_matches.R
 utils/gene_surrogate/__pycache__
+.Rhistory

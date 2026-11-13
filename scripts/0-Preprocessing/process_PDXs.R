@@ -4,6 +4,8 @@ suppressPackageStartupMessages({
   library(reshape2)
   library(stringr)
   library(Xeva)
+  library(data.table)
+  library(org.Hs.eg.db)
 })
 
 # ---------------------------------------------------------
@@ -105,6 +107,22 @@ keep <- intersect(colnames(rna), sen$model.id)
 rna <- rna[,keep]
 mut <- mut[,keep]
 sen <- sen[match(keep, sen$model.id),]
+
+###########################################################
+# Match gene names to TCGA (for ARCHE-G surrogate models)
+###########################################################
+
+# rename PDXE genes to their TCGA symbol 
+tcga_genes <- fread("data/rawdata/tcga/Human__TCGA_BRCA__UNC__RNAseq__HiSeq_RNA__01_28_2016__BI__Gene__Firehose_RSEM_log2.cct", select = 1)[[1]]
+old_names <- setdiff(tcga_genes, rownames(rna))
+
+alias <- suppressMessages(AnnotationDbi::select(org.Hs.eg.db, keys = old_names, keytype = "ALIAS", columns = "SYMBOL"))
+alias <- alias[!is.na(alias$SYMBOL) & alias$SYMBOL %in% rownames(rna) & !alias$SYMBOL %in% tcga_genes,]
+alias <- alias[!alias$ALIAS %in% alias$ALIAS[duplicated(alias$ALIAS)] &
+               !alias$SYMBOL %in% alias$SYMBOL[duplicated(alias$SYMBOL)],] # one-to-one only
+
+rownames(rna)[match(alias$SYMBOL, rownames(rna))] <- alias$ALIAS
+message("Renamed ", nrow(alias), " PDXE genes to TCGA symbols")
 
 ###########################################################
 # Save profiles
