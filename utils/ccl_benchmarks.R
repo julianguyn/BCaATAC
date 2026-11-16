@@ -248,6 +248,8 @@ plot_scatter_drug_association <- function(toPlot, feature, feature_type, drug, a
     colnames(toPlot)[colnames(toPlot) == feature] <- "toPlot"
     if (feature == "Score") feature <- arche
 
+    if (drug == "PD-0325901") drug <- "Mirdametinib"
+
     p <- ggplot(toPlot, aes(x = toPlot, y = AAC, fill = Subtype)) +
         geom_smooth(method = "lm", se = TRUE, color = "black", aes(group = 1), show.legend = FALSE) +
         geom_point(size = 2.5, shape = 21) +
@@ -297,10 +299,8 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
     p5 <- plot_scatter_drug_association(subset, names(genes)[1], "Expression", drug = drug)
     p6 <- plot_scatter_drug_association(subset, names(genes)[2], "Expression", drug = drug) + theme(axis.title.y = element_blank())
 
-
-    # ---------- With mutation data
+    # Plot mutation
     if (class(mut_df) == "data.frame") {
-
         mut_df <- as.data.frame(t(mut_df[names(genes),]))
         subset <- arche_sen[arche_sen$PSet == pset & arche_sen$Sample %in% rownames(mut_df),]
         subset$Mut <- rowSums(mut_df)[match(subset$Sample, names(rowSums(mut_df)))]
@@ -309,49 +309,55 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
         for (gene in names(genes)) {
             subset[[gene]] <- mut_df[[gene]][match(subset$Sample, rownames(mut_df))]
         }
+    } else {
+        subset <- arche_sen[arche_sen$PSet == pset,]
+        for (gene in names(genes)) {
+            subset[[gene]] <- NA
+        }
+    }
 
-        subset$Mut <- factor(subset$Mut, levels = c(1, 0), labels = c("Mut", "WT"))
-        subset <- subset[order(subset$AAC, decreasing = TRUE),]
-        subset$Sample <- factor(subset$Sample, levels = unique(subset$Sample))
-        subset$dummy <- c("BRAF", "NF1", rep("WT", nrow(subset)-2))
+    subset <- subset[order(subset$AAC, decreasing = TRUE),]
+    subset$Sample <- factor(subset$Sample, levels = unique(subset$Sample))
+    subset$dummy <- c("BRAF", "NF1", rep("WT", nrow(subset)-2))
 
-        p1 <- ggplot(subset, aes(x = Sample, y = AAC, fill = Score)) +
-            geom_col(color = "black") +
-            scale_fill_gradientn(colors = c("#BC4749", "#F8F1F8", "#077293"), limits = c(-2, 2)) +
-            theme_void() +
-            theme(
-                axis.text.x = element_blank(),
-                plot.title = element_text(hjust = 0.5, size = 11),
-                axis.title.y = element_text(angle = 90, size = 8),
-                legend.position = "none"
-            ) + 
-            labs(title = pset, fill = paste(arche, "\nScore"))
-        
-        p2 <- ggplot(subset, aes(x = Sample, y = 1, fill = as.character(BRAF))) +
-            geom_tile(color = "black") + 
-            scale_fill_manual(values = c("0" = "#F1F1F1", "1" = random_blue)) +
-            theme_void() +
-            theme(
-                legend.position = "none",
-                axis.title.y = element_text(size = 8, hjust=1)
-            ) +
-            labs(y = "BRAF")
+    p1 <- ggplot(subset, aes(x = Sample, y = AAC, fill = Score)) +
+        geom_col(color = "black") +
+        scale_fill_gradientn(colors = c("#BC4749", "#F8F1F8", "#077293"), limits = c(-2, 2)) +
+        theme_void() +
+        theme(
+            axis.text.x = element_blank(),
+            plot.title = element_text(hjust = 0.5, size = 11),
+            axis.title.y = element_text(angle = 90, size = 8),
+            legend.position = "none"
+        ) + 
+        labs(title = pset, fill = paste(arche, "\nScore"))
+    
+    p2 <- ggplot(subset, aes(x = Sample, y = 1, fill = as.character(BRAF))) +
+        geom_tile(color = "black") + 
+        scale_fill_manual(values = c("0" = "#F1F1F1", "1" = random_blue), na.value = "grey80") +
+        theme_void() +
+        theme(
+            legend.position = "none",
+            axis.title.y = element_text(size = 8, hjust=1)
+        ) +
+        labs(y = "BRAF")
 
-        p3 <- ggplot(subset, aes(x = Sample, y = 1, fill = as.character(NF1))) +
-            geom_tile(color = "black") + 
-            scale_fill_manual(values = c("0" = "#F1F1F1", "1" = random_blue)) +
-            theme_void() +
-            theme(
-                legend.position = "none",
-                axis.title.y = element_text(size = 8, hjust=1)
-            ) +
-            labs(y = "NF1")
+    p3 <- ggplot(subset, aes(x = Sample, y = 1, fill = as.character(NF1))) +
+        geom_tile(color = "black") + 
+        scale_fill_manual(values = c("0" = "#F1F1F1", "1" = random_blue), na.value = "grey80") +
+        theme_void() +
+        theme(
+            legend.position = "none",
+            axis.title.y = element_text(size = 8, hjust=1)
+        ) +
+        labs(y = "NF1")
 
         corr <- cor.test(subset$AAC, subset$Score, method = "pearson")
         estimate <- round(corr$estimate, 2)
         pval <- round(corr$p.value, 2)
         subset$Subtype <- factor(subset$Subtype, levels = names(subtype_pal))
 
+    if (class(mut_df) == "data.frame") {
         p4 <- ggplot(subset, aes(x = Score, y = AAC, fill = Subtype)) +
             geom_smooth(method = "lm", se = TRUE, color = "black", aes(group = 1), show.legend = FALSE) +
             geom_point(size = 2.5, shape = 21) +
@@ -378,35 +384,11 @@ plot_mut <- function(arche, drug, genes, pset, arche_sen) {
             ylim(0, 0.5) +
             labs(y = paste(drug, "Response (AAC)"), x = paste(arche, "Score")) +
         ggtitle(paste0("Corr: ", estimate, " | pval: ", pval))
-
-
     } else { # ---------- Without mutation data
-
-        subset <- arche_sen[arche_sen$PSet == pset,]
-        subset$Mut <- c("Mut", rep("WT", nrow(subset)-1))
-
-        p1 <- ggplot(subset, aes(x = Sample, y = AAC, fill = Score)) +
-            geom_col(color = "black") +
-            scale_fill_gradientn(colors = c("#BC4749", "#F8F1F8", "#077293"), limits = c(-2, 2)) +
-            theme_void() +
-            theme(
-                axis.text.x = element_blank(),
-                plot.title = element_text(hjust = 0.5, size = 11),
-                axis.title.y = element_text(angle = 90),
-                legend.position = "inside",
-                legend.position.inside = c(1, 1),
-                legend.justification.inside = c(1, 1),
-                legend.title = element_text(size = 9),
-                legend.text = element_text(size = 9),
-                legend.key.size = unit(0.3, 'cm')
-            ) + 
-            labs(title = pset, fill = paste(arche, "\nScore"))
         p4 <- plot_scatter_drug_association(subset, "Score", "Score", drug) + theme(axis.title.y = element_blank())
     }
 
-    if (class(mut_df) == "data.frame") {
-        p <- p1 / p2 / p3 / p4 / p5 / p6 + plot_layout(height = c(3, 1, 1, 7, 7, 7))
-    }
+    p <- p1 / p2 / p3 / p4 / p5 / p6 + plot_layout(height = c(3, 1, 1, 7, 7, 7))
     return(p)
 }
 
