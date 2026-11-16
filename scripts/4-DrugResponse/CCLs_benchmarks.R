@@ -4,7 +4,6 @@ suppressPackageStartupMessages({
     library(tidyverse)
     library(patchwork)
     library(ggnewscale)
-    library(ggpattern)
     library(matrixStats)
 })
 
