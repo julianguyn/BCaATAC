@@ -87,12 +87,14 @@ pdxe <- readRDS("data/rawdata/pdx/Xeva_PDXE.rds")
 
 # get drug response
 drug <- pdxe@model
-bin <- drug[grep("binimetinib", drug$drug),]
-model.ids <- bin$model.id[bin$oncotree.code == "BREAST"]
-#tra <- drug[grep("trametinib", drug$drug),] # this is only PDAC and CRC
+drug <- drug[drug$oncotree.code == "BREAST",]
+bin <- drug$model.id[drug$drug == "binimetinib"]
+pac <- drug$model.id[drug$drug == "paclitaxel"]
+
 sen <- pdxe@sensitivity$model
-sen <- sen[sen$model.id %in% model.ids,]
-sen$model.id <- sub("\\.", "-", sub(".biib", "", sen$model.id))
+sen <- sen[sen$model.id %in% c(bin, pac),]
+sen$drug <- drug$drug[match(sen$model.id, drug$model.id)]
+sen$model.id <- sub("\\.[^.]*$", "", sen$model.id)
 
 ###########################################################
 # Process molecular profiles

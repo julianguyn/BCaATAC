@@ -17,25 +17,22 @@ scores <- read.csv("data/results/data/1-Signatures/geneSurrogates/pdxe/rna_ARCHE
 # load drug response
 sen <- read.csv("data/procdata/PDXs/pdxe/sen.csv")
 sen$mRECIST <- factor(sen$mRECIST, levels = names(mrecist_pal))
-
-
-###########################################################
-# Format drug response associations
-###########################################################
-
-# TODO: subset for drug (if more drugs added)
-
-# add ARCHE scores
-scores <- scores[match(sen$model.id, scores$sample),]
-for (arche in paste0("ARCHE", 1:6)) {
-    sen[[arche]] <- scores[[arche]]
-}
+sen$model.id <- sub('\\.', '-', sen$model.id)
 
 ###########################################################
 # Plot drug response associations
 ###########################################################
 
-plot_pdxe_val <- function(toPlot, arche, drug) {
+plot_pdxe_val <- function(toPlot, scores, arche, drug) {
+
+    toPlot <- toPlot[toPlot$drug == tolower(drug),]
+    keep <- intersect(scores$sample, toPlot$model.id)
+    scores <- scores[match(keep, scores$sample),]
+    toPlot <- toPlot[match(keep, toPlot$model.id),]
+    for (a in paste0("ARCHE", 1:6)) {
+        toPlot[[a]] <- scores[[a]]
+    }
+
     res <- cor.test(toPlot[[arche]], toPlot$best.average.response, method = "pearson")
     corr <- round(res$estimate, 2)
     pval <- round(res$p.value, 2)
@@ -76,4 +73,5 @@ plot_pdxe_val <- function(toPlot, arche, drug) {
     ggsave(filename, p, width = 3, height = 7)
 }
 
-plot_pdxe_val(sen, "ARCHE4", "Binimetinib")
+plot_pdxe_val(sen, scores, "ARCHE4", "Binimetinib")
+plot_pdxe_val(sen, scores, "ARCHE5", "Paclitaxel")
